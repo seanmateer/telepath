@@ -21,7 +21,8 @@ export const ReasoningPanel = ({ reasoning, personality }: ReasoningPanelProps) 
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-warm-50"
+        aria-expanded={isOpen}
+        className="flex w-full min-h-[44px] items-center justify-between px-4 py-3 text-left transition hover:bg-warm-50"
       >
         <span className="text-xs font-medium text-ink-muted">
           {personalityNames[personality]}&apos;s reasoning

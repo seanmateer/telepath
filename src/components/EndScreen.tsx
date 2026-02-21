@@ -132,7 +132,7 @@ export const EndScreen = ({
                 </p>
                 <p className="mt-0.5 text-xs font-medium text-ink-muted">You</p>
               </div>
-              <div className="text-ink-faint">
+              <div className="text-ink-faint" aria-hidden="true">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

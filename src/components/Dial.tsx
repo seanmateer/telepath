@@ -208,6 +208,12 @@ export const Dial = ({
 
       <div
         ref={dialRef}
+        role="slider"
+        aria-label={`Dial between ${leftLabel} and ${rightLabel}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(clampedValue)}
+        tabIndex={0}
         className={`relative mx-auto aspect-square w-full max-w-[320px] touch-none ${
           isMouseDragging || isTouchDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}

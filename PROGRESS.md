@@ -18,10 +18,10 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 4 — Full UI (in progress)
+**Current Phase:** Phase 4 — Full UI (complete)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Building Phase 4 Full UI — splash screen, setup screen, game screen with full AI integration, score bar, reasoning panel, round transitions, end screen with share card. Design system applied throughout.
-**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 4 mobile audit.
+**Last Session Summary:** Completed Phase 4 — mobile-first audit and accessibility pass. Added focus-visible ring styles, ensured all touch targets ≥44px, improved ARIA attributes (slider role on dial, aria-expanded on reasoning panel, aria-hidden on decorative elements, aria-label on clue input), fixed contrast issues (ink-faint, score-miss, score-outer colors). Verified full game flow at 390px width.
+**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 5 real-device testing.
 
 ---
 
@@ -152,11 +152,11 @@
 - [x] End screen — win/loss, score summary with serif typography
 - [x] Share card generation (html2canvas) with Web Share API + clipboard fallback
 - [x] 📦 `git add -A && git commit -m "[phase-4] end screen + share card"`
-- [ ] Apply full design system (colors, typography, spacing)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] design system"`
-- [ ] Mobile-first audit — test all screens at 390px width
-- [ ] Accessibility pass — focus states, contrast, touch targets
-- [ ] 📦 `git add -A && git commit -m "[phase-4] mobile audit + accessibility"`
+- [x] Apply full design system (colors, typography, spacing) — DM Sans + DM Serif Display, warm palette, custom Tailwind tokens (ink, warm, spectrum, personality colors)
+- [x] 📦 committed with splash screen (foundational to all screens)
+- [x] Mobile-first audit — test all screens at 390px width
+- [x] Accessibility pass — focus states, contrast, touch targets
+- [x] 📦 `git add -A && git commit -m "[phase-4] mobile audit + accessibility"`
 
 **Phase 4 complete when:** Full game is playable end-to-end in browser and on mobile. Share card generates correctly.
 
@@ -215,6 +215,8 @@
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-21 | Claude Code | Phase 4 | Completed mobile-first audit + accessibility pass: focus-visible ring styles, min-h-[44px] touch targets on bonus/retry buttons, ARIA attributes (role=slider on dial, aria-expanded on reasoning panel, aria-hidden on decorative elements, aria-label on clue input), contrast fixes (ink-faint #C4B9AB→#A89888, score-miss #94A3B8→#708296, score-outer #EAB308→#CA8A04). Verified full 2-round game flow at 390px. |
+| 2026-02-21 | Claude Code | Phase 4 | Built all Phase 4 screens: SplashScreen (animated SVG arcs), SetupScreen (personality cards), GameScreen (full AI integration with stable-ref pattern to prevent infinite loops), ScoreBar, ReasoningPanel (accordion), RoundTransition (fullscreen overlay), EndScreen (html2canvas share card). Design system: DM Sans/DM Serif Display, warm palette, custom Tailwind tokens. |
 | 2026-02-21 | Codex | Phase 3 | Investigated iOS Safari haptics on iPhone 16 Pro (iOS 26.2.1), confirmed no reliable Web API behavior in Safari for physical feedback, and logged a follow-up for Phase 4 mobile audit. |
 | 2026-02-21 | Codex | Phase 3 | Built dial UI in isolation, implemented mouse/touch arc dragging with rotated orientation and mobile haptics, added snap/easing + reveal animation, and wired dial flow to the game state machine demo. |
 | 2026-02-21 | Codex | Phase 2 | Completed AI integration in `useAI`, verified live Lumen/Sage/Flux outputs via `/api/ai`, updated model IDs to active Sonnet/Haiku 4.5 variants, and hardened JSON parsing for fenced model responses. |

@@ -36,6 +36,14 @@ body {
   touch-action: none;
 }
 
+/* Focus-visible ring for keyboard navigation */
+button:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #C08B4A;
+  outline-offset: 2px;
+}
+
 /* Selection color */
 ::selection {
   background-color: rgba(240, 222, 198, 0.6);

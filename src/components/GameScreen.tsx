@@ -303,7 +303,7 @@ export const GameScreen = ({ personality, onGameOver }: GameScreenProps) => {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="mt-4 rounded-full border border-flux/30 bg-flux-light px-5 py-2.5 text-sm font-medium text-flux transition hover:bg-flux/10"
+            className="mt-4 min-h-[44px] rounded-full border border-flux/30 bg-flux-light px-5 py-3 text-sm font-medium text-flux transition hover:bg-flux/10"
           >
             Retry
           </button>
@@ -405,6 +405,8 @@ export const GameScreen = ({ personality, onGameOver }: GameScreenProps) => {
                   }}
                   placeholder="Enter your clue..."
                   maxLength={40}
+                  aria-label="Enter a one-word clue for your team"
+                  autoComplete="off"
                   className="flex-1 rounded-xl border border-warm-200 bg-white/80 px-4 py-3 text-center text-lg font-medium text-ink placeholder:text-ink-faint focus:border-warm-400 focus:outline-none focus:ring-1 focus:ring-warm-300"
                 />
               </div>
@@ -467,14 +469,14 @@ export const GameScreen = ({ personality, onGameOver }: GameScreenProps) => {
                 <button
                   type="button"
                   onClick={() => handleHumanBonusGuess('left')}
-                  className="rounded-full border border-warm-200 bg-white/80 px-6 py-2.5 text-sm font-medium text-ink transition hover:bg-warm-100"
+                  className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
                 >
                   &larr; Left
                 </button>
                 <button
                   type="button"
                   onClick={() => handleHumanBonusGuess('right')}
-                  className="rounded-full border border-warm-200 bg-white/80 px-6 py-2.5 text-sm font-medium text-ink transition hover:bg-warm-100"
+                  className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
                 >
                   Right &rarr;
                 </button>

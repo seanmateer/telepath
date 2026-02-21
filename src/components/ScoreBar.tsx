@@ -41,7 +41,7 @@ export const ScoreBar = ({
         <p className="text-[10px] font-medium uppercase tracking-widest text-ink-faint">
           Round {roundNumber}
         </p>
-        <div className="mt-0.5 flex items-center gap-1">
+        <div className="mt-0.5 flex items-center gap-1" aria-hidden="true">
           {Array.from({ length: pointsToWin }).map((_, i) => (
             <div
               key={i}

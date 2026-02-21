@@ -14,7 +14,7 @@ const config: Config = {
           DEFAULT: '#2C2418',
           light: '#6B5E4F',
           muted: '#9C8E7D',
-          faint: '#C4B9AB',
+          faint: '#A89888',
         },
         warm: {
           50: '#FDF8F0',
@@ -44,8 +44,8 @@ const config: Config = {
         score: {
           bullseye: '#22C55E',
           adjacent: '#84CC16',
-          outer: '#EAB308',
-          miss: '#94A3B8',
+          outer: '#CA8A04',
+          miss: '#708296',
         },
       },
       borderRadius: {
