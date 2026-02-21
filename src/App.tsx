@@ -11,6 +11,8 @@ const easeOutCubic = (value: number): number => {
 
 export const App = () => {
   const [dialValue, setDialValue] = useState(50);
+  const [showReveal, setShowReveal] = useState(false);
+  const [targetValue] = useState(72);
   const dialValueRef = useRef(dialValue);
   const animationFrameRef = useRef<number | null>(null);
 
@@ -93,7 +95,17 @@ export const App = () => {
           rightLabel="Hot"
           onChange={handleDialChange}
           onRelease={handleDialRelease}
+          revealValue={showReveal ? targetValue : null}
         />
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShowReveal((current) => !current)}
+            className="rounded-full border border-amber-300 bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-200"
+          >
+            {showReveal ? 'Hide Target Reveal' : 'Reveal Target'}
+          </button>
+        </div>
       </motion.section>
     </main>
   );

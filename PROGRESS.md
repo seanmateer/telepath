@@ -121,8 +121,8 @@
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial position math verified on device"`
 - [x] Implement dial snap/easing on release
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial snap + easing"`
-- [ ] Implement reveal animation (target position animates in)
-- [ ] 📦 `git add -A && git commit -m "[phase-3] reveal animation"`
+- [x] Implement reveal animation (target position animates in)
+- [x] 📦 `git add -A && git commit -m "[phase-3] reveal animation"`
 - [ ] Wire dial to game state
 - [ ] 📦 `git add -A && git commit -m "[phase-3] dial wired to game state"`
 

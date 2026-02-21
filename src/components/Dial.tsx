@@ -6,6 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type TouchEvent as ReactTouchEvent,
 } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   DIAL_ARC_END_DEGREES,
   DIAL_ARC_START_DEGREES,
@@ -22,6 +23,7 @@ type DialProps = {
   size?: number;
   onChange?: (value: number) => void;
   onRelease?: (value: number) => void;
+  revealValue?: number | null;
 };
 
 const createArcPath = (
@@ -45,6 +47,7 @@ export const Dial = ({
   size = 320,
   onChange,
   onRelease,
+  revealValue = null,
 }: DialProps) => {
   const dialRef = useRef<HTMLDivElement | null>(null);
   const latestValueRef = useRef<number>(clampDialValue(value));
@@ -58,6 +61,15 @@ export const Dial = ({
   const outerRadius = size * 0.38;
   const markerRadius = size * 0.26;
   const dialMarker = pointOnCircle(center, center, markerRadius, dialAngle);
+  const revealMarker =
+    revealValue === null
+      ? null
+      : pointOnCircle(
+          center,
+          center,
+          markerRadius,
+          valueToDialAngle(clampDialValue(revealValue)),
+        );
   const arcPath = createArcPath(
     center,
     center,
@@ -242,6 +254,22 @@ export const Dial = ({
             strokeWidth={2}
           />
           <circle cx={dialMarker.x} cy={dialMarker.y} r={9} fill="#9a3412" />
+          <AnimatePresence>
+            {revealMarker ? (
+              <motion.circle
+                key="reveal-target"
+                cx={revealMarker.x}
+                cy={revealMarker.y}
+                r={8}
+                fill="#1d4ed8"
+                initial={{ opacity: 0, scale: 0.2 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.2 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                style={{ transformOrigin: `${revealMarker.x}px ${revealMarker.y}px` }}
+              />
+            ) : null}
+          </AnimatePresence>
         </svg>
       </div>
 
