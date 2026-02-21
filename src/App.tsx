@@ -1,9 +1,77 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Dial } from './components/Dial';
 
+const SNAP_INCREMENT = 5;
+const SNAP_ANIMATION_MS = 180;
+
+const easeOutCubic = (value: number): number => {
+  return 1 - (1 - value) ** 3;
+};
+
 export const App = () => {
   const [dialValue, setDialValue] = useState(50);
+  const dialValueRef = useRef(dialValue);
+  const animationFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    dialValueRef.current = dialValue;
+  }, [dialValue]);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  const stopDialAnimation = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+  }, []);
+
+  const handleDialChange = useCallback(
+    (value: number) => {
+      stopDialAnimation();
+      setDialValue(value);
+    },
+    [stopDialAnimation],
+  );
+
+  const handleDialRelease = useCallback(
+    (value: number) => {
+      const snappedTarget = Math.round(value / SNAP_INCREMENT) * SNAP_INCREMENT;
+      const startValue = dialValueRef.current;
+      const endValue = Math.max(0, Math.min(100, snappedTarget));
+      const startTime = performance.now();
+
+      stopDialAnimation();
+
+      const animate = (timestamp: number): void => {
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(1, elapsed / SNAP_ANIMATION_MS);
+        const easedProgress = easeOutCubic(progress);
+        const nextValue = Math.round(
+          startValue + (endValue - startValue) * easedProgress,
+        );
+
+        setDialValue(nextValue);
+
+        if (progress < 1) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+          return;
+        }
+
+        animationFrameRef.current = null;
+      };
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    },
+    [stopDialAnimation],
+  );
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-10 text-center">
@@ -23,7 +91,8 @@ export const App = () => {
           value={dialValue}
           leftLabel="Cold"
           rightLabel="Hot"
-          onChange={setDialValue}
+          onChange={handleDialChange}
+          onRelease={handleDialRelease}
         />
       </motion.section>
     </main>

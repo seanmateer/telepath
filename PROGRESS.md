@@ -119,8 +119,8 @@
 - [x] Drag position → 0–100 percentage math correct
 - [x] Test on actual mobile device (not just browser devtools)
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial position math verified on device"`
-- [ ] Implement dial snap/easing on release
-- [ ] 📦 `git add -A && git commit -m "[phase-3] dial snap + easing"`
+- [x] Implement dial snap/easing on release
+- [x] 📦 `git add -A && git commit -m "[phase-3] dial snap + easing"`
 - [ ] Implement reveal animation (target position animates in)
 - [ ] 📦 `git add -A && git commit -m "[phase-3] reveal animation"`
 - [ ] Wire dial to game state

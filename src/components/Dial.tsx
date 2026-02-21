@@ -21,6 +21,7 @@ type DialProps = {
   rightLabel: string;
   size?: number;
   onChange?: (value: number) => void;
+  onRelease?: (value: number) => void;
 };
 
 const createArcPath = (
@@ -43,8 +44,10 @@ export const Dial = ({
   rightLabel,
   size = 320,
   onChange,
+  onRelease,
 }: DialProps) => {
   const dialRef = useRef<HTMLDivElement | null>(null);
+  const latestValueRef = useRef<number>(clampDialValue(value));
   const lastHapticBucketRef = useRef<number | null>(null);
   const [isMouseDragging, setIsMouseDragging] = useState(false);
   const [isTouchDragging, setIsTouchDragging] = useState(false);
@@ -62,6 +65,10 @@ export const Dial = ({
     DIAL_ARC_START_DEGREES,
     DIAL_ARC_END_DEGREES,
   );
+
+  useEffect(() => {
+    latestValueRef.current = clampedValue;
+  }, [clampedValue]);
 
   const triggerHaptic = useCallback(
     (value: number, force = false): void => {
@@ -98,6 +105,7 @@ export const Dial = ({
       if (onChange) {
         onChange(nextValue);
       }
+      latestValueRef.current = nextValue;
 
       if (inputType === 'touch') {
         triggerHaptic(nextValue);
@@ -117,6 +125,9 @@ export const Dial = ({
 
     const handleMouseUp = (): void => {
       setIsMouseDragging(false);
+      if (onRelease) {
+        onRelease(latestValueRef.current);
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -126,7 +137,7 @@ export const Dial = ({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isMouseDragging, updateFromMousePosition]);
+  }, [isMouseDragging, onRelease, updateFromMousePosition]);
 
   useEffect(() => {
     if (!isTouchDragging) {
@@ -145,6 +156,9 @@ export const Dial = ({
 
     const handleTouchEnd = (): void => {
       setIsTouchDragging(false);
+      if (onRelease) {
+        onRelease(latestValueRef.current);
+      }
     };
 
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -156,7 +170,7 @@ export const Dial = ({
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [isTouchDragging, updateFromMousePosition]);
+  }, [isTouchDragging, onRelease, updateFromMousePosition]);
 
   const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>): void => {
     event.preventDefault();
