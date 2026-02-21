@@ -14,6 +14,7 @@ import {
   sanitizeUpstreamError,
   toRateLimitResult,
   validateAIRequestBody,
+  parseJsonPayload,
 } from '../aiSecurity.js';
 
 const withTemporaryEnv = async (
@@ -52,10 +53,10 @@ describe('buildAllowedModels', () => {
 
   it('parses comma-separated custom models', () => {
     const models = buildAllowedModels(
-      'claude-3-5-sonnet-latest, claude-3-5-haiku-latest',
+      'claude-sonnet-4-5-20250929, claude-haiku-4-5-20251001',
     );
-    assert.equal(models.has('claude-3-5-sonnet-latest'), true);
-    assert.equal(models.has('claude-3-5-haiku-latest'), true);
+    assert.equal(models.has('claude-sonnet-4-5-20250929'), true);
+    assert.equal(models.has('claude-haiku-4-5-20251001'), true);
   });
 });
 
@@ -80,7 +81,7 @@ describe('validateAIRequestBody', () => {
   it('accepts valid payloads and assigns defaults', () => {
     const result = validateAIRequestBody(
       {
-        model: 'claude-3-5-sonnet-latest',
+        model: 'claude-sonnet-4-5-20250929',
         systemPrompt: 'You are a strict JSON API.',
         userPrompt: 'Return {"ok":true}',
       },
@@ -115,7 +116,7 @@ describe('validateAIRequestBody', () => {
 
     const systemResult = validateAIRequestBody(
       {
-        model: 'claude-3-5-sonnet-latest',
+        model: 'claude-sonnet-4-5-20250929',
         systemPrompt: tooLongSystem,
         userPrompt: 'ok',
       },
@@ -125,7 +126,7 @@ describe('validateAIRequestBody', () => {
 
     const userResult = validateAIRequestBody(
       {
-        model: 'claude-3-5-sonnet-latest',
+        model: 'claude-sonnet-4-5-20250929',
         systemPrompt: 'ok',
         userPrompt: tooLongUser,
       },
@@ -135,7 +136,7 @@ describe('validateAIRequestBody', () => {
 
     const tokenResult = validateAIRequestBody(
       {
-        model: 'claude-3-5-sonnet-latest',
+        model: 'claude-sonnet-4-5-20250929',
         systemPrompt: 'ok',
         userPrompt: 'ok',
         maxTokens: MAX_OUTPUT_TOKENS + 1,
@@ -203,5 +204,22 @@ describe('sanitizeUpstreamError', () => {
     assert.equal(sanitizeUpstreamError({ status: 401 }).status, 502);
     assert.equal(sanitizeUpstreamError({ status: 529 }).status, 503);
     assert.equal(sanitizeUpstreamError(new Error('boom')).status, 502);
+  });
+});
+
+describe('parseJsonPayload', () => {
+  it('parses plain JSON payloads', () => {
+    const parsed = parseJsonPayload('{"ok":true}');
+    assert.deepEqual(parsed, { ok: true });
+  });
+
+  it('parses JSON wrapped in markdown code fences', () => {
+    const parsed = parseJsonPayload('```json\n{"ok":true}\n```');
+    assert.deepEqual(parsed, { ok: true });
+  });
+
+  it('rejects non-JSON content', () => {
+    const parsed = parseJsonPayload('not-json');
+    assert.equal(parsed, null);
   });
 });

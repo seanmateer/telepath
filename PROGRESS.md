@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 2 — AI Integration (in progress)
+**Current Phase:** Phase 2 — AI Integration (complete)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Started Phase 2 by defining personality prompt system scaffolding for Lumen, Sage, and Flux.
+**Last Session Summary:** Completed Phase 2 AI integration, including live personality verification through `/api/ai`, JSON parsing hardening for fenced responses, and updated current Anthropic model defaults.
 
 ---
 
@@ -98,10 +98,10 @@
   - [x] Accepts: spectrum pair, clue, personality
   - [x] Returns: `{ position: number, reasoning: string }`
 - [x] 📦 `git add -A && git commit -m "[phase-2] dial placement"`
-- [ ] Test AI calls manually: verify Lumen/Sage/Flux produce meaningfully different outputs
-- [ ] Verify all responses parse correctly as JSON
-- [ ] Verify edge function is being called (not Anthropic directly)
-- [ ] 📦 `git add -A && git commit -m "[phase-2] AI integration verified"`
+- [x] Test AI calls manually: verify Lumen/Sage/Flux produce meaningfully different outputs
+- [x] Verify all responses parse correctly as JSON
+- [x] Verify edge function is being called (not Anthropic directly)
+- [x] 📦 `git add -A && git commit -m "[phase-2] AI integration verified"`
 
 **Phase 2 complete when:** All three personalities generate clues and place the dial. Manually verified outputs feel distinct.
 
@@ -214,6 +214,7 @@
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-21 | Codex | Phase 2 | Completed AI integration in `useAI`, verified live Lumen/Sage/Flux outputs via `/api/ai`, updated model IDs to active Sonnet/Haiku 4.5 variants, and hardened JSON parsing for fenced model responses. |
 | 2026-02-21 | Codex | Phase 1 | Implemented and tested game logic: typed entities, card loader + shuffle, deterministic state machine transitions, scoring, psychic alternation, and first-to-10 win condition. |
 | 2026-02-21 | Codex | Phase 0 | Replaced in-memory edge rate limiting with Upstash Redis-backed limiting, updated `/api/ai.ts` fallback/misconfiguration behavior, refreshed tests, and documented new Upstash env vars/security notes. |
 | 2026-02-21 | Codex | Phase 0 | Hardened `/api/ai.ts` with model/origin allowlists, stricter request bounds, and sanitized upstream error handling; added API hardening tests and test runner scripts. |

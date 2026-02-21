@@ -2,8 +2,8 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
 export const DEFAULT_ALLOWED_MODELS = [
-  'claude-3-5-sonnet-latest',
-  'claude-3-5-haiku-latest',
+  'claude-sonnet-4-5-20250929',
+  'claude-haiku-4-5-20251001',
 ] as const;
 
 const LOCAL_DEV_ORIGINS = new Set<string>([
@@ -388,8 +388,12 @@ export const isJsonValue = (value: unknown): value is JsonValue => {
 };
 
 export const parseJsonPayload = (value: string): JsonValue | null => {
+  const trimmed = value.trim();
+  const fencedMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const jsonCandidate = fencedMatch ? fencedMatch[1] : trimmed;
+
   try {
-    const parsed: unknown = JSON.parse(value);
+    const parsed: unknown = JSON.parse(jsonCandidate);
     return isJsonValue(parsed) ? parsed : null;
   } catch {
     return null;

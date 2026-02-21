@@ -1,7 +1,7 @@
 import type { Personality, SpectrumCard } from '../types/game.js';
 
-export const CLUE_MODEL = 'claude-3-5-sonnet-latest';
-export const DIAL_MODEL = 'claude-3-5-haiku-latest';
+export const CLUE_MODEL = 'claude-sonnet-4-5-20250929';
+export const DIAL_MODEL = 'claude-haiku-4-5-20251001';
 
 type PersonalityPromptProfile = {
   name: string;

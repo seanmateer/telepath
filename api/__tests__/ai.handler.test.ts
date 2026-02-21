@@ -59,7 +59,7 @@ describe('/api/ai handler hardening', () => {
     const response = await handler(
       createRequest(
         {
-          model: 'claude-3-5-sonnet-latest',
+          model: 'claude-sonnet-4-5-20250929',
           systemPrompt: 'Return JSON only',
           userPrompt: '{"ok":true}',
         },
@@ -144,7 +144,7 @@ describe('/api/ai handler hardening', () => {
         const response = await handler(
           createRequest(
             {
-              model: 'claude-3-5-sonnet-latest',
+              model: 'claude-sonnet-4-5-20250929',
               systemPrompt: 'Return JSON only',
               userPrompt: '{"ok":true}',
             },
