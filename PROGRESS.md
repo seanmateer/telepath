@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 3 — Dial UI (in progress)
+**Current Phase:** Phase 3 — Dial UI (complete)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Started Phase 3 with a standalone, isolated dial component scaffold for desktop/mobile layout testing.
+**Last Session Summary:** Completed Phase 3 dial UI: standalone dial, mouse/touch drag, verified dial math on device, snap/easing, reveal animation, and game-state wiring.
 
 ---
 
@@ -123,8 +123,8 @@
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial snap + easing"`
 - [x] Implement reveal animation (target position animates in)
 - [x] 📦 `git add -A && git commit -m "[phase-3] reveal animation"`
-- [ ] Wire dial to game state
-- [ ] 📦 `git add -A && git commit -m "[phase-3] dial wired to game state"`
+- [x] Wire dial to game state
+- [x] 📦 `git add -A && git commit -m "[phase-3] dial wired to game state"`
 
 **Phase 3 complete when:** Dial is draggable and accurate on both desktop and a real mobile device.
 
@@ -214,6 +214,7 @@
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-21 | Codex | Phase 3 | Built dial UI in isolation, implemented mouse/touch arc dragging with rotated orientation and mobile haptics, added snap/easing + reveal animation, and wired dial flow to the game state machine demo. |
 | 2026-02-21 | Codex | Phase 2 | Completed AI integration in `useAI`, verified live Lumen/Sage/Flux outputs via `/api/ai`, updated model IDs to active Sonnet/Haiku 4.5 variants, and hardened JSON parsing for fenced model responses. |
 | 2026-02-21 | Codex | Phase 1 | Implemented and tested game logic: typed entities, card loader + shuffle, deterministic state machine transitions, scoring, psychic alternation, and first-to-10 win condition. |
 | 2026-02-21 | Codex | Phase 0 | Replaced in-memory edge rate limiting with Upstash Redis-backed limiting, updated `/api/ai.ts` fallback/misconfiguration behavior, refreshed tests, and documented new Upstash env vars/security notes. |
