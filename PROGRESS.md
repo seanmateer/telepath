@@ -136,8 +136,8 @@
 
 - [x] Splash screen with animated layered arcs (Framer Motion) — DM Serif Display title, animated arcs, warm beige canvas
 - [x] 📦 `git add -A && git commit -m "[phase-4] splash screen"`
-- [ ] Setup screen — personality selection with descriptions
-- [ ] 📦 `git add -A && git commit -m "[phase-4] setup screen"`
+- [x] Setup screen — personality selection with descriptions — Lumen/Sage/Flux cards with accent colors
+- [x] 📦 `git add -A && git commit -m "[phase-4] setup screen"`
 - [ ] Game screen layout
   - [ ] Spectrum bar with gradient and concept labels
   - [ ] Clue display area
