@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "npm run test:api",
+    "test:api": "npm run test:api:compile && npm run test:api:run",
+    "test:api:compile": "tsc -p tsconfig.api-tests.json",
+    "test:api:run": "node --test --test-concurrency=1 .test-dist/api/__tests__/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
