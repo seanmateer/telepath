@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 2 — AI Integration (complete)
+**Current Phase:** Phase 3 — Dial UI (in progress)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Completed Phase 2 AI integration, including live personality verification through `/api/ai`, JSON parsing hardening for fenced responses, and updated current Anthropic model defaults.
+**Last Session Summary:** Started Phase 3 with a standalone, isolated dial component scaffold for desktop/mobile layout testing.
 
 ---
 
@@ -110,8 +110,8 @@
 ### Phase 3 — Dial UI
 *Highest implementation risk. Build and validate in isolation before integrating.*
 
-- [ ] Build standalone `<Dial />` component in isolation (no game state wired)
-- [ ] 📦 `git add -A && git commit -m "[phase-3] dial component scaffold"`
+- [x] Build standalone `<Dial />` component in isolation (no game state wired)
+- [x] 📦 `git add -A && git commit -m "[phase-3] dial component scaffold"`
 - [ ] Implement circular arc drag interaction — mouse
 - [ ] 📦 `git add -A && git commit -m "[phase-3] dial drag mouse"`
 - [ ] Implement circular arc drag interaction — touch (mobile)

@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
+import { Dial } from './components/Dial';
 
 export const App = () => {
   return (
-    <main className="grid min-h-screen place-items-center px-6 text-center">
+    <main className="grid min-h-screen place-items-center px-4 py-10 text-center">
       <motion.section
-        className="space-y-2"
+        className="w-full max-w-[430px] space-y-5"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -12,9 +13,10 @@ export const App = () => {
         <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
           Telepath
         </h1>
-        <p className="text-base text-slate-700">
-          Humans vs. AI Wavelength adaptation.
+        <p className="text-sm text-slate-700">
+          Phase 3 standalone dial sandbox
         </p>
+        <Dial value={50} leftLabel="Cold" rightLabel="Hot" />
       </motion.section>
     </main>
   );
