@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP  
-**Current Phase:** Phase 0 — Project Scaffolding (in progress)  
+**Current Phase:** Phase 0 — Project Scaffolding (complete)  
 **Last Updated:** 2026-02-21  
-**Last Session Summary:** Started Phase 0 and completed Vite + React + TypeScript scaffold.
+**Last Session Summary:** Completed all Phase 0 tasks, including Edge Function proxy + rate limiting and folder structure setup.
 
 ---
 
@@ -41,9 +41,9 @@
 - [x] Verify edge function proxies correctly to Anthropic API
 - [x] Add basic rate limiting to edge function (max requests per IP)
 - [x] 📦 `git add -A && git commit -m "[phase-0] vercel edge function + rate limiting"`
-- [ ] Copy `spectrum-deck.json` into `public/`
-- [ ] Set up project folder structure per `AGENTS.md`
-- [ ] 📦 `git add -A && git commit -m "[phase-0] folder structure + spectrum deck"`
+- [x] Copy `spectrum-deck.json` into `public/`
+- [x] Set up project folder structure per `AGENTS.md`
+- [x] 📦 `git add -A && git commit -m "[phase-0] folder structure + spectrum deck"`
 
 **Phase 0 complete when:** Dev server runs, edge function responds, folder structure matches AGENTS.md spec.
 
@@ -208,4 +208,5 @@
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-21 | Codex | Phase 0 | Initialized Vite + React + TypeScript, configured Tailwind and Framer Motion, implemented `/api/ai.ts` with JSON validation + rate limiting, and completed required folder/public deck setup. |
 | —    | —     | —     | —       |
