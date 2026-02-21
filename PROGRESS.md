@@ -149,9 +149,9 @@
 - [x] 📦 `git add -A && git commit -m "[phase-4] AI reasoning panel"`
 - [x] Round transition animation + score delta — fullscreen overlay with zone label, points, bonus
 - [x] 📦 `git add -A && git commit -m "[phase-4] round transition"`
-- [ ] End screen — win/loss, score summary
-- [ ] Share card generation (html2canvas or equivalent)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] end screen + share card"`
+- [x] End screen — win/loss, score summary with serif typography
+- [x] Share card generation (html2canvas) with Web Share API + clipboard fallback
+- [x] 📦 `git add -A && git commit -m "[phase-4] end screen + share card"`
 - [ ] Apply full design system (colors, typography, spacing)
 - [ ] 📦 `git add -A && git commit -m "[phase-4] design system"`
 - [ ] Mobile-first audit — test all screens at 390px width
