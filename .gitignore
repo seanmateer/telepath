@@ -49,6 +49,9 @@ coverage/
 # Vercel
 .vercel/
 
+# Claude Code
+.claude/worktrees/
+
 # Misc
 *.pem
 .cache/
