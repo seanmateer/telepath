@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Dial } from './components/Dial';
 
 export const App = () => {
+  const [dialValue, setDialValue] = useState(50);
+
   return (
     <main className="grid min-h-screen place-items-center px-4 py-10 text-center">
       <motion.section
@@ -16,7 +19,12 @@ export const App = () => {
         <p className="text-sm text-slate-700">
           Phase 3 standalone dial sandbox
         </p>
-        <Dial value={50} leftLabel="Cold" rightLabel="Hot" />
+        <Dial
+          value={dialValue}
+          leftLabel="Cold"
+          rightLabel="Hot"
+          onChange={setDialValue}
+        />
       </motion.section>
     </main>
   );

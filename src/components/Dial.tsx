@@ -1,8 +1,17 @@
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
+
 type DialProps = {
   value: number;
   leftLabel: string;
   rightLabel: string;
   size?: number;
+  onChange?: (value: number) => void;
 };
 
 const DIAL_MIN = 0;
@@ -23,6 +32,15 @@ const clampValue = (value: number): number => {
 const valueToAngle = (value: number): number => {
   const normalized = clampValue(value) / DIAL_MAX;
   return ARC_START_DEGREES + normalized * ARC_SWEEP_DEGREES;
+};
+
+const angleToValue = (angleDegrees: number): number => {
+  const clampedAngle = Math.min(
+    ARC_START_DEGREES + ARC_SWEEP_DEGREES,
+    Math.max(ARC_START_DEGREES, angleDegrees),
+  );
+  const normalized = (clampedAngle - ARC_START_DEGREES) / ARC_SWEEP_DEGREES;
+  return clampValue(normalized * DIAL_MAX);
 };
 
 const polarToCartesian = (
@@ -53,7 +71,15 @@ const createArcPath = (
   return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
 };
 
-export const Dial = ({ value, leftLabel, rightLabel, size = 320 }: DialProps) => {
+export const Dial = ({
+  value,
+  leftLabel,
+  rightLabel,
+  size = 320,
+  onChange,
+}: DialProps) => {
+  const dialRef = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const clampedValue = clampValue(value);
   const dialAngle = valueToAngle(clampedValue);
 
@@ -69,6 +95,56 @@ export const Dial = ({ value, leftLabel, rightLabel, size = 320 }: DialProps) =>
     ARC_START_DEGREES + ARC_SWEEP_DEGREES,
   );
 
+  const updateFromMousePosition = useCallback(
+    (clientX: number, clientY: number): void => {
+      const dialElement = dialRef.current;
+      if (!dialElement) {
+        return;
+      }
+
+      const rect = dialElement.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const angle =
+        (Math.atan2(clientY - centerY, clientX - centerX) * 180) / Math.PI;
+      const nextValue = Math.round(angleToValue(angle));
+
+      if (onChange) {
+        onChange(nextValue);
+      }
+    },
+    [onChange],
+  );
+
+  useEffect(() => {
+    if (!isDragging) {
+      return;
+    }
+
+    const handleMouseMove = (event: MouseEvent): void => {
+      updateFromMousePosition(event.clientX, event.clientY);
+    };
+
+    const handleMouseUp = (): void => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, updateFromMousePosition]);
+
+  const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    setIsDragging(true);
+    updateFromMousePosition(event.clientX, event.clientY);
+  };
+
   return (
     <section className="mx-auto w-full max-w-[390px] rounded-3xl border border-amber-200/80 bg-amber-50/70 p-4 shadow-[0_20px_60px_-40px_rgba(120,53,15,0.55)]">
       <div className="mb-5 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
@@ -76,7 +152,13 @@ export const Dial = ({ value, leftLabel, rightLabel, size = 320 }: DialProps) =>
         <span>{rightLabel}</span>
       </div>
 
-      <div className="relative mx-auto aspect-square w-full max-w-[320px]">
+      <div
+        ref={dialRef}
+        className={`relative mx-auto aspect-square w-full max-w-[320px] ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+        onMouseDown={handleMouseDown}
+      >
         <svg
           viewBox={`0 0 ${size} ${size}`}
           className="h-full w-full"

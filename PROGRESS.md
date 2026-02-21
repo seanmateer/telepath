@@ -112,8 +112,8 @@
 
 - [x] Build standalone `<Dial />` component in isolation (no game state wired)
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial component scaffold"`
-- [ ] Implement circular arc drag interaction — mouse
-- [ ] 📦 `git add -A && git commit -m "[phase-3] dial drag mouse"`
+- [x] Implement circular arc drag interaction — mouse
+- [x] 📦 `git add -A && git commit -m "[phase-3] dial drag mouse"`
 - [ ] Implement circular arc drag interaction — touch (mobile)
 - [ ] 📦 `git add -A && git commit -m "[phase-3] dial drag touch"`
 - [ ] Drag position → 0–100 percentage math correct
