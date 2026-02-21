@@ -1,3 +1,6 @@
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
 export const DEFAULT_ALLOWED_MODELS = [
   'claude-3-5-sonnet-latest',
   'claude-3-5-haiku-latest',
@@ -41,11 +44,6 @@ type ValidationFailure = {
 
 export type ValidationResult = ValidationSuccess | ValidationFailure;
 
-type RateLimitEntry = {
-  count: number;
-  windowStart: number;
-};
-
 export type RateLimitResult = {
   allowed: boolean;
   limit: number;
@@ -53,10 +51,15 @@ export type RateLimitResult = {
   retryAfterSeconds: number | null;
 };
 
+type UpstashRateLimitResponse = Awaited<ReturnType<Ratelimit['limit']>>;
+
 type SafeUpstreamError = {
   status: number;
   message: string;
 };
+
+let cachedRateLimiter: Ratelimit | null = null;
+let hasWarnedMissingRateLimiterConfig = false;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
@@ -111,66 +114,82 @@ const getUpstreamStatus = (error: unknown): number | null => {
   return status;
 };
 
-export class InMemoryRateLimiter {
-  private readonly entries = new Map<string, RateLimitEntry>();
+const isProductionEnvironment = (): boolean => {
+  return (
+    process.env.NODE_ENV === 'production' ||
+    process.env.VERCEL_ENV === 'production'
+  );
+};
 
-  constructor(
-    private readonly windowMs: number,
-    private readonly maxRequests: number,
-    private readonly maxEntries: number = 5_000,
-  ) {}
+const hasUpstashRateLimiterEnv = (): boolean => {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  allow(key: string, now: number = Date.now()): RateLimitResult {
-    this.cleanup(now);
+  return Boolean(redisUrl?.trim() && redisToken?.trim());
+};
 
-    const existing = this.entries.get(key);
+export const createRateLimiter = (
+  windowMs: number,
+  maxRequests: number,
+): Ratelimit | null => {
+  if (cachedRateLimiter) {
+    return cachedRateLimiter;
+  }
 
-    if (!existing || now - existing.windowStart >= this.windowMs) {
-      this.entries.set(key, { count: 1, windowStart: now });
-      return {
-        allowed: true,
-        limit: this.maxRequests,
-        remaining: this.maxRequests - 1,
-        retryAfterSeconds: null,
-      };
-    }
-
-    if (existing.count >= this.maxRequests) {
-      const retryAfterMs = Math.max(
-        0,
-        this.windowMs - (now - existing.windowStart),
+  if (!hasUpstashRateLimiterEnv()) {
+    if (isProductionEnvironment()) {
+      throw new Error(
+        'Rate limiting misconfigured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.',
       );
-      return {
-        allowed: false,
-        limit: this.maxRequests,
-        remaining: 0,
-        retryAfterSeconds: Math.max(1, Math.ceil(retryAfterMs / 1000)),
-      };
     }
 
-    existing.count += 1;
-    this.entries.set(key, existing);
+    if (!hasWarnedMissingRateLimiterConfig) {
+      hasWarnedMissingRateLimiterConfig = true;
+      console.warn(
+        'Rate limiting disabled: missing UPSTASH_REDIS_REST_URL and/or UPSTASH_REDIS_REST_TOKEN.',
+      );
+    }
 
+    return null;
+  }
+
+  cachedRateLimiter = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(maxRequests, `${windowMs} ms`),
+    prefix: 'telepath',
+  });
+
+  return cachedRateLimiter;
+};
+
+export const toRateLimitResult = (
+  response: UpstashRateLimitResponse,
+  nowMs: number = Date.now(),
+): RateLimitResult => {
+  if (response.success) {
     return {
       allowed: true,
-      limit: this.maxRequests,
-      remaining: this.maxRequests - existing.count,
+      limit: response.limit,
+      remaining: response.remaining,
       retryAfterSeconds: null,
     };
   }
 
-  private cleanup(now: number): void {
-    if (this.entries.size <= this.maxEntries) {
-      return;
-    }
+  return {
+    allowed: false,
+    limit: response.limit,
+    remaining: response.remaining,
+    retryAfterSeconds: Math.max(
+      1,
+      Math.ceil(Math.max(0, response.reset - nowMs) / 1000),
+    ),
+  };
+};
 
-    for (const [key, value] of this.entries.entries()) {
-      if (now - value.windowStart >= this.windowMs) {
-        this.entries.delete(key);
-      }
-    }
-  }
-}
+export const resetRateLimiterForTests = (): void => {
+  cachedRateLimiter = null;
+  hasWarnedMissingRateLimiterConfig = false;
+};
 
 export const buildAllowedModels = (
   envValue: string | undefined,

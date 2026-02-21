@@ -9,6 +9,8 @@
 
 If you modify any universal content (tech stack, project structure, env vars, non-negotiable rules, milestone scope) in either file, **update the other file to match before committing.** Include both files in the same commit when syncing.
 
+Current universal env vars (maintained in `AGENTS.md` and `.env.example`): `ANTHROPIC_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
+
 ---
 
 ## Session & Progress Management

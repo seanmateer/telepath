@@ -160,6 +160,8 @@ Three personalities, each with a distinct system prompt affecting clue style and
 
 ```
 ANTHROPIC_API_KEY=        # Required. Server-side only. Never expose client-side.
+UPSTASH_REDIS_REST_URL=   # Required in production for distributed edge rate limiting.
+UPSTASH_REDIS_REST_TOKEN= # Required in production for distributed edge rate limiting.
 ```
 
 Document any new env vars in `.env.example` as they are added. Never add real values to `.env.example`.
@@ -191,7 +193,8 @@ Key design principles:
 
 ## Security Notes
 
-- `ANTHROPIC_API_KEY` is the only secret — lives in Vercel environment variables only
+- `ANTHROPIC_API_KEY` and `UPSTASH_REDIS_REST_TOKEN` are server-side secrets only (Vercel env vars)
+- `UPSTASH_REDIS_REST_URL` is server-side configuration for rate limiting
 - Rate limiting is implemented in `/api/ai.ts` — do not remove it
 - No user authentication in MVP — no PII collected or stored
 - Supabase (1.0): anon key is safe client-side; service role key is not

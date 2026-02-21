@@ -3,16 +3,46 @@ import { describe, it } from 'node:test';
 import {
   DEFAULT_ALLOWED_MODELS,
   DEFAULT_TEMPERATURE,
-  InMemoryRateLimiter,
   MAX_OUTPUT_TOKENS,
   MAX_SYSTEM_PROMPT_LENGTH,
   MAX_USER_PROMPT_LENGTH,
   buildAllowedModels,
   buildAllowedOrigins,
+  createRateLimiter,
   isOriginAllowed,
+  resetRateLimiterForTests,
   sanitizeUpstreamError,
+  toRateLimitResult,
   validateAIRequestBody,
 } from '../aiSecurity.js';
+
+const withTemporaryEnv = async (
+  overrides: Record<string, string | undefined>,
+  callback: () => Promise<void> | void,
+): Promise<void> => {
+  const previousValues = new Map<string, string | undefined>();
+
+  for (const [key, value] of Object.entries(overrides)) {
+    previousValues.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+      continue;
+    }
+    process.env[key] = value;
+  }
+
+  try {
+    await callback();
+  } finally {
+    for (const [key, value] of previousValues.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+        continue;
+      }
+      process.env[key] = value;
+    }
+  }
+};
 
 describe('buildAllowedModels', () => {
   it('falls back to default allowed models when env var is empty', () => {
@@ -116,21 +146,54 @@ describe('validateAIRequestBody', () => {
   });
 });
 
-describe('InMemoryRateLimiter', () => {
-  it('blocks requests after the configured ceiling and then resets', () => {
-    const limiter = new InMemoryRateLimiter(1_000, 2);
+describe('createRateLimiter + toRateLimitResult', () => {
+  it('disables rate limiting in non-production when Upstash env vars are missing', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'test',
+        VERCEL_ENV: undefined,
+        UPSTASH_REDIS_REST_URL: undefined,
+        UPSTASH_REDIS_REST_TOKEN: undefined,
+      },
+      () => {
+        resetRateLimiterForTests();
+        const limiter = createRateLimiter(1_000, 2);
+        assert.equal(limiter, null);
+      },
+    );
+  });
 
-    const first = limiter.allow('ip-1', 0);
-    const second = limiter.allow('ip-1', 100);
-    const third = limiter.allow('ip-1', 200);
+  it('throws on missing Upstash env vars in production', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'production',
+        VERCEL_ENV: 'production',
+        UPSTASH_REDIS_REST_URL: undefined,
+        UPSTASH_REDIS_REST_TOKEN: undefined,
+      },
+      () => {
+        resetRateLimiterForTests();
+        assert.throws(
+          () => createRateLimiter(1_000, 2),
+          /Rate limiting misconfigured/,
+        );
+      },
+    );
+  });
 
-    assert.equal(first.allowed, true);
-    assert.equal(second.allowed, true);
-    assert.equal(third.allowed, false);
-    assert.equal(third.retryAfterSeconds, 1);
+  it('maps Upstash deny responses to retry-after seconds', () => {
+    const blocked = toRateLimitResult(
+      {
+        success: false,
+        limit: 20,
+        remaining: 0,
+        reset: 2_500,
+      } as Parameters<typeof toRateLimitResult>[0],
+      1_000,
+    );
 
-    const afterWindow = limiter.allow('ip-1', 1_001);
-    assert.equal(afterWindow.allowed, true);
+    assert.equal(blocked.allowed, false);
+    assert.equal(blocked.retryAfterSeconds, 2);
   });
 });
 

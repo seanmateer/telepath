@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 0 — Project Scaffolding (complete)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Completed edge proxy security hardening (origin/model allowlists, stricter validation, safer errors) and added API hardening tests.
+**Last Session Summary:** Replaced edge in-memory rate limiting with Upstash Redis-backed limiting, updated handler/test behavior for edge-safe rate limiting, and documented new env vars/security notes.
 
 ---
 
@@ -48,6 +48,8 @@
 - [x] 📦 `git add -A && git commit -m "[phase-0] harden edge proxy"`
 - [x] Add hardening tests for `/api/ai.ts` request validation, origin enforcement, and rate limiting
 - [x] 📦 `git add -A && git commit -m "[phase-0] edge proxy hardening tests"`
+- [x] Replace in-memory edge rate limiter with Upstash Redis-backed rate limiting
+- [x] Update edge proxy tests and security/env documentation for Upstash rate limiting
 
 **Phase 0 complete when:** Dev server runs, edge function responds, folder structure matches AGENTS.md spec.
 
@@ -212,6 +214,7 @@
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-21 | Codex | Phase 0 | Replaced in-memory edge rate limiting with Upstash Redis-backed limiting, updated `/api/ai.ts` fallback/misconfiguration behavior, refreshed tests, and documented new Upstash env vars/security notes. |
 | 2026-02-21 | Codex | Phase 0 | Hardened `/api/ai.ts` with model/origin allowlists, stricter request bounds, and sanitized upstream error handling; added API hardening tests and test runner scripts. |
 | 2026-02-21 | Codex | Phase 0 | Initialized Vite + React + TypeScript, configured Tailwind and Framer Motion, implemented `/api/ai.ts` with JSON validation + rate limiting, and completed required folder/public deck setup. |
 | —    | —     | —     | —       |

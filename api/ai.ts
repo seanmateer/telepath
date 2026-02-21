@@ -1,12 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
 import {
-  InMemoryRateLimiter,
   MAX_REQUEST_BODY_BYTES,
   buildAllowedModels,
   buildAllowedOrigins,
+  createRateLimiter,
   createCorsHeaders,
   isOriginAllowed,
   parseJsonPayload,
+  toRateLimitResult,
   sanitizeUpstreamError,
   validateAIRequestBody,
   type JsonValue,
@@ -30,23 +31,6 @@ type SuccessResponse = {
 type ErrorResponse = {
   ok: false;
   error: string;
-};
-
-type GlobalRateLimitStore = typeof globalThis & {
-  __telepathRateLimiter?: InMemoryRateLimiter;
-};
-
-const getRateLimiter = (): InMemoryRateLimiter => {
-  const store = globalThis as GlobalRateLimitStore;
-
-  if (!store.__telepathRateLimiter) {
-    store.__telepathRateLimiter = new InMemoryRateLimiter(
-      RATE_LIMIT_WINDOW_MS,
-      RATE_LIMIT_MAX_REQUESTS,
-    );
-  }
-
-  return store.__telepathRateLimiter;
 };
 
 const createJsonResponse = (
@@ -169,16 +153,44 @@ export default async function handler(req: Request): Promise<Response> {
     }
   }
 
-  const rateLimiter = getRateLimiter();
   const clientIp = extractClientIp(req);
   const rateLimitKey = `${clientIp}|${originHeader ?? 'no-origin'}`;
-  const rateLimitResult = rateLimiter.allow(rateLimitKey);
-  const rateLimitHeaders = getRateLimitHeaders(
-    rateLimitResult.limit,
-    rateLimitResult.remaining,
-  );
+  let rateLimitHeaders: Record<string, string> = {};
+  let rateLimitResult: ReturnType<typeof toRateLimitResult> | null = null;
 
-  if (!rateLimitResult.allowed) {
+  try {
+    const rateLimiter = createRateLimiter(
+      RATE_LIMIT_WINDOW_MS,
+      RATE_LIMIT_MAX_REQUESTS,
+    );
+    if (rateLimiter) {
+      const upstreamRateLimitResult = await rateLimiter.limit(rateLimitKey);
+      rateLimitResult = toRateLimitResult(upstreamRateLimitResult);
+      rateLimitHeaders = getRateLimitHeaders(
+        rateLimitResult.limit,
+        rateLimitResult.remaining,
+      );
+    }
+  } catch (error: unknown) {
+    const isMisconfigurationError =
+      error instanceof Error &&
+      error.message.includes('Rate limiting misconfigured');
+    const status = isMisconfigurationError ? 500 : 503;
+    const errorMessage = isMisconfigurationError
+      ? 'Server rate limiter is not configured.'
+      : 'Rate limiting is temporarily unavailable. Please try again soon.';
+    console.error('Rate limiter failed', {
+      status,
+      name: error instanceof Error ? error.name : 'unknown',
+    });
+    return createJsonResponse(
+      { ok: false, error: errorMessage },
+      status,
+      corsHeaders,
+    );
+  }
+
+  if (rateLimitResult && !rateLimitResult.allowed) {
     return createJsonResponse(
       { ok: false, error: 'Rate limit exceeded. Please try again soon.' },
       429,

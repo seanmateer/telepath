@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import handler from '../ai.js';
+import { resetRateLimiterForTests } from '../aiSecurity.js';
 
 type ErrorPayload = {
   ok: false;
@@ -23,6 +24,34 @@ const createRequest = (
 
 const toErrorPayload = async (response: Response): Promise<ErrorPayload> => {
   return (await response.json()) as ErrorPayload;
+};
+
+const withTemporaryEnv = async (
+  overrides: Record<string, string | undefined>,
+  callback: () => Promise<void> | void,
+): Promise<void> => {
+  const previousValues = new Map<string, string | undefined>();
+
+  for (const [key, value] of Object.entries(overrides)) {
+    previousValues.set(key, process.env[key]);
+    if (value === undefined) {
+      delete process.env[key];
+      continue;
+    }
+    process.env[key] = value;
+  }
+
+  try {
+    await callback();
+  } finally {
+    for (const [key, value] of previousValues.entries()) {
+      if (value === undefined) {
+        delete process.env[key];
+        continue;
+      }
+      process.env[key] = value;
+    }
+  }
 };
 
 describe('/api/ai handler hardening', () => {
@@ -71,34 +100,65 @@ describe('/api/ai handler hardening', () => {
     );
   });
 
-  it('rate-limits repeated requests per IP/origin', async () => {
-    const headers = {
-      origin: 'http://localhost:5173',
-      'x-forwarded-for': '198.51.100.12',
-    };
+  it('continues normal validation when rate limiting is disabled in local/test', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'test',
+        VERCEL_ENV: undefined,
+        UPSTASH_REDIS_REST_URL: undefined,
+        UPSTASH_REDIS_REST_TOKEN: undefined,
+      },
+      async () => {
+        resetRateLimiterForTests();
+        const response = await handler(
+          createRequest(
+            {
+              model: 'claude-unknown',
+              systemPrompt: 'Return JSON only',
+              userPrompt: '{"ok":true}',
+            },
+            {
+              origin: 'http://localhost:5173',
+              'x-forwarded-for': '198.51.100.12',
+            },
+          ),
+        );
 
-    const requestBody = {
-      model: 'claude-unknown',
-      systemPrompt: 'Return JSON only',
-      userPrompt: '{"ok":true}',
-    };
+        const payload = await toErrorPayload(response);
+        assert.equal(response.status, 400);
+        assert.match(payload.error, /Unsupported model/);
+      },
+    );
+  });
 
-    let finalResponse: Response | null = null;
-    for (let index = 0; index <= 20; index += 1) {
-      finalResponse = await handler(createRequest(requestBody, headers));
-    }
+  it('returns 500 in production when Upstash env vars are missing', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'production',
+        VERCEL_ENV: 'production',
+        UPSTASH_REDIS_REST_URL: undefined,
+        UPSTASH_REDIS_REST_TOKEN: undefined,
+      },
+      async () => {
+        resetRateLimiterForTests();
+        const response = await handler(
+          createRequest(
+            {
+              model: 'claude-3-5-sonnet-latest',
+              systemPrompt: 'Return JSON only',
+              userPrompt: '{"ok":true}',
+            },
+            {
+              origin: 'http://localhost:5173',
+              'x-forwarded-for': '198.51.100.13',
+            },
+          ),
+        );
 
-    assert.ok(finalResponse);
-    if (finalResponse) {
-      const payload = await toErrorPayload(finalResponse);
-      assert.equal(finalResponse.status, 429);
-      assert.equal(payload.ok, false);
-      assert.match(payload.error, /Rate limit exceeded/);
-      const retryAfter = finalResponse.headers.get('retry-after');
-      assert.notEqual(retryAfter, null);
-      const retryAfterNumber = Number(retryAfter);
-      assert.equal(Number.isNaN(retryAfterNumber), false);
-      assert.equal(retryAfterNumber >= 1, true);
-    }
+        const payload = await toErrorPayload(response);
+        assert.equal(response.status, 500);
+        assert.match(payload.error, /rate limiter is not configured/i);
+      },
+    );
   });
 });
