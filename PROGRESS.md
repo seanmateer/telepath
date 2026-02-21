@@ -33,9 +33,9 @@
 - [x] 📦 `git add -A && git commit -m "[phase-0] project scaffold"`
 - [x] Set up Tailwind CSS
 - [x] 📦 `git add -A && git commit -m "[phase-0] tailwind setup"`
-- [ ] Set up Framer Motion
-- [ ] Create `.env.example` with all required env vars documented
-- [ ] 📦 `git add -A && git commit -m "[phase-0] framer motion + env.example"`
+- [x] Set up Framer Motion
+- [x] Create `.env.example` with all required env vars documented
+- [x] 📦 `git add -A && git commit -m "[phase-0] framer motion + env.example"`
 - [ ] Create `vercel.json` with edge function routing config
 - [ ] Create `/api/ai.ts` Vercel Edge Function (**do this before any AI calls**)
 - [ ] Verify edge function proxies correctly to Anthropic API
