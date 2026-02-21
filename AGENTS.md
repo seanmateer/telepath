@@ -27,6 +27,8 @@ A web-based game called **Telepath** — an adaptation of the Wavelength board g
 Full design context: `telepath-project-plan.md`  
 Progress tracking: `PROGRESS.md`
 
+At the start of every session, read `PROGRESS.md` and `telepath-project-plan.md` before implementing tasks.
+
 ---
 
 ## Tech Stack

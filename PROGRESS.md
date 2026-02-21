@@ -5,7 +5,7 @@
 
 ## Instructions for Any Agent
 
-1. **At session start:** Read this file in full before writing any code. Identify the current phase and the next uncompleted task.
+1. **At session start:** Read this file and `telepath-project-plan.md` in full before writing any code. Identify the current phase and the next uncompleted task.
 2. **Before starting a task:** Note it as in-progress (add a comment or update status above if your tool supports it).
 3. **After completing a task:** Check it off, then **immediately run the commit command shown** — do not batch multiple tasks into one commit.
 4. **If you hit a blocker:** Mark it `🚫 Blocked`, log it in the Blockers Log below, and stop. Do not silently work around it or skip ahead.
