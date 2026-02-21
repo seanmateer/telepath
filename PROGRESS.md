@@ -36,11 +36,11 @@
 - [x] Set up Framer Motion
 - [x] Create `.env.example` with all required env vars documented
 - [x] 📦 `git add -A && git commit -m "[phase-0] framer motion + env.example"`
-- [ ] Create `vercel.json` with edge function routing config
-- [ ] Create `/api/ai.ts` Vercel Edge Function (**do this before any AI calls**)
-- [ ] Verify edge function proxies correctly to Anthropic API
-- [ ] Add basic rate limiting to edge function (max requests per IP)
-- [ ] 📦 `git add -A && git commit -m "[phase-0] vercel edge function + rate limiting"`
+- [x] Create `vercel.json` with edge function routing config
+- [x] Create `/api/ai.ts` Vercel Edge Function (**do this before any AI calls**)
+- [x] Verify edge function proxies correctly to Anthropic API
+- [x] Add basic rate limiting to edge function (max requests per IP)
+- [x] 📦 `git add -A && git commit -m "[phase-0] vercel edge function + rate limiting"`
 - [ ] Copy `spectrum-deck.json` into `public/`
 - [ ] Set up project folder structure per `AGENTS.md`
 - [ ] 📦 `git add -A && git commit -m "[phase-0] folder structure + spectrum deck"`
