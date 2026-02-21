@@ -31,8 +31,8 @@
 
 - [x] Initialize Vite + React + TypeScript project
 - [x] 📦 `git add -A && git commit -m "[phase-0] project scaffold"`
-- [ ] Set up Tailwind CSS
-- [ ] 📦 `git add -A && git commit -m "[phase-0] tailwind setup"`
+- [x] Set up Tailwind CSS
+- [x] 📦 `git add -A && git commit -m "[phase-0] tailwind setup"`
 - [ ] Set up Framer Motion
 - [ ] Create `.env.example` with all required env vars documented
 - [ ] 📦 `git add -A && git commit -m "[phase-0] framer motion + env.example"`
