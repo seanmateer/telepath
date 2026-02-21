@@ -15,6 +15,7 @@ import {
   pointerValueFromCenter,
   valueToDialAngle,
 } from '../lib/dialMath.js';
+import { triggerHapticPulse } from '../lib/haptics.js';
 
 type DialProps = {
   value: number;
@@ -84,17 +85,13 @@ export const Dial = ({
 
   const triggerHaptic = useCallback(
     (value: number, force = false): void => {
-      if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
-        return;
-      }
-
       const bucket = Math.round(value / 10);
       if (!force && lastHapticBucketRef.current === bucket) {
         return;
       }
 
       lastHapticBucketRef.current = bucket;
-      navigator.vibrate(8);
+      triggerHapticPulse(8);
     },
     [],
   );
@@ -167,6 +164,7 @@ export const Dial = ({
     };
 
     const handleTouchEnd = (): void => {
+      triggerHaptic(latestValueRef.current, true);
       setIsTouchDragging(false);
       if (onRelease) {
         onRelease(latestValueRef.current);
@@ -182,7 +180,7 @@ export const Dial = ({
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [isTouchDragging, onRelease, updateFromMousePosition]);
+  }, [isTouchDragging, onRelease, triggerHaptic, updateFromMousePosition]);
 
   const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>): void => {
     event.preventDefault();
@@ -196,9 +194,9 @@ export const Dial = ({
       return;
     }
 
+    lastHapticBucketRef.current = null;
     setIsTouchDragging(true);
     updateFromMousePosition(touch.clientX, touch.clientY, 'touch');
-    triggerHaptic(clampedValue, true);
   };
 
   return (
