@@ -62,11 +62,11 @@
 - [x] 📦 `git add -A && git commit -m "[phase-1] game types"`
 - [x] Implement spectrum card loader (shuffle 80-card deck on game start)
 - [x] 📦 `git add -A && git commit -m "[phase-1] card loader + shuffle"`
-- [ ] Implement game state machine (`src/lib/gameState.ts`)
+- [x] Implement game state machine (`src/lib/gameState.ts`)
   - [x] States: setup → psychic-clue → human-guess → ai-bonus-guess → reveal → score → next-round → game-over
   - [x] Transitions between all states
 - [x] 📦 `git add -A && git commit -m "[phase-1] game state machine"`
-- [ ] Implement scoring logic
+- [x] Implement scoring logic
   - [x] Bullseye (center zone): 4 pts
   - [x] Adjacent zone: 3 pts
   - [x] Outer zone: 2 pts
