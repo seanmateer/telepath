@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP  
-**Current Phase:** Not started  
-**Last Updated:** —  
-**Last Session Summary:** —
+**Current Phase:** Phase 0 — Project Scaffolding (in progress)  
+**Last Updated:** 2026-02-21  
+**Last Session Summary:** Started Phase 0 and completed Vite + React + TypeScript scaffold.
 
 ---
 
@@ -29,8 +29,8 @@
 ### Phase 0 — Project Scaffolding
 *Must be completed before any other phase.*
 
-- [ ] Initialize Vite + React + TypeScript project
-- [ ] 📦 `git add -A && git commit -m "[phase-0] project scaffold"`
+- [x] Initialize Vite + React + TypeScript project
+- [x] 📦 `git add -A && git commit -m "[phase-0] project scaffold"`
 - [ ] Set up Tailwind CSS
 - [ ] 📦 `git add -A && git commit -m "[phase-0] tailwind setup"`
 - [ ] Set up Framer Motion
