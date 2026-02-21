@@ -67,12 +67,12 @@
   - [x] Transitions between all states
 - [x] 📦 `git add -A && git commit -m "[phase-1] game state machine"`
 - [ ] Implement scoring logic
-  - [ ] Bullseye (center zone): 4 pts
-  - [ ] Adjacent zone: 3 pts
-  - [ ] Outer zone: 2 pts
-  - [ ] Miss: 0 pts
-  - [ ] Bonus opposing guess correct: 1 pt
-- [ ] 📦 `git add -A && git commit -m "[phase-1] scoring logic"`
+  - [x] Bullseye (center zone): 4 pts
+  - [x] Adjacent zone: 3 pts
+  - [x] Outer zone: 2 pts
+  - [x] Miss: 0 pts
+  - [x] Bonus opposing guess correct: 1 pt
+- [x] 📦 `git add -A && git commit -m "[phase-1] scoring logic"`
 - [ ] Implement round alternation (who is Psychic each round)
 - [ ] Implement win condition (first to 10 points)
 - [ ] 📦 `git add -A && git commit -m "[phase-1] round alternation + win condition"`

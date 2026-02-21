@@ -47,7 +47,9 @@ export type ScoreBreakdown = {
 export type RoundResult = {
   actualDirection: ActualDirection;
   scoringTeam: Team;
-  pointsAwarded: number;
+  scoringPoints: number;
+  bonusTeam: Team | null;
+  bonusTeamPoints: number;
   score: ScoreBreakdown;
 };
 

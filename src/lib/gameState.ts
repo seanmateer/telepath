@@ -4,6 +4,7 @@ import type {
   GameState,
   Personality,
   Round,
+  ScoreZone,
   ScoreBreakdown,
   SpectrumCard,
   Team,
@@ -12,6 +13,10 @@ import type {
 export const DEFAULT_POINTS_TO_WIN = 10;
 export const MIN_POSITION = 0;
 export const MAX_POSITION = 100;
+export const BULLSEYE_MAX_DISTANCE = 4;
+export const ADJACENT_MAX_DISTANCE = 10;
+export const OUTER_MAX_DISTANCE = 18;
+export const BONUS_POINT_VALUE = 1;
 
 type InitialGameOptions = {
   personality?: Personality;
@@ -101,6 +106,63 @@ const createPlaceholderScore = (): ScoreBreakdown => {
     bonusPoints: 0,
     totalPoints: 0,
     bonusCorrect: false,
+  };
+};
+
+export const resolveScoreZone = (distance: number): ScoreZone => {
+  if (distance <= BULLSEYE_MAX_DISTANCE) {
+    return 'bullseye';
+  }
+  if (distance <= ADJACENT_MAX_DISTANCE) {
+    return 'adjacent';
+  }
+  if (distance <= OUTER_MAX_DISTANCE) {
+    return 'outer';
+  }
+  return 'miss';
+};
+
+export const getBasePointsForZone = (zone: ScoreZone): number => {
+  switch (zone) {
+    case 'bullseye':
+      return 4;
+    case 'adjacent':
+      return 3;
+    case 'outer':
+      return 2;
+    case 'miss':
+      return 0;
+    default: {
+      const exhaustive: never = zone;
+      return exhaustive;
+    }
+  }
+};
+
+export const calculateRoundScore = (round: Round): ScoreBreakdown => {
+  if (round.guessPosition === null) {
+    throw new Error('Cannot score round without a main guess.');
+  }
+
+  const distance = Math.abs(round.targetPosition - round.guessPosition);
+  const zone = resolveScoreZone(distance);
+  const basePoints = getBasePointsForZone(zone);
+  const actualDirection = resolveActualDirection(
+    round.targetPosition,
+    round.guessPosition,
+  );
+  const bonusCorrect =
+    round.bonusGuess !== null &&
+    actualDirection !== 'center' &&
+    round.bonusGuess.direction === actualDirection;
+  const bonusPoints = bonusCorrect ? BONUS_POINT_VALUE : 0;
+
+  return {
+    zone,
+    basePoints,
+    bonusPoints,
+    totalPoints: basePoints + bonusPoints,
+    bonusCorrect,
   };
 };
 
@@ -228,7 +290,9 @@ export const revealRound = (state: GameState): GameState => {
       result: {
         actualDirection,
         scoringTeam: round.psychicTeam,
-        pointsAwarded: 0,
+        scoringPoints: 0,
+        bonusTeam: null,
+        bonusTeamPoints: 0,
         score: createPlaceholderScore(),
       },
     },
@@ -243,15 +307,31 @@ export const scoreRound = (state: GameState): GameState => {
     throw new Error('Cannot score round before reveal.');
   }
 
+  const score = calculateRoundScore(round);
+  const scoringTeam = round.psychicTeam;
+  const bonusTeam = score.bonusCorrect ? round.bonusGuess?.team ?? null : null;
+
+  const updatedScores = {
+    ...state.scores,
+    [scoringTeam]: state.scores[scoringTeam] + score.basePoints,
+  };
+
+  if (bonusTeam && score.bonusPoints > 0) {
+    updatedScores[bonusTeam] += score.bonusPoints;
+  }
+
   return {
     ...state,
     phase: 'next-round',
+    scores: updatedScores,
     round: {
       ...round,
       result: {
         ...round.result,
-        pointsAwarded: 0,
-        score: createPlaceholderScore(),
+        scoringPoints: score.basePoints,
+        bonusTeam,
+        bonusTeamPoints: score.bonusPoints,
+        score,
       },
     },
   };
