@@ -88,12 +88,12 @@
 
 - [x] Define personality system prompt strings for Lumen, Sage, Flux
 - [x] 📦 `git add -A && git commit -m "[phase-2] personality prompts"`
-- [ ] Implement `useAI` hook for all AI interactions
-- [ ] Implement clue generation call (Sonnet via `/api/ai`)
-  - [ ] Accepts: spectrum pair, target position, personality
-  - [ ] Returns: `{ clue: string, reasoning: string }`
-  - [ ] Handle API errors gracefully with fallback
-- [ ] 📦 `git add -A && git commit -m "[phase-2] clue generation"`
+- [x] Implement `useAI` hook for all AI interactions
+- [x] Implement clue generation call (Sonnet via `/api/ai`)
+  - [x] Accepts: spectrum pair, target position, personality
+  - [x] Returns: `{ clue: string, reasoning: string }`
+  - [x] Handle API errors gracefully with fallback
+- [x] 📦 `git add -A && git commit -m "[phase-2] clue generation"`
 - [ ] Implement dial placement call (Haiku via `/api/ai`)
   - [ ] Accepts: spectrum pair, clue, personality
   - [ ] Returns: `{ position: number, reasoning: string }`
