@@ -94,10 +94,10 @@
   - [x] Returns: `{ clue: string, reasoning: string }`
   - [x] Handle API errors gracefully with fallback
 - [x] 📦 `git add -A && git commit -m "[phase-2] clue generation"`
-- [ ] Implement dial placement call (Haiku via `/api/ai`)
-  - [ ] Accepts: spectrum pair, clue, personality
-  - [ ] Returns: `{ position: number, reasoning: string }`
-- [ ] 📦 `git add -A && git commit -m "[phase-2] dial placement"`
+- [x] Implement dial placement call (Haiku via `/api/ai`)
+  - [x] Accepts: spectrum pair, clue, personality
+  - [x] Returns: `{ position: number, reasoning: string }`
+- [x] 📦 `git add -A && git commit -m "[phase-2] dial placement"`
 - [ ] Test AI calls manually: verify Lumen/Sage/Flux produce meaningfully different outputs
 - [ ] Verify all responses parse correctly as JSON
 - [ ] Verify edge function is being called (not Anthropic directly)
