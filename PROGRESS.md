@@ -116,9 +116,9 @@
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial drag mouse"`
 - [x] Implement circular arc drag interaction — touch (mobile)
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial drag touch"`
-- [ ] Drag position → 0–100 percentage math correct
-- [ ] Test on actual mobile device (not just browser devtools)
-- [ ] 📦 `git add -A && git commit -m "[phase-3] dial position math verified on device"`
+- [x] Drag position → 0–100 percentage math correct
+- [x] Test on actual mobile device (not just browser devtools)
+- [x] 📦 `git add -A && git commit -m "[phase-3] dial position math verified on device"`
 - [ ] Implement dial snap/easing on release
 - [ ] 📦 `git add -A && git commit -m "[phase-3] dial snap + easing"`
 - [ ] Implement reveal animation (target position animates in)

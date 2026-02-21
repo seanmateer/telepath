@@ -6,6 +6,14 @@ import {
   type MouseEvent as ReactMouseEvent,
   type TouchEvent as ReactTouchEvent,
 } from 'react';
+import {
+  DIAL_ARC_END_DEGREES,
+  DIAL_ARC_START_DEGREES,
+  clampDialValue,
+  pointOnCircle,
+  pointerValueFromCenter,
+  valueToDialAngle,
+} from '../lib/dialMath.js';
 
 type DialProps = {
   value: number;
@@ -15,49 +23,6 @@ type DialProps = {
   onChange?: (value: number) => void;
 };
 
-const DIAL_MIN = 0;
-const DIAL_MAX = 100;
-const ARC_START_DEGREES = -135;
-const ARC_SWEEP_DEGREES = 270;
-
-const clampValue = (value: number): number => {
-  if (value < DIAL_MIN) {
-    return DIAL_MIN;
-  }
-  if (value > DIAL_MAX) {
-    return DIAL_MAX;
-  }
-  return value;
-};
-
-const valueToAngle = (value: number): number => {
-  const normalized = clampValue(value) / DIAL_MAX;
-  return ARC_START_DEGREES + normalized * ARC_SWEEP_DEGREES;
-};
-
-const angleToValue = (angleDegrees: number): number => {
-  const clampedAngle = Math.min(
-    ARC_START_DEGREES + ARC_SWEEP_DEGREES,
-    Math.max(ARC_START_DEGREES, angleDegrees),
-  );
-  const normalized = (clampedAngle - ARC_START_DEGREES) / ARC_SWEEP_DEGREES;
-  return clampValue(normalized * DIAL_MAX);
-};
-
-const polarToCartesian = (
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angleDegrees: number,
-): { x: number; y: number } => {
-  const radians = (angleDegrees * Math.PI) / 180;
-
-  return {
-    x: centerX + radius * Math.cos(radians),
-    y: centerY + radius * Math.sin(radians),
-  };
-};
-
 const createArcPath = (
   centerX: number,
   centerY: number,
@@ -65,8 +30,8 @@ const createArcPath = (
   startAngle: number,
   endAngle: number,
 ): string => {
-  const start = polarToCartesian(centerX, centerY, radius, startAngle);
-  const end = polarToCartesian(centerX, centerY, radius, endAngle);
+  const start = pointOnCircle(centerX, centerY, radius, startAngle);
+  const end = pointOnCircle(centerX, centerY, radius, endAngle);
   const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
 
   return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
@@ -80,25 +45,43 @@ export const Dial = ({
   onChange,
 }: DialProps) => {
   const dialRef = useRef<HTMLDivElement | null>(null);
+  const lastHapticBucketRef = useRef<number | null>(null);
   const [isMouseDragging, setIsMouseDragging] = useState(false);
   const [isTouchDragging, setIsTouchDragging] = useState(false);
-  const clampedValue = clampValue(value);
-  const dialAngle = valueToAngle(clampedValue);
+  const clampedValue = clampDialValue(value);
+  const dialAngle = valueToDialAngle(clampedValue);
 
   const center = size / 2;
   const outerRadius = size * 0.38;
   const markerRadius = size * 0.26;
-  const dialMarker = polarToCartesian(center, center, markerRadius, dialAngle);
+  const dialMarker = pointOnCircle(center, center, markerRadius, dialAngle);
   const arcPath = createArcPath(
     center,
     center,
     outerRadius,
-    ARC_START_DEGREES,
-    ARC_START_DEGREES + ARC_SWEEP_DEGREES,
+    DIAL_ARC_START_DEGREES,
+    DIAL_ARC_END_DEGREES,
+  );
+
+  const triggerHaptic = useCallback(
+    (value: number, force = false): void => {
+      if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
+        return;
+      }
+
+      const bucket = Math.round(value / 10);
+      if (!force && lastHapticBucketRef.current === bucket) {
+        return;
+      }
+
+      lastHapticBucketRef.current = bucket;
+      navigator.vibrate(8);
+    },
+    [],
   );
 
   const updateFromMousePosition = useCallback(
-    (clientX: number, clientY: number): void => {
+    (clientX: number, clientY: number, inputType: 'mouse' | 'touch'): void => {
       const dialElement = dialRef.current;
       if (!dialElement) {
         return;
@@ -108,15 +91,19 @@ export const Dial = ({
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
 
-      const angle =
-        (Math.atan2(clientY - centerY, clientX - centerX) * 180) / Math.PI;
-      const nextValue = Math.round(angleToValue(angle));
+      const nextValue = Math.round(
+        pointerValueFromCenter(clientX, clientY, centerX, centerY),
+      );
 
       if (onChange) {
         onChange(nextValue);
       }
+
+      if (inputType === 'touch') {
+        triggerHaptic(nextValue);
+      }
     },
-    [onChange],
+    [onChange, triggerHaptic],
   );
 
   useEffect(() => {
@@ -125,7 +112,7 @@ export const Dial = ({
     }
 
     const handleMouseMove = (event: MouseEvent): void => {
-      updateFromMousePosition(event.clientX, event.clientY);
+      updateFromMousePosition(event.clientX, event.clientY, 'mouse');
     };
 
     const handleMouseUp = (): void => {
@@ -153,7 +140,7 @@ export const Dial = ({
       }
 
       event.preventDefault();
-      updateFromMousePosition(touch.clientX, touch.clientY);
+      updateFromMousePosition(touch.clientX, touch.clientY, 'touch');
     };
 
     const handleTouchEnd = (): void => {
@@ -174,7 +161,7 @@ export const Dial = ({
   const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>): void => {
     event.preventDefault();
     setIsMouseDragging(true);
-    updateFromMousePosition(event.clientX, event.clientY);
+    updateFromMousePosition(event.clientX, event.clientY, 'mouse');
   };
 
   const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>): void => {
@@ -184,7 +171,8 @@ export const Dial = ({
     }
 
     setIsTouchDragging(true);
-    updateFromMousePosition(touch.clientX, touch.clientY);
+    updateFromMousePosition(touch.clientX, touch.clientY, 'touch');
+    triggerHaptic(clampedValue, true);
   };
 
   return (
