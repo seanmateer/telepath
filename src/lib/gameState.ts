@@ -8,7 +8,7 @@ import type {
   ScoreBreakdown,
   SpectrumCard,
   Team,
-} from '../types/game';
+} from '../types/game.js';
 
 export const DEFAULT_POINTS_TO_WIN = 10;
 export const MIN_POSITION = 0;

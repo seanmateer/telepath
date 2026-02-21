@@ -8,10 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "npm run test:api",
+    "test": "npm run test:api && npm run test:game",
     "test:api": "npm run test:api:compile && npm run test:api:run",
     "test:api:compile": "tsc -p tsconfig.api-tests.json",
-    "test:api:run": "node --test --test-concurrency=1 .test-dist/api/__tests__/*.test.js"
+    "test:api:run": "node --test --test-concurrency=1 .test-dist/api/__tests__/*.test.js",
+    "test:game": "npm run test:game:compile && npm run test:game:run",
+    "test:game:compile": "tsc -p tsconfig.game-tests.json",
+    "test:game:run": "node --test --test-concurrency=1 .test-dist-game/lib/__tests__/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

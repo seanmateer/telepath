@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 1 — Game Logic (in progress)
+**Current Phase:** Phase 1 — Game Logic (complete)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Started Phase 1 by defining core game entity TypeScript types and updating initial game-state shape.
+**Last Session Summary:** Completed Phase 1 game logic: typed entities, spectrum deck loader/shuffle, state machine, scoring, alternation/win condition, and unit tests.
 
 ---
 
@@ -76,8 +76,8 @@
 - [x] Implement round alternation (who is Psychic each round)
 - [x] Implement win condition (first to 10 points)
 - [x] 📦 `git add -A && git commit -m "[phase-1] round alternation + win condition"`
-- [ ] Write basic unit tests for scoring and state transitions
-- [ ] 📦 `git add -A && git commit -m "[phase-1] unit tests"`
+- [x] Write basic unit tests for scoring and state transitions
+- [x] 📦 `git add -A && git commit -m "[phase-1] unit tests"`
 
 **Phase 1 complete when:** Game state machine can run a full game in tests with no UI.
 
@@ -214,6 +214,7 @@
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-21 | Codex | Phase 1 | Implemented and tested game logic: typed entities, card loader + shuffle, deterministic state machine transitions, scoring, psychic alternation, and first-to-10 win condition. |
 | 2026-02-21 | Codex | Phase 0 | Replaced in-memory edge rate limiting with Upstash Redis-backed limiting, updated `/api/ai.ts` fallback/misconfiguration behavior, refreshed tests, and documented new Upstash env vars/security notes. |
 | 2026-02-21 | Codex | Phase 0 | Hardened `/api/ai.ts` with model/origin allowlists, stricter request bounds, and sanitized upstream error handling; added API hardening tests and test runner scripts. |
 | 2026-02-21 | Codex | Phase 0 | Initialized Vite + React + TypeScript, configured Tailwind and Framer Motion, implemented `/api/ai.ts` with JSON validation + rate limiting, and completed required folder/public deck setup. |

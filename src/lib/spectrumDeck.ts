@@ -1,4 +1,4 @@
-import type { SpectrumCard, SpectrumDeck } from '../types/game';
+import type { SpectrumCard, SpectrumDeck } from '../types/game.js';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
