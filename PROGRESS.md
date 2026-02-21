@@ -114,8 +114,8 @@
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial component scaffold"`
 - [x] Implement circular arc drag interaction — mouse
 - [x] 📦 `git add -A && git commit -m "[phase-3] dial drag mouse"`
-- [ ] Implement circular arc drag interaction — touch (mobile)
-- [ ] 📦 `git add -A && git commit -m "[phase-3] dial drag touch"`
+- [x] Implement circular arc drag interaction — touch (mobile)
+- [x] 📦 `git add -A && git commit -m "[phase-3] dial drag touch"`
 - [ ] Drag position → 0–100 percentage math correct
 - [ ] Test on actual mobile device (not just browser devtools)
 - [ ] 📦 `git add -A && git commit -m "[phase-3] dial position math verified on device"`

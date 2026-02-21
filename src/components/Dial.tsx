@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type TouchEvent as ReactTouchEvent,
 } from 'react';
 
 type DialProps = {
@@ -79,7 +80,8 @@ export const Dial = ({
   onChange,
 }: DialProps) => {
   const dialRef = useRef<HTMLDivElement | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isMouseDragging, setIsMouseDragging] = useState(false);
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
   const clampedValue = clampValue(value);
   const dialAngle = valueToAngle(clampedValue);
 
@@ -118,7 +120,7 @@ export const Dial = ({
   );
 
   useEffect(() => {
-    if (!isDragging) {
+    if (!isMouseDragging) {
       return;
     }
 
@@ -127,7 +129,7 @@ export const Dial = ({
     };
 
     const handleMouseUp = (): void => {
-      setIsDragging(false);
+      setIsMouseDragging(false);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -137,12 +139,52 @@ export const Dial = ({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, updateFromMousePosition]);
+  }, [isMouseDragging, updateFromMousePosition]);
+
+  useEffect(() => {
+    if (!isTouchDragging) {
+      return;
+    }
+
+    const handleTouchMove = (event: TouchEvent): void => {
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+
+      event.preventDefault();
+      updateFromMousePosition(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchEnd = (): void => {
+      setIsTouchDragging(false);
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [isTouchDragging, updateFromMousePosition]);
 
   const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>): void => {
     event.preventDefault();
-    setIsDragging(true);
+    setIsMouseDragging(true);
     updateFromMousePosition(event.clientX, event.clientY);
+  };
+
+  const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>): void => {
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+
+    setIsTouchDragging(true);
+    updateFromMousePosition(touch.clientX, touch.clientY);
   };
 
   return (
@@ -154,10 +196,11 @@ export const Dial = ({
 
       <div
         ref={dialRef}
-        className={`relative mx-auto aspect-square w-full max-w-[320px] ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        className={`relative mx-auto aspect-square w-full max-w-[320px] touch-none ${
+          isMouseDragging || isTouchDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         <svg
           viewBox={`0 0 ${size} ${size}`}
