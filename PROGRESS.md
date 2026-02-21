@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 1 — Game Logic (complete)
+**Current Phase:** Phase 2 — AI Integration (in progress)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Completed Phase 1 game logic: typed entities, spectrum deck loader/shuffle, state machine, scoring, alternation/win condition, and unit tests.
+**Last Session Summary:** Started Phase 2 by defining personality prompt system scaffolding for Lumen, Sage, and Flux.
 
 ---
 
@@ -86,8 +86,8 @@
 ### Phase 2 — AI Integration
 *Depends on Phase 0 (edge function) being complete.*
 
-- [ ] Define personality system prompt strings for Lumen, Sage, Flux
-- [ ] 📦 `git add -A && git commit -m "[phase-2] personality prompts"`
+- [x] Define personality system prompt strings for Lumen, Sage, Flux
+- [x] 📦 `git add -A && git commit -m "[phase-2] personality prompts"`
 - [ ] Implement `useAI` hook for all AI interactions
 - [ ] Implement clue generation call (Sonnet via `/api/ai`)
   - [ ] Accepts: spectrum pair, target position, personality
