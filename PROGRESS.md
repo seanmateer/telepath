@@ -147,8 +147,8 @@
 - [x] 📦 `git add -A && git commit -m "[phase-4] game screen layout"`
 - [x] AI reasoning panel (hidden, tap to reveal after round) — expandable accordion with chevron
 - [x] 📦 `git add -A && git commit -m "[phase-4] AI reasoning panel"`
-- [ ] Round transition animation + score delta
-- [ ] 📦 `git add -A && git commit -m "[phase-4] round transition"`
+- [x] Round transition animation + score delta — fullscreen overlay with zone label, points, bonus
+- [x] 📦 `git add -A && git commit -m "[phase-4] round transition"`
 - [ ] End screen — win/loss, score summary
 - [ ] Share card generation (html2canvas or equivalent)
 - [ ] 📦 `git add -A && git commit -m "[phase-4] end screen + share card"`
