@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 3 — Dial UI (complete)
+**Current Phase:** Phase 4 — Full UI (in progress)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Completed Phase 3 dial UI: standalone dial, mouse/touch drag, verified dial math on device, snap/easing, reveal animation, and game-state wiring.
+**Last Session Summary:** Building Phase 4 Full UI — splash screen, setup screen, game screen with full AI integration, score bar, reasoning panel, round transitions, end screen with share card. Design system applied throughout.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 4 mobile audit.
 
 ---
@@ -134,8 +134,8 @@
 ### Phase 4 — Full UI
 *Depends on Phases 1–3.*
 
-- [ ] Splash screen with animated layered arcs (Framer Motion)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] splash screen"`
+- [x] Splash screen with animated layered arcs (Framer Motion) — DM Serif Display title, animated arcs, warm beige canvas
+- [x] 📦 `git add -A && git commit -m "[phase-4] splash screen"`
 - [ ] Setup screen — personality selection with descriptions
 - [ ] 📦 `git add -A && git commit -m "[phase-4] setup screen"`
 - [ ] Game screen layout

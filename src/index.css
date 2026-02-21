@@ -9,8 +9,9 @@
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   font-family:
-    Inter,
+    'DM Sans',
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -21,9 +22,21 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #faf7f2;
-  color: #1f2937;
+  color: #2c2418;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Prevent pull-to-refresh on touch devices during dial interaction */
+.touch-none {
+  touch-action: none;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(240, 222, 198, 0.6);
 }
