@@ -145,8 +145,8 @@
   - [x] Round indicator
   - [x] Context-sensitive action area
 - [x] 📦 `git add -A && git commit -m "[phase-4] game screen layout"`
-- [ ] AI reasoning panel (hidden, tap to reveal after round)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] AI reasoning panel"`
+- [x] AI reasoning panel (hidden, tap to reveal after round) — expandable accordion with chevron
+- [x] 📦 `git add -A && git commit -m "[phase-4] AI reasoning panel"`
 - [ ] Round transition animation + score delta
 - [ ] 📦 `git add -A && git commit -m "[phase-4] round transition"`
 - [ ] End screen — win/loss, score summary
