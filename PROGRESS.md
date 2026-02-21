@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 0 — Project Scaffolding (complete)
+**Current Phase:** Phase 1 — Game Logic (in progress)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Replaced edge in-memory rate limiting with Upstash Redis-backed limiting, updated handler/test behavior for edge-safe rate limiting, and documented new env vars/security notes.
+**Last Session Summary:** Started Phase 1 by defining core game entity TypeScript types and updating initial game-state shape.
 
 ---
 
@@ -58,8 +58,8 @@
 ### Phase 1 — Game Logic
 *No UI required. Pure state machine and data.*
 
-- [ ] Define TypeScript types for all game entities (GameState, Round, Team, Card, Personality, etc.)
-- [ ] 📦 `git add -A && git commit -m "[phase-1] game types"`
+- [x] Define TypeScript types for all game entities (GameState, Round, Team, Card, Personality, etc.)
+- [x] 📦 `git add -A && git commit -m "[phase-1] game types"`
 - [ ] Implement spectrum card loader (shuffle 80-card deck on game start)
 - [ ] 📦 `git add -A && git commit -m "[phase-1] card loader + shuffle"`
 - [ ] Implement game state machine (`src/lib/gameState.ts`)
