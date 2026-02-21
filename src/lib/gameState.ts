@@ -109,6 +109,33 @@ const createPlaceholderScore = (): ScoreBreakdown => {
   };
 };
 
+export const getOpposingTeam = (team: Team): Team => {
+  return team === 'human' ? 'ai' : 'human';
+};
+
+const resolveWinnerByTargetScore = (
+  scores: GameState['scores'],
+  pointsToWin: number,
+): Team | null => {
+  if (scores.human >= pointsToWin) {
+    return 'human';
+  }
+  if (scores.ai >= pointsToWin) {
+    return 'ai';
+  }
+  return null;
+};
+
+const resolveWinnerFromCurrentScores = (scores: GameState['scores']): Team | null => {
+  if (scores.human > scores.ai) {
+    return 'human';
+  }
+  if (scores.ai > scores.human) {
+    return 'ai';
+  }
+  return null;
+};
+
 export const resolveScoreZone = (distance: number): ScoreZone => {
   if (distance <= BULLSEYE_MAX_DISTANCE) {
     return 'bullseye';
@@ -320,10 +347,16 @@ export const scoreRound = (state: GameState): GameState => {
     updatedScores[bonusTeam] += score.bonusPoints;
   }
 
+  const winner = resolveWinnerByTargetScore(
+    updatedScores,
+    state.settings.pointsToWin,
+  );
+
   return {
     ...state,
-    phase: 'next-round',
+    phase: winner ? 'game-over' : 'next-round',
     scores: updatedScores,
+    winner,
     round: {
       ...round,
       result: {
@@ -344,6 +377,14 @@ export const startNextRound = (
   assertPhase(state, 'next-round');
 
   const previousRound = getActiveRound(state);
+  if (state.deck.length === 0) {
+    return {
+      ...state,
+      phase: 'game-over',
+      winner: resolveWinnerFromCurrentScores(state.scores),
+    };
+  }
+
   const { card, remainingDeck } = drawCard(state.deck);
 
   return {
@@ -354,7 +395,7 @@ export const startNextRound = (
     round: createRound(
       card,
       createTargetPosition(random),
-      previousRound.psychicTeam,
+      getOpposingTeam(previousRound.psychicTeam),
       previousRound.roundNumber + 1,
     ),
   };

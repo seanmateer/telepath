@@ -73,9 +73,9 @@
   - [x] Miss: 0 pts
   - [x] Bonus opposing guess correct: 1 pt
 - [x] 📦 `git add -A && git commit -m "[phase-1] scoring logic"`
-- [ ] Implement round alternation (who is Psychic each round)
-- [ ] Implement win condition (first to 10 points)
-- [ ] 📦 `git add -A && git commit -m "[phase-1] round alternation + win condition"`
+- [x] Implement round alternation (who is Psychic each round)
+- [x] Implement win condition (first to 10 points)
+- [x] 📦 `git add -A && git commit -m "[phase-1] round alternation + win condition"`
 - [ ] Write basic unit tests for scoring and state transitions
 - [ ] 📦 `git add -A && git commit -m "[phase-1] unit tests"`
 
