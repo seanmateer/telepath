@@ -60,8 +60,8 @@
 
 - [x] Define TypeScript types for all game entities (GameState, Round, Team, Card, Personality, etc.)
 - [x] 📦 `git add -A && git commit -m "[phase-1] game types"`
-- [ ] Implement spectrum card loader (shuffle 80-card deck on game start)
-- [ ] 📦 `git add -A && git commit -m "[phase-1] card loader + shuffle"`
+- [x] Implement spectrum card loader (shuffle 80-card deck on game start)
+- [x] 📦 `git add -A && git commit -m "[phase-1] card loader + shuffle"`
 - [ ] Implement game state machine (`src/lib/gameState.ts`)
   - [ ] States: setup → psychic-clue → human-guess → ai-bonus-guess → reveal → score → next-round → game-over
   - [ ] Transitions between all states
