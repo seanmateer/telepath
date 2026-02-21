@@ -13,6 +13,13 @@ This project uses the Anthropic API. To run it locally:
 
 All Anthropic API calls are proxied through a Vercel Edge Function (`/api/ai.ts`). The API key is never exposed to the browser or included in the client bundle.
 
+Current edge proxy controls:
+- Origin allowlisting (`ALLOWED_ORIGINS`) for browser requests
+- Model allowlisting (`ALLOWED_ANTHROPIC_MODELS`) to prevent arbitrary model selection
+- Request-size, prompt-length, and max-token bounds
+- Per-IP/per-origin rate limiting with `Retry-After` response headers
+- Sanitized upstream error messages (internal provider errors are not returned verbatim)
+
 ## Reporting Vulnerabilities
 
 This is a personal portfolio project. If you spot a security issue, please open a GitHub Issue. For anything sensitive, contact via the profile email.

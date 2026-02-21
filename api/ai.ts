@@ -1,32 +1,25 @@
 import Anthropic from '@anthropic-ai/sdk';
+import {
+  InMemoryRateLimiter,
+  MAX_REQUEST_BODY_BYTES,
+  buildAllowedModels,
+  buildAllowedOrigins,
+  createCorsHeaders,
+  isOriginAllowed,
+  parseJsonPayload,
+  sanitizeUpstreamError,
+  validateAIRequestBody,
+  type JsonValue,
+} from './aiSecurity.js';
 
 export const config = { runtime: 'edge' };
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
-const DEFAULT_MAX_TOKENS = 250;
-const DEFAULT_TEMPERATURE = 0.7;
-
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
-
-type AIRequestBody = {
-  model: string;
-  systemPrompt: string;
-  userPrompt: string;
-  maxTokens?: number;
-  temperature?: number;
-};
-
-type RateLimitEntry = {
-  count: number;
-  windowStart: number;
-};
 
 type SuccessResponse = {
   ok: true;
   data: JsonValue;
-  rawText: string;
   model: string;
   usage: {
     inputTokens: number;
@@ -40,33 +33,33 @@ type ErrorResponse = {
 };
 
 type GlobalRateLimitStore = typeof globalThis & {
-  __telepathRateLimitStore?: Map<string, RateLimitEntry>;
+  __telepathRateLimiter?: InMemoryRateLimiter;
 };
 
-const corsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'POST, OPTIONS',
-  'access-control-allow-headers': 'content-type',
-};
-
-const getRateLimitStore = (): Map<string, RateLimitEntry> => {
+const getRateLimiter = (): InMemoryRateLimiter => {
   const store = globalThis as GlobalRateLimitStore;
 
-  if (!store.__telepathRateLimitStore) {
-    store.__telepathRateLimitStore = new Map<string, RateLimitEntry>();
+  if (!store.__telepathRateLimiter) {
+    store.__telepathRateLimiter = new InMemoryRateLimiter(
+      RATE_LIMIT_WINDOW_MS,
+      RATE_LIMIT_MAX_REQUESTS,
+    );
   }
 
-  return store.__telepathRateLimitStore;
+  return store.__telepathRateLimiter;
 };
 
 const createJsonResponse = (
   body: SuccessResponse | ErrorResponse,
   status: number,
+  corsHeaders: Record<string, string>,
+  extraHeaders: Record<string, string> = {},
 ): Response => {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       ...corsHeaders,
+      ...extraHeaders,
       'cache-control': 'no-store',
       'content-type': 'application/json',
     },
@@ -74,121 +67,24 @@ const createJsonResponse = (
 };
 
 const extractClientIp = (req: Request): string => {
-  const forwardedFor = req.headers.get('x-forwarded-for');
+  const candidates = [
+    req.headers.get('x-vercel-forwarded-for'),
+    req.headers.get('x-forwarded-for'),
+    req.headers.get('x-real-ip'),
+  ];
 
-  if (forwardedFor) {
-    const [firstIp] = forwardedFor.split(',');
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
+
+    const [firstIp] = candidate.split(',');
     if (firstIp?.trim()) {
       return firstIp.trim();
     }
   }
 
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp?.trim()) {
-    return realIp.trim();
-  }
-
   return 'unknown';
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === 'object' && value !== null;
-};
-
-const isValidRequestBody = (value: unknown): value is AIRequestBody => {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  const { model, systemPrompt, userPrompt, maxTokens, temperature } = value;
-
-  if (
-    typeof model !== 'string' ||
-    model.trim().length === 0 ||
-    typeof systemPrompt !== 'string' ||
-    systemPrompt.trim().length === 0 ||
-    typeof userPrompt !== 'string' ||
-    userPrompt.trim().length === 0
-  ) {
-    return false;
-  }
-
-  if (maxTokens !== undefined) {
-    if (
-      typeof maxTokens !== 'number' ||
-      !Number.isInteger(maxTokens) ||
-      maxTokens <= 0 ||
-      maxTokens > 4096
-    ) {
-      return false;
-    }
-  }
-
-  if (temperature !== undefined) {
-    if (
-      typeof temperature !== 'number' ||
-      Number.isNaN(temperature) ||
-      temperature < 0 ||
-      temperature > 1
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-const isJsonValue = (value: unknown): value is JsonValue => {
-  if (value === null) {
-    return true;
-  }
-
-  const valueType = typeof value;
-  if (
-    valueType === 'string' ||
-    valueType === 'number' ||
-    valueType === 'boolean'
-  ) {
-    return true;
-  }
-
-  if (Array.isArray(value)) {
-    return value.every((item) => isJsonValue(item));
-  }
-
-  if (isRecord(value)) {
-    return Object.values(value).every((item) => isJsonValue(item));
-  }
-
-  return false;
-};
-
-const parseJsonPayload = (value: string): JsonValue | null => {
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return isJsonValue(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
-const allowRequest = (ip: string): boolean => {
-  const store = getRateLimitStore();
-  const now = Date.now();
-  const existingEntry = store.get(ip);
-
-  if (!existingEntry || now - existingEntry.windowStart >= RATE_LIMIT_WINDOW_MS) {
-    store.set(ip, { count: 1, windowStart: now });
-    return true;
-  }
-
-  if (existingEntry.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return false;
-  }
-
-  existingEntry.count += 1;
-  store.set(ip, existingEntry);
-  return true;
 };
 
 const getTextResponse = (message: Anthropic.Messages.Message): string => {
@@ -203,7 +99,36 @@ const getTextResponse = (message: Anthropic.Messages.Message): string => {
   return parts.join('\n').trim();
 };
 
+const toBodyByteLength = (value: string): number => {
+  return new TextEncoder().encode(value).byteLength;
+};
+
+const getRateLimitHeaders = (
+  limit: number,
+  remaining: number,
+): Record<string, string> => {
+  return {
+    'x-ratelimit-limit': String(limit),
+    'x-ratelimit-remaining': String(remaining),
+  };
+};
+
 export default async function handler(req: Request): Promise<Response> {
+  const originHeader = req.headers.get('origin');
+  const allowedOrigins = buildAllowedOrigins(
+    process.env.ALLOWED_ORIGINS,
+    req.headers.get('host'),
+  );
+  const corsHeaders = createCorsHeaders(originHeader, allowedOrigins);
+
+  if (!isOriginAllowed(originHeader, allowedOrigins)) {
+    return createJsonResponse(
+      { ok: false, error: 'Origin not allowed.' },
+      403,
+      corsHeaders,
+    );
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -215,35 +140,106 @@ export default async function handler(req: Request): Promise<Response> {
     return createJsonResponse(
       { ok: false, error: 'Method not allowed. Use POST.' },
       405,
+      corsHeaders,
     );
   }
 
+  const contentType = req.headers.get('content-type') ?? '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return createJsonResponse(
+      { ok: false, error: 'Unsupported media type. Use application/json.' },
+      415,
+      corsHeaders,
+    );
+  }
+
+  const contentLengthHeader = req.headers.get('content-length');
+  if (contentLengthHeader) {
+    const contentLength = Number(contentLengthHeader);
+    if (
+      !Number.isNaN(contentLength) &&
+      Number.isFinite(contentLength) &&
+      contentLength > MAX_REQUEST_BODY_BYTES
+    ) {
+      return createJsonResponse(
+        { ok: false, error: 'Request body is too large.' },
+        413,
+        corsHeaders,
+      );
+    }
+  }
+
+  const rateLimiter = getRateLimiter();
   const clientIp = extractClientIp(req);
-  if (!allowRequest(clientIp)) {
+  const rateLimitKey = `${clientIp}|${originHeader ?? 'no-origin'}`;
+  const rateLimitResult = rateLimiter.allow(rateLimitKey);
+  const rateLimitHeaders = getRateLimitHeaders(
+    rateLimitResult.limit,
+    rateLimitResult.remaining,
+  );
+
+  if (!rateLimitResult.allowed) {
     return createJsonResponse(
       { ok: false, error: 'Rate limit exceeded. Please try again soon.' },
       429,
+      corsHeaders,
+      {
+        ...rateLimitHeaders,
+        'retry-after': String(rateLimitResult.retryAfterSeconds ?? 1),
+      },
+    );
+  }
+
+  let rawRequestBody = '';
+  try {
+    rawRequestBody = await req.text();
+  } catch {
+    return createJsonResponse(
+      { ok: false, error: 'Invalid request body.' },
+      400,
+      corsHeaders,
+      rateLimitHeaders,
+    );
+  }
+
+  if (rawRequestBody.trim().length === 0) {
+    return createJsonResponse(
+      { ok: false, error: 'Request body cannot be empty.' },
+      400,
+      corsHeaders,
+      rateLimitHeaders,
+    );
+  }
+
+  if (toBodyByteLength(rawRequestBody) > MAX_REQUEST_BODY_BYTES) {
+    return createJsonResponse(
+      { ok: false, error: 'Request body is too large.' },
+      413,
+      corsHeaders,
+      rateLimitHeaders,
     );
   }
 
   let parsedBody: unknown;
   try {
-    parsedBody = await req.json();
+    parsedBody = JSON.parse(rawRequestBody);
   } catch {
     return createJsonResponse(
       { ok: false, error: 'Invalid JSON request body.' },
       400,
+      corsHeaders,
+      rateLimitHeaders,
     );
   }
 
-  if (!isValidRequestBody(parsedBody)) {
+  const allowedModels = buildAllowedModels(process.env.ALLOWED_ANTHROPIC_MODELS);
+  const validation = validateAIRequestBody(parsedBody, allowedModels);
+  if (!validation.ok) {
     return createJsonResponse(
-      {
-        ok: false,
-        error:
-          'Invalid payload. Required fields: model, systemPrompt, userPrompt.',
-      },
+      { ok: false, error: validation.error },
       400,
+      corsHeaders,
+      rateLimitHeaders,
     );
   }
 
@@ -252,17 +248,19 @@ export default async function handler(req: Request): Promise<Response> {
     return createJsonResponse(
       { ok: false, error: 'Server missing ANTHROPIC_API_KEY.' },
       500,
+      corsHeaders,
+      rateLimitHeaders,
     );
   }
 
   try {
     const anthropic = new Anthropic({ apiKey });
     const message = await anthropic.messages.create({
-      model: parsedBody.model,
-      system: parsedBody.systemPrompt,
-      max_tokens: parsedBody.maxTokens ?? DEFAULT_MAX_TOKENS,
-      temperature: parsedBody.temperature ?? DEFAULT_TEMPERATURE,
-      messages: [{ role: 'user', content: parsedBody.userPrompt }],
+      model: validation.data.model,
+      system: validation.data.systemPrompt,
+      max_tokens: validation.data.maxTokens,
+      temperature: validation.data.temperature,
+      messages: [{ role: 'user', content: validation.data.userPrompt }],
     });
 
     const rawText = getTextResponse(message);
@@ -270,6 +268,8 @@ export default async function handler(req: Request): Promise<Response> {
       return createJsonResponse(
         { ok: false, error: 'Model returned an empty response.' },
         502,
+        corsHeaders,
+        rateLimitHeaders,
       );
     }
 
@@ -278,6 +278,8 @@ export default async function handler(req: Request): Promise<Response> {
       return createJsonResponse(
         { ok: false, error: 'Model response was not valid JSON.' },
         502,
+        corsHeaders,
+        rateLimitHeaders,
       );
     }
 
@@ -285,7 +287,6 @@ export default async function handler(req: Request): Promise<Response> {
       {
         ok: true,
         data: parsedJson,
-        rawText,
         model: message.model,
         usage: {
           inputTokens: message.usage.input_tokens,
@@ -293,10 +294,20 @@ export default async function handler(req: Request): Promise<Response> {
         },
       },
       200,
+      corsHeaders,
+      rateLimitHeaders,
     );
   } catch (error: unknown) {
-    const fallbackMessage =
-      error instanceof Error ? error.message : 'Unknown Anthropic API error.';
-    return createJsonResponse({ ok: false, error: fallbackMessage }, 502);
+    const safeError = sanitizeUpstreamError(error);
+    console.error('Anthropic API request failed', {
+      status: safeError.status,
+      name: error instanceof Error ? error.name : 'unknown',
+    });
+    return createJsonResponse(
+      { ok: false, error: safeError.message },
+      safeError.status,
+      corsHeaders,
+      rateLimitHeaders,
+    );
   }
 }
