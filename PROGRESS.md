@@ -138,13 +138,13 @@
 - [x] 📦 `git add -A && git commit -m "[phase-4] splash screen"`
 - [x] Setup screen — personality selection with descriptions — Lumen/Sage/Flux cards with accent colors
 - [x] 📦 `git add -A && git commit -m "[phase-4] setup screen"`
-- [ ] Game screen layout
-  - [ ] Spectrum bar with gradient and concept labels
-  - [ ] Clue display area
-  - [ ] Score tracker (Human vs. AI)
-  - [ ] Round indicator
-  - [ ] Context-sensitive action area
-- [ ] 📦 `git add -A && git commit -m "[phase-4] game screen layout"`
+- [x] Game screen layout
+  - [x] Spectrum bar with gradient and concept labels
+  - [x] Clue display area
+  - [x] Score tracker (Human vs. AI)
+  - [x] Round indicator
+  - [x] Context-sensitive action area
+- [x] 📦 `git add -A && git commit -m "[phase-4] game screen layout"`
 - [ ] AI reasoning panel (hidden, tap to reveal after round)
 - [ ] 📦 `git add -A && git commit -m "[phase-4] AI reasoning panel"`
 - [ ] Round transition animation + score delta

@@ -200,8 +200,8 @@ export const Dial = ({
   };
 
   return (
-    <section className="mx-auto w-full max-w-[390px] rounded-3xl border border-amber-200/80 bg-amber-50/70 p-4 shadow-[0_20px_60px_-40px_rgba(120,53,15,0.55)]">
-      <div className="mb-5 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+    <section className="mx-auto w-full max-w-[390px] rounded-2xl border border-warm-200/60 bg-white/50 p-4 shadow-card">
+      <div className="mb-4 flex items-center justify-between text-xs font-medium uppercase tracking-widest text-ink-muted">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
       </div>
@@ -247,11 +247,11 @@ export const Dial = ({
             cx={center}
             cy={center}
             r={size * 0.16}
-            fill="#fff7ed"
-            stroke="#f59e0b"
-            strokeWidth={2}
+            fill="#FDF8F0"
+            stroke="#E5C9A0"
+            strokeWidth={1.5}
           />
-          <circle cx={dialMarker.x} cy={dialMarker.y} r={9} fill="#9a3412" />
+          <circle cx={dialMarker.x} cy={dialMarker.y} r={9} fill="#2C2418" />
           <AnimatePresence>
             {revealMarker ? (
               <motion.circle
@@ -259,7 +259,7 @@ export const Dial = ({
                 cx={revealMarker.x}
                 cy={revealMarker.y}
                 r={8}
-                fill="#1d4ed8"
+                fill="#22C55E"
                 initial={{ opacity: 0, scale: 0.2 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.2 }}
@@ -271,8 +271,8 @@ export const Dial = ({
         </svg>
       </div>
 
-      <p className="mt-2 text-center text-sm font-medium text-amber-900">
-        Position: {Math.round(clampedValue)}%
+      <p className="mt-2 text-center text-sm tabular-nums text-ink-muted">
+        {Math.round(clampedValue)}%
       </p>
     </section>
   );
