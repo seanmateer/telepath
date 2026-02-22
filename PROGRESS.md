@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-22
-**Last Session Summary:** Completed local dev AI reliability fixes: Vite middleware now routes `/api/ai` to the edge handler and Vite config now loads `.env` server vars into `process.env` for dev middleware execution, so local AI calls use the configured `ANTHROPIC_API_KEY`.
+**Last Session Summary:** Improved dial-placement prompt reliability by explicitly defining 0/50/100 left-center-right mapping and adding instruction-level consistency checks between reasoning and numeric position to reduce contradictory AI explanations.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -190,6 +190,7 @@ _(none — waiting for play-testing feedback)_
 - [x] **Co-op pacing refactor** — Added manual reveal step after guesses, staged co-op flow to preserve guess→reveal rhythm, animated AI dial sweep for human-psychic rounds, replaced co-op fullscreen transition with inline summary card + explicit Next Round/See Results, and preserved competitive overlay behavior.
 - [x] **Local AI proxy dev fix** — Added Vite dev middleware to forward `/api/ai` requests to `api/ai.ts` during `npm run dev`, preventing HTML fallback responses and restoring JSON AI responses for clue/dial calls in local play-tests.
 - [x] **Local env loading for AI proxy** — Updated Vite config to load `.env` values into `process.env` in local dev so the `/api/ai` middleware can read `ANTHROPIC_API_KEY` and avoid “Server missing ANTHROPIC_API_KEY.”
+- [x] **Dial reasoning consistency tuning** — Updated dial-placement prompts to explicitly define left/right numeric scale and require consistency between textual reasoning and numeric output to reduce contradictions like “rebellious” with right-leaning placement.
 
 **Phase 5 complete when:** The human says the gameplay loop feels good and we're ready to ship.
 
@@ -248,6 +249,7 @@ _(none — waiting for play-testing feedback)_
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-22 | Codex | Phase 5 | Tuned dial-placement prompts for consistency: added explicit 0/50/100 left-center-right mapping and stronger reasoning-to-position alignment instructions to reduce contradictory Lumen outputs. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Added `.env` loading in Vite config for local server middleware so `/api/ai` can read `ANTHROPIC_API_KEY` during `npm run dev`; fixes local fallback clue/reasoning errors caused by missing server env vars. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Resolved local play-test AI proxy failures (`AI proxy response was not valid JSON`) by wiring a Vite dev `/api/ai` middleware to the edge handler and improving non-JSON proxy diagnostics in `useAI`. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Implemented co-op pacing flow updates from play-test feedback: manual reveal step, inline co-op round summary with continue CTA, AI dial sweep animation before reveal, and competitive-only fullscreen transition. Verified with `npm run test:game`, `npm run build`, and `npm run lint`. |
