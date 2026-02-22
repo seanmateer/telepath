@@ -180,7 +180,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
 
-_(none — waiting for play-testing feedback)_
+- [ ] **Dial UI refinement** — Rework dial target-zone presentation to better resemble official Wavelength’s 2-3-4-3-2 spread while preserving current interaction model and co-op flow.
 
 #### Completed Tasks
 
@@ -249,6 +249,7 @@ _(none — waiting for play-testing feedback)_
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-22 | Codex | Phase 5 | Added next active gameplay-testing task for dial UI refinement toward official 2-3-4-3-2 target spread, then prepared branch for merge into `main`. |
 | 2026-02-22 | Codex | Phase 5 | Tuned dial-placement prompts for consistency: added explicit 0/50/100 left-center-right mapping and stronger reasoning-to-position alignment instructions to reduce contradictory Lumen outputs. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Added `.env` loading in Vite config for local server middleware so `/api/ai` can read `ANTHROPIC_API_KEY` during `npm run dev`; fixes local fallback clue/reasoning errors caused by missing server env vars. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Resolved local play-test AI proxy failures (`AI proxy response was not valid JSON`) by wiring a Vite dev `/api/ai` middleware to the edge handler and improving non-JSON proxy diagnostics in `useAI`. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
