@@ -19,8 +19,8 @@
 
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
-**Last Updated:** 2026-02-21
-**Last Session Summary:** Added Phase 5 (Gameplay Testing) to the roadmap. This is an open-ended iteration phase — we play-test, log issues, fix them, and repeat until the gameplay loop and UI feel solid. Deploy moved to Phase 6. No task should be marked done without the human confirming the fix feels right in-game.
+**Last Updated:** 2026-02-22
+**Last Session Summary:** Completed co-op mode overhaul — mode selection screen, 7-card deck, alternating psychic, single team score, rating chart, updated ScoreBar/RoundTransition/EndScreen, AI prompts, and 20 unit tests all passing. Ready for play-testing.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -180,13 +180,13 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
 
-- [ ] **Co-op mode overhaul** — Restructure gameplay from competitive to co-op mode per official Wavelength co-op rules. Mode selection screen, 7-card deck, alternating psychic, single team score, rating chart. See plan: `.claude/plans/shimmying-booping-reddy.md`
+_(none — waiting for play-testing feedback)_
 
 #### Completed Tasks
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
-_(none yet)_
+- [x] **Co-op mode overhaul** — Mode selection screen, 7-card deck, alternating psychic, single team score with rating chart, co-op scoring (bullseye 3pts + bonus card, adjacent 3pts, outer 2pts), updated ScoreBar/RoundTransition/EndScreen, cooperative AI prompt framing, 20 unit tests passing. Competitive scaffolding preserved for 1.0.
 
 **Phase 5 complete when:** The human says the gameplay loop feels good and we're ready to ship.
 
@@ -245,6 +245,7 @@ _(none yet)_
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-22 | Claude Code | Phase 5 | Completed co-op mode overhaul: ModeScreen, startCoopGame/submitTeamGuess/scoreCoopRound/getCoopRating state machine functions, GameScreen co-op branching, ScoreBar (single score + round X of Y), RoundTransition (bonus card message + running total), EndScreen (score + rating chart), cooperative AI prompt framing, 20 unit tests (12 new co-op + 8 existing competitive). TypeScript clean, build passes. |
 | 2026-02-21 | Claude Code | Phase 4 | Completed mobile-first audit + accessibility pass: focus-visible ring styles, min-h-[44px] touch targets on bonus/retry buttons, ARIA attributes (role=slider on dial, aria-expanded on reasoning panel, aria-hidden on decorative elements, aria-label on clue input), contrast fixes (ink-faint #C4B9AB→#A89888, score-miss #94A3B8→#708296, score-outer #EAB308→#CA8A04). Verified full 2-round game flow at 390px. |
 | 2026-02-21 | Claude Code | Phase 4 | Built all Phase 4 screens: SplashScreen (animated SVG arcs), SetupScreen (personality cards), GameScreen (full AI integration with stable-ref pattern to prevent infinite loops), ScoreBar, ReasoningPanel (accordion), RoundTransition (fullscreen overlay), EndScreen (html2canvas share card). Design system: DM Sans/DM Serif Display, warm palette, custom Tailwind tokens. |
 | 2026-02-21 | Codex | Phase 3 | Investigated iOS Safari haptics on iPhone 16 Pro (iOS 26.2.1), confirmed no reliable Web API behavior in Safari for physical feedback, and logged a follow-up for Phase 4 mobile audit. |
