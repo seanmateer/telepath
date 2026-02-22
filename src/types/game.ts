@@ -1,5 +1,7 @@
 export type Team = 'human' | 'ai';
 
+export type GameMode = 'coop' | 'competitive';
+
 export type Personality = 'lumen' | 'sage' | 'flux';
 
 export type GamePhase =

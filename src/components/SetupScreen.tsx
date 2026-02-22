@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { Personality } from '../types/game';
+import type { GameMode, Personality } from '../types/game';
 
 type SetupScreenProps = {
   onStart: (personality: Personality) => void;
+  gameMode: GameMode;
 };
 
 type PersonalityOption = {
@@ -50,7 +51,7 @@ const personalities: PersonalityOption[] = [
   },
 ];
 
-export const SetupScreen = ({ onStart }: SetupScreenProps) => {
+export const SetupScreen = ({ onStart, gameMode }: SetupScreenProps) => {
   const [selected, setSelected] = useState<Personality>('lumen');
 
   return (
@@ -62,7 +63,7 @@ export const SetupScreen = ({ onStart }: SetupScreenProps) => {
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         <h2 className="font-serif text-3xl tracking-tight text-ink">
-          Choose your opponent
+          {gameMode === 'coop' ? 'Choose your partner' : 'Choose your opponent'}
         </h2>
         <p className="mt-2 text-sm text-ink-muted">
           Each AI has a different way of thinking.

@@ -22,7 +22,7 @@ When in doubt, `AGENTS.md` wins for universal content. `CLAUDE.md` wins only for
 
 ## Project Overview
 
-A web-based game called **Telepath** — an adaptation of the Wavelength board game with a core twist: it's always **Humans vs. AI**. One team is the human player(s), the other is a single LLM-powered AI opponent with a distinct personality. Built as a public project — code quality and architecture decisions should reflect that.
+A web-based game called **Telepath** — an adaptation of the Wavelength board game. In solo play (MVP), a human and an AI with a distinct personality cooperate as teammates, alternating as psychic. In multiplayer (1.0), teams of humans compete against the AI. Built as a public project — code quality and architecture decisions should reflect that.
 
 Full design context: `telepath-project-plan.md`  
 Progress tracking: `PROGRESS.md`
@@ -135,17 +135,26 @@ Three personalities, each with a distinct system prompt affecting clue style and
 
 ## Game Rules
 
+### Game Modes
+
+**Co-op Mode (MVP — solo play):**
+- Human and AI are teammates, not opponents
+- They alternate as psychic each round (random first psychic)
+- When AI is psychic: AI gives clue → human places dial
+- When human is psychic: human gives clue → AI places dial
+- 7 cards per game. Game ends when deck is empty
+- Bullseye = 3 pts + draw a bonus card (extra round!)
+- Adjacent = 3 pts, Outer = 2 pts, Miss = 0 pts
+- No left/right bonus guess phase (no opposing team)
+- End-of-game score rated on a chart (0–3 terrible → 22+ psychic for real)
+- Based on the official Wavelength cooperative mode rules
+
+**Competitive Mode (1.0 — multiplayer):**
 - Two teams: Human(s) vs. AI
 - First to 10 points wins
-- Each round: active team's Psychic gives a one-word clue → their team places the dial → opposing team makes a bonus left/right guess for 1pt
-- Teams alternate who is the Psychic each round
-- AI always makes the opposing bonus guess; humans make the bonus guess when AI is psychic
-- Scoring:
-  - Bullseye (center zone): 4 points
-  - Adjacent zone: 3 points
-  - Outer zone: 2 points
-  - Miss: 0 points
-  - Bonus opposing guess correct: 1 point
+- Each round: active team's Psychic gives a clue → their team places the dial → opposing team makes a bonus left/right guess for 1pt
+- Scoring: Bullseye 4 pts, Adjacent 3 pts, Outer 2 pts, Miss 0 pts, Bonus guess correct 1 pt
+- Code scaffolding exists but mode is not yet playable
 
 ---
 
@@ -205,8 +214,8 @@ Key design principles:
 
 ## Milestone Scope
 
-**MVP (current):** Solo play vs. AI only. No multiplayer, no Supabase, no user accounts.  
-**1.0:** Human multiplayer rooms + Supabase. Do not build during MVP.  
+**MVP (current):** Solo co-op play (human + AI teammates). Mode selection screen with competitive disabled. No multiplayer, no Supabase, no user accounts.
+**1.0:** Human multiplayer rooms + Supabase + competitive mode enabled. Do not build during MVP.
 **2.0:** Player-generated card packs. Do not build during 1.0.
 
 Do not build ahead of the current milestone without explicit instruction.

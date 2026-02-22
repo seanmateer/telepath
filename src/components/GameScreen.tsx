@@ -16,10 +16,11 @@ import {
 } from '../lib/gameState';
 import { loadShuffledSpectrumDeck } from '../lib/spectrumDeck';
 import { useAI } from '../hooks/useAI';
-import type { BonusDirection, GameState, Personality } from '../types/game';
+import type { BonusDirection, GameMode, GameState, Personality } from '../types/game';
 
 type GameScreenProps = {
   personality: Personality;
+  gameMode: GameMode;
   onGameOver: (state: GameState) => void;
 };
 
@@ -29,7 +30,7 @@ const DEFAULT_DIAL_VALUE = 50;
 
 const easeOutCubic = (value: number): number => 1 - (1 - value) ** 3;
 
-export const GameScreen = ({ personality, onGameOver }: GameScreenProps) => {
+export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProps) => {
   const [dialValue, setDialValue] = useState(DEFAULT_DIAL_VALUE);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);

@@ -180,7 +180,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
 
-_(no tasks yet — play-test to discover them)_
+- [ ] **Co-op mode overhaul** — Restructure gameplay from competitive to co-op mode per official Wavelength co-op rules. Mode selection screen, 7-card deck, alternating psychic, single team score, rating chart. See plan: `.claude/plans/shimmying-booping-reddy.md`
 
 #### Completed Tasks
 
