@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-22
-**Last Session Summary:** Completed co-op mode overhaul — mode selection screen, 7-card deck, alternating psychic, single team score, rating chart, updated ScoreBar/RoundTransition/EndScreen, AI prompts, and 20 unit tests all passing. Ready for play-testing.
+**Last Session Summary:** Implemented co-op pacing fix: staged guess → reveal → score flow, manual Reveal Target step, animated AI dial sweep when AI is guesser, inline co-op round summary with Next Round/See Results, and competitive fullscreen transition preserved. Build + lint + game tests passing.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -187,6 +187,7 @@ _(none — waiting for play-testing feedback)_
 *Move tasks here when done, with a brief note. Prune periodically.*
 
 - [x] **Co-op mode overhaul** — Mode selection screen, 7-card deck, alternating psychic, single team score with rating chart, co-op scoring (bullseye 3pts + bonus card, adjacent 3pts, outer 2pts), updated ScoreBar/RoundTransition/EndScreen, cooperative AI prompt framing, 20 unit tests passing. Competitive scaffolding preserved for 1.0.
+- [x] **Co-op pacing refactor** — Added manual reveal step after guesses, staged co-op flow to preserve guess→reveal rhythm, animated AI dial sweep for human-psychic rounds, replaced co-op fullscreen transition with inline summary card + explicit Next Round/See Results, and preserved competitive overlay behavior.
 
 **Phase 5 complete when:** The human says the gameplay loop feels good and we're ready to ship.
 
@@ -245,6 +246,7 @@ _(none — waiting for play-testing feedback)_
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-22 | Codex | Phase 5 | Implemented co-op pacing flow updates from play-test feedback: manual reveal step, inline co-op round summary with continue CTA, AI dial sweep animation before reveal, and competitive-only fullscreen transition. Verified with `npm run test:game`, `npm run build`, and `npm run lint`. |
 | 2026-02-22 | Claude Code | Phase 5 | Completed co-op mode overhaul: ModeScreen, startCoopGame/submitTeamGuess/scoreCoopRound/getCoopRating state machine functions, GameScreen co-op branching, ScoreBar (single score + round X of Y), RoundTransition (bonus card message + running total), EndScreen (score + rating chart), cooperative AI prompt framing, 20 unit tests (12 new co-op + 8 existing competitive). TypeScript clean, build passes. |
 | 2026-02-21 | Claude Code | Phase 4 | Completed mobile-first audit + accessibility pass: focus-visible ring styles, min-h-[44px] touch targets on bonus/retry buttons, ARIA attributes (role=slider on dial, aria-expanded on reasoning panel, aria-hidden on decorative elements, aria-label on clue input), contrast fixes (ink-faint #C4B9AB→#A89888, score-miss #94A3B8→#708296, score-outer #EAB308→#CA8A04). Verified full 2-round game flow at 390px. |
 | 2026-02-21 | Claude Code | Phase 4 | Built all Phase 4 screens: SplashScreen (animated SVG arcs), SetupScreen (personality cards), GameScreen (full AI integration with stable-ref pattern to prevent infinite loops), ScoreBar, ReasoningPanel (accordion), RoundTransition (fullscreen overlay), EndScreen (html2canvas share card). Design system: DM Sans/DM Serif Display, warm palette, custom Tailwind tokens. |

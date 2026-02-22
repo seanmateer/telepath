@@ -1,6 +1,5 @@
 import type {
   BonusDirection,
-  GameMode,
   GamePhase,
   GameState,
   Personality,

@@ -65,9 +65,12 @@ export const ScoreBar = ({
         </motion.div>
 
         {/* Partner name */}
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-baseline gap-1.5 text-right">
           <span className="text-xs font-medium text-ink-muted">
             w/ {personalityNames[personality]}
+          </span>
+          <span className="text-[10px] text-ink-faint">
+            {cardsRemaining} left
           </span>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Dial } from './Dial';
+import { CoopRoundSummary } from './CoopRoundSummary';
 import { ScoreBar } from './ScoreBar';
 import { ReasoningPanel } from './ReasoningPanel';
 import { RoundTransition } from './RoundTransition';
@@ -29,6 +30,7 @@ type GameScreenProps = {
 
 const SNAP_INCREMENT = 5;
 const SNAP_ANIMATION_MS = 180;
+const AI_DIAL_SWEEP_MS = 650;
 const DEFAULT_DIAL_VALUE = 50;
 
 const easeOutCubic = (value: number): number => 1 - (1 - value) ** 3;
@@ -72,6 +74,44 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
       animationFrameRef.current = null;
     }
   }, []);
+
+  const animateDialToValue = useCallback(
+    (targetValue: number, durationMs: number): Promise<void> => {
+      const startValue = dialValueRef.current;
+      const endValue = Math.max(0, Math.min(100, targetValue));
+
+      stopDialAnimation();
+
+      if (durationMs <= 0 || startValue === endValue) {
+        setDialValue(endValue);
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve) => {
+        const startTime = performance.now();
+
+        const animate = (timestamp: number): void => {
+          const elapsed = timestamp - startTime;
+          const progress = Math.min(1, elapsed / durationMs);
+          const easedProgress = easeOutCubic(progress);
+          const nextValue = Math.round(startValue + (endValue - startValue) * easedProgress);
+          setDialValue(nextValue);
+
+          if (progress < 1) {
+            animationFrameRef.current = requestAnimationFrame(animate);
+            return;
+          }
+
+          animationFrameRef.current = null;
+          setDialValue(endValue);
+          resolve();
+        };
+
+        animationFrameRef.current = requestAnimationFrame(animate);
+      });
+    },
+    [stopDialAnimation],
+  );
 
   // Initialize game — runs once on mount
   useEffect(() => {
@@ -130,7 +170,9 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
 
   const handleDialChange = useCallback(
     (value: number) => {
-      if (!gameState || gameState.phase !== 'human-guess') return;
+      if (!gameState || gameState.phase !== 'human-guess' || gameState.round?.psychicTeam !== 'ai') {
+        return;
+      }
       stopDialAnimation();
       setDialValue(value);
     },
@@ -139,7 +181,9 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
 
   const handleDialRelease = useCallback(
     (value: number) => {
-      if (!gameState || gameState.phase !== 'human-guess') return;
+      if (!gameState || gameState.phase !== 'human-guess' || gameState.round?.psychicTeam !== 'ai') {
+        return;
+      }
 
       const snappedTarget = Math.round(value / SNAP_INCREMENT) * SNAP_INCREMENT;
       const startValue = dialValueRef.current;
@@ -176,45 +220,58 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
 
   const handleSubmitClue = useCallback(async () => {
     if (!gameState || gameState.phase !== 'psychic-clue') return;
-    if (humanClueInput.trim().length === 0) return;
+    const trimmedClue = humanClueInput.trim();
+    if (trimmedClue.length === 0) return;
 
     try {
+      setError(null);
       setAiThinking(true);
-      let nextState = submitPsychicClue(gameState, humanClueInput.trim());
+      let nextState = submitPsychicClue(gameState, trimmedClue);
 
-      // AI places the dial as guesser
-      const dialResult = await placeDialRef.current({
-        card: nextState.round!.card,
-        clue: humanClueInput.trim(),
-        personality,
-      });
-
-      // Submit AI's guess — co-op skips bonus, competitive uses bonus flow
       if (gameMode === 'coop') {
-        nextState = submitTeamGuess(nextState, dialResult.position);
-        const revealed = revealRound(nextState);
-        const scored = scoreCoopRound(revealed);
-        setAiReasoning(dialResult.reasoning);
-        setGameState(scored);
-        setDialValue(dialResult.position);
+        // Show clue immediately, then let AI visibly place the dial before reveal.
+        setGameState(nextState);
         setHumanClueInput('');
-        setAiThinking(false);
-        setShowTransition(true);
-      } else {
-        nextState = submitHumanGuess(nextState, dialResult.position);
+
+        const dialResult = await placeDialRef.current({
+          card: nextState.round!.card,
+          clue: trimmedClue,
+          personality,
+        });
+
+        await animateDialToValue(dialResult.position, AI_DIAL_SWEEP_MS);
+
+        nextState = submitTeamGuess(nextState, dialResult.position);
         setAiReasoning(dialResult.reasoning);
         setGameState(nextState);
-        setDialValue(dialResult.position);
-        setHumanClueInput('');
         setAiThinking(false);
+        return;
       }
+
+      // Competitive flow remains unchanged.
+      const dialResult = await placeDialRef.current({
+        card: nextState.round!.card,
+        clue: trimmedClue,
+        personality,
+      });
+      nextState = submitHumanGuess(nextState, dialResult.position);
+      setAiReasoning(dialResult.reasoning);
+      setGameState(nextState);
+      setDialValue(dialResult.position);
+      setHumanClueInput('');
+      setAiThinking(false);
     } catch (caughtError: unknown) {
       const message =
         caughtError instanceof Error ? caughtError.message : 'Failed to process clue.';
+      if (gameMode === 'coop') {
+        // If AI placement fails, restore the clue step so the user can retry.
+        setGameState(gameState);
+        setHumanClueInput(trimmedClue);
+      }
       setError(message);
       setAiThinking(false);
     }
-  }, [gameState, humanClueInput, personality, gameMode]);
+  }, [animateDialToValue, gameState, humanClueInput, personality, gameMode]);
 
   const handleHumanBonusGuess = useCallback(
     (direction: BonusDirection) => {
@@ -235,17 +292,28 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
     [gameState],
   );
 
+  const handleRevealCoopRound = useCallback(() => {
+    if (!gameState || gameState.mode !== 'coop' || gameState.phase !== 'reveal') return;
+
+    try {
+      const revealed = revealRound(gameState);
+      const scored = scoreCoopRound(revealed);
+      setGameState(scored);
+    } catch (caughtError: unknown) {
+      const message =
+        caughtError instanceof Error ? caughtError.message : 'Failed to reveal round.';
+      setError(message);
+    }
+  }, [gameState]);
+
   const handleLockGuess = useCallback(() => {
     if (!gameState || gameState.phase !== 'human-guess') return;
 
     try {
       if (gameMode === 'coop') {
-        // Co-op: skip bonus guess, go directly to reveal → score
+        // Co-op: lock guess first, then let players manually reveal.
         const withGuess = submitTeamGuess(gameState, dialValueRef.current);
-        const revealed = revealRound(withGuess);
-        const scored = scoreCoopRound(revealed);
-        setGameState(scored);
-        setShowTransition(true);
+        setGameState(withGuess);
       } else {
         // Competitive: AI makes bonus guess, then reveal → score
         const withGuess = submitHumanGuess(gameState, dialValueRef.current);
@@ -388,11 +456,17 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
               </p>
             ) : gameState.phase === 'human-guess' ? (
               <p className="text-sm font-medium text-ink-light">
-                Place the dial where you think the target is.
+                {isHumanPsychic
+                  ? 'AI is placing the dial...'
+                  : 'Place the dial where you think the target is.'}
               </p>
             ) : gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' ? (
               <p className="text-sm font-medium text-ink-light">
                 Is the real target left or right of the guess?
+              </p>
+            ) : gameState.phase === 'reveal' && gameMode === 'coop' ? (
+              <p className="text-sm font-medium text-ink-light">
+                Review the guess, then reveal the target.
               </p>
             ) : isRevealed ? (
               <p className="text-sm font-medium text-ink-light">
@@ -467,6 +541,7 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
           {/* Dial */}
           {(gameState.phase === 'human-guess' ||
             gameState.phase === 'ai-bonus-guess' ||
+            (gameMode === 'coop' && gameState.phase === 'reveal') ||
             isRevealed) && (
             <Dial
               value={dialValue}
@@ -480,7 +555,7 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
 
           {/* Action area */}
           <div className="mt-6 flex justify-center">
-            {gameState.phase === 'human-guess' && (
+            {gameState.phase === 'human-guess' && currentRound.psychicTeam === 'ai' && (
               <motion.button
                 type="button"
                 onClick={handleLockGuess}
@@ -491,6 +566,20 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
                 whileTap={{ scale: 0.97 }}
               >
                 Lock Guess
+              </motion.button>
+            )}
+
+            {gameMode === 'coop' && gameState.phase === 'reveal' && (
+              <motion.button
+                type="button"
+                onClick={handleRevealCoopRound}
+                className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97]"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                Reveal Target
               </motion.button>
             )}
 
@@ -519,6 +608,15 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
             )}
           </div>
 
+          {gameMode === 'coop' && currentRound.result && isRevealed && (
+            <CoopRoundSummary
+              result={currentRound.result}
+              coopScore={gameState.coopScore}
+              isGameOver={gameState.phase === 'game-over'}
+              onContinue={() => void handleTransitionDone()}
+            />
+          )}
+
           {/* Reasoning panel (after reveal) */}
           {isRevealed && aiReasoning && (
             <div className="mt-6">
@@ -533,7 +631,7 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
 
       {/* Round transition overlay */}
       <AnimatePresence>
-        {showTransition && gameState.round?.result && (
+        {gameMode === 'competitive' && showTransition && gameState.round?.result && (
           <RoundTransition
             result={gameState.round.result}
             isGameOver={gameState.phase === 'game-over'}
