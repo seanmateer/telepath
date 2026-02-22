@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
-import type { RoundResult } from '../types/game';
+import type { GameMode, RoundResult } from '../types/game';
 
 type RoundTransitionProps = {
   result: RoundResult;
   isGameOver: boolean;
+  gameMode: GameMode;
+  coopScore: number;
   onDone: () => void;
 };
 
@@ -21,10 +23,12 @@ const zoneColors: Record<string, string> = {
   miss: 'text-score-miss',
 };
 
-export const RoundTransition = ({ result, isGameOver, onDone }: RoundTransitionProps) => {
+export const RoundTransition = ({ result, isGameOver, gameMode, coopScore, onDone }: RoundTransitionProps) => {
   const zone = result.score.zone;
   const basePoints = result.score.basePoints;
   const bonusCorrect = result.score.bonusCorrect;
+  const isCoop = gameMode === 'coop';
+  const bonusCardDrawn = result.bonusCardDrawn === true;
 
   return (
     <motion.div
@@ -63,8 +67,20 @@ export const RoundTransition = ({ result, isGameOver, onDone }: RoundTransitionP
           <span className="text-lg text-ink-muted">pts</span>
         </motion.div>
 
-        {/* Bonus */}
-        {bonusCorrect && (
+        {/* Co-op bonus card drawn */}
+        {isCoop && bonusCardDrawn && (
+          <motion.p
+            className="mt-2 text-sm font-medium text-score-bullseye"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.65 }}
+          >
+            +1 bonus round!
+          </motion.p>
+        )}
+
+        {/* Competitive bonus */}
+        {!isCoop && bonusCorrect && (
           <motion.p
             className="mt-2 text-sm font-medium text-ink-muted"
             initial={{ opacity: 0 }}
@@ -72,6 +88,18 @@ export const RoundTransition = ({ result, isGameOver, onDone }: RoundTransitionP
             transition={{ duration: 0.3, delay: 0.65 }}
           >
             +1 bonus point
+          </motion.p>
+        )}
+
+        {/* Co-op running total */}
+        {isCoop && (
+          <motion.p
+            className="mt-3 text-sm text-ink-muted"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.7 }}
+          >
+            Total: {coopScore} pts
           </motion.p>
         )}
 

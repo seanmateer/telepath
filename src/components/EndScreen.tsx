@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameState, Personality } from '../types/game';
+import { getCoopRating } from '../lib/gameState';
 
 type EndScreenProps = {
   gameState: GameState;
@@ -27,9 +28,11 @@ export const EndScreen = ({
 }: EndScreenProps) => {
   const shareCardRef = useRef<HTMLDivElement>(null);
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const isCoop = gameState.mode === 'coop';
   const humanWon = gameState.winner === 'human';
   const personality = gameState.settings.personality;
   const roundCount = gameState.round?.roundNumber ?? 0;
+  const coopRating = isCoop ? getCoopRating(gameState.coopScore) : null;
 
   const handleShare = useCallback(async () => {
     const cardEl = shareCardRef.current;
@@ -80,7 +83,9 @@ export const EndScreen = ({
       }, 'image/png');
     } catch {
       // html2canvas not available — copy text summary instead
-      const text = `Telepath: ${humanWon ? 'Victory' : 'Defeat'}\n${gameState.scores.human} - ${gameState.scores.ai} vs ${personalityNames[personality]}\n${roundCount} rounds`;
+      const text = isCoop
+        ? `Telepath Co-op: ${gameState.coopScore} pts\n"${coopRating}"\nw/ ${personalityNames[personality]} \u2022 ${roundCount} rounds`
+        : `Telepath: ${humanWon ? 'Victory' : 'Defeat'}\n${gameState.scores.human} - ${gameState.scores.ai} vs ${personalityNames[personality]}\n${roundCount} rounds`;
       try {
         await navigator.clipboard.writeText(text);
         setShareStatus('copied');
@@ -90,7 +95,7 @@ export const EndScreen = ({
         setTimeout(() => setShareStatus('idle'), 2000);
       }
     }
-  }, [gameState.scores, humanWon, personality, roundCount]);
+  }, [gameState.scores, gameState.coopScore, isCoop, coopRating, humanWon, personality, roundCount]);
 
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center px-6 py-12">
@@ -108,7 +113,7 @@ export const EndScreen = ({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2, ease: [0.175, 0.885, 0.32, 1.275] }}
           >
-            {humanWon ? 'You won' : 'AI wins'}
+            {isCoop ? coopRating : humanWon ? 'You won' : 'AI wins'}
           </motion.p>
         </div>
 
@@ -124,35 +129,61 @@ export const EndScreen = ({
             {/* Title */}
             <p className="text-center font-serif text-xl text-ink">Telepath</p>
 
-            {/* Scores */}
-            <div className="mt-5 flex items-center justify-center gap-6">
-              <div className="text-center">
-                <p className="text-3xl font-semibold tabular-nums text-ink">
-                  {gameState.scores.human}
-                </p>
-                <p className="mt-0.5 text-xs font-medium text-ink-muted">You</p>
-              </div>
-              <div className="text-ink-faint" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-semibold tabular-nums text-ink">
-                  {gameState.scores.ai}
-                </p>
-                <p className="mt-0.5 text-xs font-medium text-ink-muted">
-                  {personalityNames[personality]}
-                </p>
-              </div>
-            </div>
+            {isCoop ? (
+              <>
+                {/* Co-op: single team score */}
+                <div className="mt-5 text-center">
+                  <p className="text-5xl font-semibold tabular-nums text-ink">
+                    {gameState.coopScore}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-ink-muted">points</p>
+                </div>
 
-            {/* Details */}
-            <div className="mt-5 flex justify-center gap-4 text-xs text-ink-muted">
-              <span>{roundCount} rounds</span>
-              <span>&middot;</span>
-              <span>vs {personalityTaglines[personality]}</span>
-            </div>
+                {/* Rating */}
+                <p className="mt-4 text-center font-serif text-lg text-ink-light">
+                  &ldquo;{coopRating}&rdquo;
+                </p>
+
+                {/* Details */}
+                <div className="mt-4 flex justify-center gap-4 text-xs text-ink-muted">
+                  <span>{roundCount} rounds</span>
+                  <span>&middot;</span>
+                  <span>w/ {personalityNames[personality]}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Competitive: head-to-head scores */}
+                <div className="mt-5 flex items-center justify-center gap-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-semibold tabular-nums text-ink">
+                      {gameState.scores.human}
+                    </p>
+                    <p className="mt-0.5 text-xs font-medium text-ink-muted">You</p>
+                  </div>
+                  <div className="text-ink-faint" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-semibold tabular-nums text-ink">
+                      {gameState.scores.ai}
+                    </p>
+                    <p className="mt-0.5 text-xs font-medium text-ink-muted">
+                      {personalityNames[personality]}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="mt-5 flex justify-center gap-4 text-xs text-ink-muted">
+                  <span>{roundCount} rounds</span>
+                  <span>&middot;</span>
+                  <span>vs {personalityTaglines[personality]}</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Bottom band */}
