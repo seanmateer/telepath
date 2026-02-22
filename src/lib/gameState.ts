@@ -1,5 +1,6 @@
 import type {
   BonusDirection,
+  GameMode,
   GamePhase,
   GameState,
   Personality,
@@ -11,6 +12,7 @@ import type {
 } from '../types/game.js';
 
 export const DEFAULT_POINTS_TO_WIN = 10;
+export const COOP_DECK_SIZE = 7;
 export const MIN_POSITION = 0;
 export const MAX_POSITION = 100;
 export const BULLSEYE_MAX_DISTANCE = 4;
@@ -198,6 +200,7 @@ export const createInitialGameState = (
 ): GameState => {
   return {
     phase: 'setup',
+    mode: 'competitive',
     settings: {
       personality: options.personality ?? 'lumen',
       pointsToWin: options.pointsToWin ?? DEFAULT_POINTS_TO_WIN,
@@ -209,6 +212,8 @@ export const createInitialGameState = (
       human: 0,
       ai: 0,
     },
+    coopScore: 0,
+    totalCards: 0,
     winner: null,
   };
 };
@@ -233,6 +238,8 @@ export const startGame = (
       human: 0,
       ai: 0,
     },
+    coopScore: 0,
+    totalCards: options.deck.length,
     winner: null,
   };
 };
@@ -378,6 +385,12 @@ export const startNextRound = (
 
   const previousRound = getActiveRound(state);
   if (state.deck.length === 0) {
+    if (state.mode === 'coop') {
+      return {
+        ...state,
+        phase: 'game-over',
+      };
+    }
     return {
       ...state,
       phase: 'game-over',
@@ -398,5 +411,164 @@ export const startNextRound = (
       getOpposingTeam(previousRound.psychicTeam),
       previousRound.roundNumber + 1,
     ),
+  };
+};
+
+// ===========================
+// CO-OP MODE FUNCTIONS
+// ===========================
+
+export const COOP_BULLSEYE_POINTS = 3;
+export const COOP_ADJACENT_POINTS = 3;
+export const COOP_OUTER_POINTS = 2;
+
+export const getCoopPointsForZone = (zone: ScoreZone): number => {
+  switch (zone) {
+    case 'bullseye':
+      return COOP_BULLSEYE_POINTS;
+    case 'adjacent':
+      return COOP_ADJACENT_POINTS;
+    case 'outer':
+      return COOP_OUTER_POINTS;
+    case 'miss':
+      return 0;
+    default: {
+      const exhaustive: never = zone;
+      return exhaustive;
+    }
+  }
+};
+
+type CoopRating = {
+  label: string;
+  minScore: number;
+};
+
+const COOP_RATINGS: CoopRating[] = [
+  { minScore: 22, label: 'Psychic for real' },
+  { minScore: 19, label: 'Galaxy brain' },
+  { minScore: 16, label: "You're on the same wavelength" },
+  { minScore: 13, label: 'You won!' },
+  { minScore: 10, label: 'SO CLOSE' },
+  { minScore: 7, label: 'Not bad! Not great, but not bad' },
+  { minScore: 4, label: 'Try turning it off and back on again' },
+  { minScore: 0, label: 'Are you sure it\'s plugged in?' },
+];
+
+export const getCoopRating = (score: number): string => {
+  for (const rating of COOP_RATINGS) {
+    if (score >= rating.minScore) {
+      return rating.label;
+    }
+  }
+  return COOP_RATINGS[COOP_RATINGS.length - 1]!.label;
+};
+
+type StartCoopGameOptions = {
+  deck: SpectrumCard[];
+  random?: () => number;
+};
+
+export const startCoopGame = (
+  state: GameState,
+  options: StartCoopGameOptions,
+): GameState => {
+  assertPhase(state, 'setup');
+
+  const random = options.random ?? Math.random;
+  const coopDeck = options.deck.slice(0, COOP_DECK_SIZE);
+  const { card, remainingDeck } = drawCard(coopDeck);
+  const firstPsychic: Team = random() < 0.5 ? 'human' : 'ai';
+
+  return {
+    ...state,
+    phase: 'psychic-clue',
+    mode: 'coop',
+    deck: remainingDeck,
+    discardPile: [],
+    round: createRound(card, createTargetPosition(random), firstPsychic, 1),
+    scores: { human: 0, ai: 0 },
+    coopScore: 0,
+    totalCards: coopDeck.length,
+    winner: null,
+  };
+};
+
+export const submitTeamGuess = (
+  state: GameState,
+  guessPosition: number,
+): GameState => {
+  assertPhase(state, 'human-guess');
+
+  const round = getActiveRound(state);
+
+  return {
+    ...state,
+    phase: 'reveal',
+    round: {
+      ...round,
+      guessPosition: clampPosition(guessPosition),
+    },
+  };
+};
+
+export const scoreCoopRound = (state: GameState): GameState => {
+  assertPhase(state, 'score');
+
+  const round = getActiveRound(state);
+  if (!round.result) {
+    throw new Error('Cannot score round before reveal.');
+  }
+  if (round.guessPosition === null) {
+    throw new Error('Cannot score round without a guess.');
+  }
+
+  const distance = Math.abs(round.targetPosition - round.guessPosition);
+  const zone = resolveScoreZone(distance);
+  const points = getCoopPointsForZone(zone);
+  const isBullseye = zone === 'bullseye';
+
+  // Bullseye: draw a bonus card from the remaining deck (if available)
+  let updatedDeck = state.deck;
+  let bonusCardDrawn = false;
+  if (isBullseye && state.discardPile.length > 0) {
+    // Draw a bonus card from the discard pile (used cards), treating it as "drawing from the remaining full deck"
+    // Actually per official rules: "draw a bonus card to add to the deck" — we add an extra round
+    // We'll just add a card back from discard to the deck
+    const bonusCard = state.discardPile[state.discardPile.length - 1];
+    if (bonusCard) {
+      updatedDeck = [...state.deck, bonusCard];
+      bonusCardDrawn = true;
+    }
+  }
+
+  const newCoopScore = state.coopScore + points;
+  const isLastCard = updatedDeck.length === 0;
+
+  const score: ScoreBreakdown = {
+    zone,
+    basePoints: points,
+    bonusPoints: 0,
+    totalPoints: points,
+    bonusCorrect: false,
+  };
+
+  return {
+    ...state,
+    phase: isLastCard ? 'game-over' : 'next-round',
+    coopScore: newCoopScore,
+    deck: updatedDeck,
+    discardPile: bonusCardDrawn
+      ? state.discardPile.slice(0, -1)
+      : state.discardPile,
+    round: {
+      ...round,
+      result: {
+        ...round.result,
+        scoringPoints: points,
+        score,
+        bonusCardDrawn,
+      },
+    },
   };
 };
