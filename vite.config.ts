@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import aiHandler from './api/ai';
 
 const readRequestBody = (req: IncomingMessage): Promise<string> => {
@@ -90,6 +90,16 @@ const devApiProxyPlugin = (): Plugin => {
   };
 };
 
-export default defineConfig({
-  plugins: [react(), devApiProxyPlugin()],
+export default defineConfig(({ mode }) => {
+  // Make server-side edge handler env vars available during local Vite dev middleware execution.
+  const env = loadEnv(mode, process.cwd(), '');
+  for (const [key, value] of Object.entries(env)) {
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+
+  return {
+    plugins: [react(), devApiProxyPlugin()],
+  };
 });
