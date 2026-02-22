@@ -18,10 +18,10 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 4 — Full UI (complete)
+**Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-21
-**Last Session Summary:** Completed Phase 4 — mobile-first audit and accessibility pass. Added focus-visible ring styles, ensured all touch targets ≥44px, improved ARIA attributes (slider role on dial, aria-expanded on reasoning panel, aria-hidden on decorative elements, aria-label on clue input), fixed contrast issues (ink-faint, score-miss, score-outer colors). Verified full game flow at 390px width.
-**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 5 real-device testing.
+**Last Session Summary:** Added Phase 5 (Gameplay Testing) to the roadmap. This is an open-ended iteration phase — we play-test, log issues, fix them, and repeat until the gameplay loop and UI feel solid. Deploy moved to Phase 6. No task should be marked done without the human confirming the fix feels right in-game.
+**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
 
@@ -162,19 +162,49 @@
 
 ---
 
-### Phase 5 — Deploy
-*Depends on Phase 4.*
+### Phase 5 — Gameplay Testing
+*Open-ended iteration phase. Do NOT skip to Phase 6 (Deploy) until gameplay feels solid.*
+
+This phase is different from the others — it's not a linear checklist. We play-test the game, identify issues (gameplay feel, AI quality, UI rough edges, timing, animations, edge cases), log them as tasks below, fix them, and repeat. Tasks will be added and removed as we go.
+
+**How this phase works:**
+1. Play-test the full game loop (both as human psychic and with AI psychic)
+2. Note anything that feels off — gameplay, UI, animations, AI behavior, timing
+3. Add it as a task below with a clear description
+4. Fix it, verify it in-game, commit
+5. Repeat until the human says it's ready for deploy
+
+**Important for all agents:** Do not auto-generate a big backlog of speculative tasks here. Tasks are added by the human during play-testing or collaboratively during a session. This is a "hang out and iterate" phase — stay responsive to what the human wants to work on next.
+
+#### Active Tasks
+
+*Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
+
+_(no tasks yet — play-test to discover them)_
+
+#### Completed Tasks
+
+*Move tasks here when done, with a brief note. Prune periodically.*
+
+_(none yet)_
+
+**Phase 5 complete when:** The human says the gameplay loop feels good and we're ready to ship.
+
+---
+
+### Phase 6 — Deploy
+*Depends on Phase 5. Do NOT start until gameplay testing is complete.*
 
 - [ ] Set `ANTHROPIC_API_KEY` in Vercel environment variables
 - [ ] Deploy to Vercel
 - [ ] Smoke test production build — full game, both player types
 - [ ] Verify edge function works in production (check logs)
-- [ ] 📦 `git add -A && git commit -m "[phase-5] production verified"`
+- [ ] 📦 `git add -A && git commit -m "[phase-6] production verified"`
 - [ ] Test share card on iOS and Android
 - [ ] Final mobile test on real device
-- [ ] 📦 `git add -A && git commit -m "[phase-5] MVP complete 🎉"`
+- [ ] 📦 `git add -A && git commit -m "[phase-6] MVP complete 🎉"`
 
-**Phase 5 complete when:** Live URL works end-to-end on real devices. Share card works.
+**Phase 6 complete when:** Live URL works end-to-end on real devices. Share card works.
 
 ---
 
