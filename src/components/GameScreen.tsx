@@ -7,12 +7,15 @@ import { RoundTransition } from './RoundTransition';
 import {
   createInitialGameState,
   revealRound,
+  scoreCoopRound,
   scoreRound,
+  startCoopGame,
   startGame,
   startNextRound,
   submitBonusGuess,
   submitHumanGuess,
   submitPsychicClue,
+  submitTeamGuess,
 } from '../lib/gameState';
 import { loadShuffledSpectrumDeck } from '../lib/spectrumDeck';
 import { useAI } from '../hooks/useAI';
@@ -82,7 +85,12 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
       try {
         const shuffledDeck = await loadShuffledSpectrumDeck();
         let nextState = createInitialGameState({ personality, pointsToWin: 10 });
-        nextState = startGame(nextState, { deck: shuffledDeck, startingPsychicTeam: 'human' });
+
+        if (gameMode === 'coop') {
+          nextState = startCoopGame(nextState, { deck: shuffledDeck });
+        } else {
+          nextState = startGame(nextState, { deck: shuffledDeck, startingPsychicTeam: 'human' });
+        }
 
         if (cancelled) return;
 
@@ -181,20 +189,32 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
         personality,
       });
 
-      // Submit AI's guess
-      nextState = submitHumanGuess(nextState, dialResult.position);
-      setAiReasoning(dialResult.reasoning);
-      setGameState(nextState);
-      setDialValue(dialResult.position);
-      setHumanClueInput('');
-      setAiThinking(false);
+      // Submit AI's guess — co-op skips bonus, competitive uses bonus flow
+      if (gameMode === 'coop') {
+        nextState = submitTeamGuess(nextState, dialResult.position);
+        const revealed = revealRound(nextState);
+        const scored = scoreCoopRound(revealed);
+        setAiReasoning(dialResult.reasoning);
+        setGameState(scored);
+        setDialValue(dialResult.position);
+        setHumanClueInput('');
+        setAiThinking(false);
+        setShowTransition(true);
+      } else {
+        nextState = submitHumanGuess(nextState, dialResult.position);
+        setAiReasoning(dialResult.reasoning);
+        setGameState(nextState);
+        setDialValue(dialResult.position);
+        setHumanClueInput('');
+        setAiThinking(false);
+      }
     } catch (caughtError: unknown) {
       const message =
         caughtError instanceof Error ? caughtError.message : 'Failed to process clue.';
       setError(message);
       setAiThinking(false);
     }
-  }, [gameState, humanClueInput, personality]);
+  }, [gameState, humanClueInput, personality, gameMode]);
 
   const handleHumanBonusGuess = useCallback(
     (direction: BonusDirection) => {
@@ -219,18 +239,28 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
     if (!gameState || gameState.phase !== 'human-guess') return;
 
     try {
-      const withGuess = submitHumanGuess(gameState, dialValueRef.current);
-      const withBonusGuess = submitBonusGuess(withGuess, chooseAIBonusDirection(withGuess));
-      const revealed = revealRound(withBonusGuess);
-      const scored = scoreRound(revealed);
-      setGameState(scored);
-      setShowTransition(true);
+      if (gameMode === 'coop') {
+        // Co-op: skip bonus guess, go directly to reveal → score
+        const withGuess = submitTeamGuess(gameState, dialValueRef.current);
+        const revealed = revealRound(withGuess);
+        const scored = scoreCoopRound(revealed);
+        setGameState(scored);
+        setShowTransition(true);
+      } else {
+        // Competitive: AI makes bonus guess, then reveal → score
+        const withGuess = submitHumanGuess(gameState, dialValueRef.current);
+        const withBonusGuess = submitBonusGuess(withGuess, chooseAIBonusDirection(withGuess));
+        const revealed = revealRound(withBonusGuess);
+        const scored = scoreRound(revealed);
+        setGameState(scored);
+        setShowTransition(true);
+      }
     } catch (caughtError: unknown) {
       const message =
         caughtError instanceof Error ? caughtError.message : 'Failed to resolve round.';
       setError(message);
     }
-  }, [chooseAIBonusDirection, gameState]);
+  }, [chooseAIBonusDirection, gameState, gameMode]);
 
   const handleTransitionDone = useCallback(async () => {
     setShowTransition(false);
@@ -328,6 +358,10 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
         personality={personality}
         roundNumber={currentRound.roundNumber}
         pointsToWin={gameState.settings.pointsToWin}
+        gameMode={gameMode}
+        coopScore={gameState.coopScore}
+        totalCards={gameState.totalCards}
+        cardsRemaining={gameState.deck.length}
       />
 
       {/* Main content */}
@@ -356,7 +390,7 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
               <p className="text-sm font-medium text-ink-light">
                 Place the dial where you think the target is.
               </p>
-            ) : gameState.phase === 'ai-bonus-guess' ? (
+            ) : gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' ? (
               <p className="text-sm font-medium text-ink-light">
                 Is the real target left or right of the guess?
               </p>
@@ -460,7 +494,7 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
               </motion.button>
             )}
 
-            {gameState.phase === 'ai-bonus-guess' && (
+            {gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' && (
               <motion.div
                 className="flex gap-3"
                 initial={{ opacity: 0, y: 6 }}
@@ -503,6 +537,8 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
           <RoundTransition
             result={gameState.round.result}
             isGameOver={gameState.phase === 'game-over'}
+            gameMode={gameMode}
+            coopScore={gameState.coopScore}
             onDone={() => void handleTransitionDone()}
           />
         )}
