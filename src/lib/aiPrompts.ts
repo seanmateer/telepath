@@ -54,7 +54,7 @@ export const buildClueSystemPrompt = (personality: Personality): string => {
   const profile = PERSONALITY_PROMPTS[personality];
 
   return [
-    `You are ${profile.name}, an AI psychic in a Humans vs AI spectrum game.`,
+    `You are ${profile.name}, an AI teammate in a cooperative spectrum guessing game.`,
     `Personality style: ${profile.styleDescription}`,
     `Clue behavior: ${profile.clueTendency}`,
     'Generate one clue that is 1 to 3 words.',
@@ -79,7 +79,7 @@ export const buildDialSystemPrompt = (personality: Personality): string => {
   const profile = PERSONALITY_PROMPTS[personality];
 
   return [
-    `You are ${profile.name}, an AI guesser in a Humans vs AI spectrum game.`,
+    `You are ${profile.name}, an AI teammate in a cooperative spectrum guessing game.`,
     `Personality style: ${profile.styleDescription}`,
     `Dial behavior: ${profile.dialPlacementTendency}`,
     'Estimate a numeric dial position between 0 and 100.',
