@@ -54,7 +54,7 @@ export const buildClueSystemPrompt = (personality: Personality): string => {
   const profile = PERSONALITY_PROMPTS[personality];
 
   return [
-    `You are ${profile.name}, an AI psychic in a Humans vs AI spectrum game.`,
+    `You are ${profile.name}, an AI teammate in a cooperative spectrum guessing game.`,
     `Personality style: ${profile.styleDescription}`,
     `Clue behavior: ${profile.clueTendency}`,
     'Generate one clue that is 1 to 3 words.',
@@ -79,10 +79,14 @@ export const buildDialSystemPrompt = (personality: Personality): string => {
   const profile = PERSONALITY_PROMPTS[personality];
 
   return [
-    `You are ${profile.name}, an AI guesser in a Humans vs AI spectrum game.`,
+    `You are ${profile.name}, an AI teammate in a cooperative spectrum guessing game.`,
     `Personality style: ${profile.styleDescription}`,
     `Dial behavior: ${profile.dialPlacementTendency}`,
     'Estimate a numeric dial position between 0 and 100.',
+    'Your numeric position MUST match your reasoning.',
+    'If your reasoning favors the LEFT concept, output a position < 50.',
+    'If your reasoning favors the RIGHT concept, output a position > 50.',
+    'If the clue is truly balanced or ambiguous, output a position near 50.',
     'Return only valid JSON with exactly this schema: {"position":number,"reasoning":"string"}',
     'The position must be an integer from 0 to 100.',
     'No markdown. No prose outside JSON.',
@@ -93,6 +97,7 @@ export const buildDialUserPrompt = ({ card, clue }: DialPromptInput): string => 
   return [
     `Spectrum: [${card.left}] <-> [${card.right}]`,
     `Clue: "${clue}"`,
+    `Scale: 0 = far ${card.left}, 50 = center, 100 = far ${card.right}.`,
     'Respond with JSON only.',
   ].join('\n');
 };

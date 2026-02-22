@@ -1,26 +1,27 @@
 # Telepath – Project Plan
-*Humans vs. AI adaptation of the Wavelength board game*
+*A web-based adaptation of the Wavelength board game*
 *Project name: **Telepath** — a psychic-themed spin on Wavelength*
 
 ---
 
 ## ⚠️ Open Decisions — Remaining
 
-- [ ] **Bonus guess mechanic** — Keep the physical game's opposing-team bonus guess (left/right of dial for 1pt), or simplify? With a 2-team structure (humans vs. AI) this still works naturally — decide before building scoring logic.
-- [ ] **AI explanation UI** — Confirmed: yes, show reasoning hidden behind a click/tap after reveal. Decide: single expandable panel, or a persistent "AI thought" drawer?
-- [ ] **Dial interaction prototype** — Highest-risk UI piece. Validate circular drag-on-arc touch interaction before committing to full build.
 - [ ] **Room link sharing format** — For 1.0 multiplayer: short code (e.g. `WXYZ`) + URL, or UUID-based URL only?
 
 ---
 
 ## ✅ Resolved Decisions
 
+- **Game modes:** MVP uses co-op mode (human + AI teammates, official Wavelength co-op rules). Competitive mode (humans vs AI) deferred to 1.0 with multiplayer. Mode selection screen shows both options with competitive disabled.
+- **Solo co-op rules:** 7 cards per game, alternating psychic (random first), bullseye = 3 pts + bonus card, end-of-game score rated on chart.
+- **Bonus guess:** Not used in co-op mode (no opposing team). Kept in codebase for competitive mode in 1.0.
 - **Spectrum deck:** LLM-generated pairs. 80-card core deck shipped as static JSON (see `spectrum-deck.json`). Additional LLM-generated packs in 1.0, player-generated in 2.0.
 - **Multiplayer:** MVP is solo only. 1.0 adds human multiplayer with websockets — priority 1 after working MVP.
-- **Scoring:** First to 10 points. Configurable scoring planned for post-1.0.
+- **Scoring:** Co-op: score rated on chart at game end. Competitive (1.0): first to 10 points. Configurable scoring planned for post-1.0.
 - **AI explanation:** Yes — shown after reveal, hidden behind a tap. Both for player interest and prompt/model tuning purposes.
 - **Hosting:** Vercel (frontend, free tier), Supabase (DB + realtime for 1.0, free tier). Effectively $0 hosting cost. Anthropic API is the only variable cost.
 - **AI personalities:** 3 for MVP — Lumen (literal), Sage (abstract), Flux (chaotic).
+- **Dial interaction:** Validated — circular arc drag on touch works. Implemented in Phase 3.
 
 ---
 
@@ -44,9 +45,9 @@ Telepath is inspired by [Wavelength](https://www.cmyk.games/collections/games/pr
 
 ## Concept
 
-A web-based adaptation of Wavelength with a meaningful twist: **it's always Humans vs. AI**. One team is the human player(s), the other is a single AI opponent with a distinct personality. The AI acts as a full team of one — giving clues when it's the psychic, placing the dial as the opposing guesser when humans are the psychic.
+A web-based adaptation of Wavelength where a human plays with an AI partner. In solo play (MVP), the human and AI cooperate as teammates — alternating as the psychic who gives clues while the other reads their mind and places the dial. In multiplayer (1.0), human teams compete against the AI in competitive mode.
 
-This makes the AI a genuine rival rather than a background system, keeps API costs low, and creates the game's most interesting moment: trying to read how an LLM thinks.
+The AI has a distinct personality that affects its clue style and dial placement. The core experience is trying to read how an LLM thinks — and having it try to read you back.
 
 ---
 
@@ -54,29 +55,31 @@ This makes the AI a genuine rival rather than a background system, keeps API cos
 
 | Milestone | Scope | Goal |
 |---|---|---|
-| **MVP** | Solo vs. AI, static deck, core loop | Validate the AI opponent concept |
-| **1.0** | + Human multiplayer rooms, LLM-generated card packs | Make it a real shareable game |
+| **MVP** | Solo co-op with AI, static deck, core loop | Validate the AI partner concept |
+| **1.0** | + Competitive mode, human multiplayer rooms, LLM-generated card packs | Make it a real shareable game |
 | **2.0** | + Player-generated packs, pack sharing, scoring options | Community and replayability |
 
 ---
 
 ## MVP
 
-*Solo only. You vs. AI. Validate the core loop and AI opponent experience.*
+*Solo co-op mode. You & AI as teammates. Validate the AI partner experience.*
 
 ### Scope
-- Single player vs. one AI opponent (choice of 3 personalities)
-- Full game loop: spectrum card draw → clue → dial placement → reveal → score → next round
-- First to 10 points wins
-- AI as psychic: generates clue via API, human places dial
-- AI as guesser: human gives clue, AI places dial as opposing bonus guess
+- Solo co-op mode: human + AI are teammates (choice of 3 AI personalities)
+- Mode selection screen: co-op enabled, competitive disabled ("Coming in 1.0")
+- Full game loop: spectrum card draw → psychic gives clue → partner places dial → reveal → score → next round
+- Human and AI alternate as psychic each round (random first psychic)
+- 7 cards per game; bullseye grants bonus card (extra round)
+- End-of-game score rated on chart (0–3 terrible → 22+ psychic for real)
 - Post-reveal AI reasoning panel (hidden behind tap)
-- Static 80-card core spectrum deck (`spectrum-deck.json`)
+- Static 80-card core spectrum deck (`spectrum-deck.json`) — 7 drawn per game
 - Animated splash screen
-- Share card on game end (score + AI personality faced)
+- Share card on game end (score + rating + AI personality)
 - Mobile-first responsive design
 
 ### What's Excluded from MVP
+- Competitive mode (scaffolding exists, disabled in UI)
 - Human multiplayer
 - LLM-generated card packs
 - User accounts or persistent stats
@@ -139,28 +142,35 @@ Respond only as JSON: { "position": <number 0-100>, "reasoning": "..." }
 - Single CTA: Play
 - Minimal — no clutter
 
-**2. Setup**
+**2. Mode Selection**
+- Co-op card: enabled, clickable — "You & AI are teammates"
+- Competitive card: disabled — "Coming in 1.0"
+
+**3. Setup**
 - Choose AI personality with short description
 - Start game
 
-**3. Game Screen**
+**4. Game Screen**
 - Spectrum bar — warm gradient, left/right concept labels
-- Dial — draggable arc, touch-optimized (highest implementation risk)
+- Dial — draggable arc, touch-optimized
 - Clue display — prominent, centered above spectrum
-- Score tracker — Human vs. AI, subtle top bar
-- Round indicator
-- Context-sensitive action area: "Give your clue" / "Place the dial" / "Waiting for AI…"
+- Score tracker — single team score, round X of Y
+- Context-sensitive action area:
+  - AI psychic rounds: "Waiting for AI..." → clue appears → human drags dial → "Lock Guess"
+  - Human psychic rounds: target visible + clue input → "Give Clue" → AI places dial
 - After reveal: target animates in, score updates, AI reasoning panel (tap to expand)
 
-**4. Round Transition**
-- Reveal animation
-- Score delta
-- Next Round prompt
+**5. Round Transition**
+- Zone label (Bullseye! / Close! / Almost / Miss)
+- Points earned + running total
+- Bonus card message on bullseye
+- Next Round / See Results button
 
-**5. End Screen**
-- Win/loss
-- Score summary
-- Shareable card (score + personality + round count)
+**6. End Screen**
+- Total score prominently displayed
+- Rating from co-op chart (e.g., "You're on the same wavelength!")
+- Rounds played, personality partnered with
+- Shareable card (score + rating + personality)
 - Play Again / Change Personality
 
 ### Design System
@@ -217,9 +227,10 @@ Respond only as JSON: { "position": <number 0-100>, "reasoning": "..." }
 
 ## 1.0
 
-*Multiplayer rooms + LLM-generated card packs. Priority 1 after working MVP.*
+*Competitive mode + multiplayer rooms + LLM-generated card packs. Priority 1 after working MVP.*
 
 ### Added Scope
+- **Competitive mode enabled** — humans vs. AI, first to 10 points, bonus guess mechanic (code scaffolding already exists from MVP)
 - Human multiplayer via shareable room link (humans share one team vs. AI)
 - Real-time dial sync across all human players (they see each other's live position)
 - Room creation with unique code + URL

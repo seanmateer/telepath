@@ -18,10 +18,10 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 3 — Dial UI (complete)
-**Last Updated:** 2026-02-21
-**Last Session Summary:** Completed Phase 3 dial UI: standalone dial, mouse/touch drag, verified dial math on device, snap/easing, reveal animation, and game-state wiring.
-**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 4 mobile audit.
+**Current Phase:** Phase 5 — Gameplay Testing (in progress)
+**Last Updated:** 2026-02-22
+**Last Session Summary:** Improved dial-placement prompt reliability by explicitly defining 0/50/100 left-center-right mapping and adding instruction-level consistency checks between reasoning and numeric position to reduce contradictory AI explanations.
+**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
 
@@ -134,47 +134,81 @@
 ### Phase 4 — Full UI
 *Depends on Phases 1–3.*
 
-- [ ] Splash screen with animated layered arcs (Framer Motion)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] splash screen"`
-- [ ] Setup screen — personality selection with descriptions
-- [ ] 📦 `git add -A && git commit -m "[phase-4] setup screen"`
-- [ ] Game screen layout
-  - [ ] Spectrum bar with gradient and concept labels
-  - [ ] Clue display area
-  - [ ] Score tracker (Human vs. AI)
-  - [ ] Round indicator
-  - [ ] Context-sensitive action area
-- [ ] 📦 `git add -A && git commit -m "[phase-4] game screen layout"`
-- [ ] AI reasoning panel (hidden, tap to reveal after round)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] AI reasoning panel"`
-- [ ] Round transition animation + score delta
-- [ ] 📦 `git add -A && git commit -m "[phase-4] round transition"`
-- [ ] End screen — win/loss, score summary
-- [ ] Share card generation (html2canvas or equivalent)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] end screen + share card"`
-- [ ] Apply full design system (colors, typography, spacing)
-- [ ] 📦 `git add -A && git commit -m "[phase-4] design system"`
-- [ ] Mobile-first audit — test all screens at 390px width
-- [ ] Accessibility pass — focus states, contrast, touch targets
-- [ ] 📦 `git add -A && git commit -m "[phase-4] mobile audit + accessibility"`
+- [x] Splash screen with animated layered arcs (Framer Motion) — DM Serif Display title, animated arcs, warm beige canvas
+- [x] 📦 `git add -A && git commit -m "[phase-4] splash screen"`
+- [x] Setup screen — personality selection with descriptions — Lumen/Sage/Flux cards with accent colors
+- [x] 📦 `git add -A && git commit -m "[phase-4] setup screen"`
+- [x] Game screen layout
+  - [x] Spectrum bar with gradient and concept labels
+  - [x] Clue display area
+  - [x] Score tracker (Human vs. AI)
+  - [x] Round indicator
+  - [x] Context-sensitive action area
+- [x] 📦 `git add -A && git commit -m "[phase-4] game screen layout"`
+- [x] AI reasoning panel (hidden, tap to reveal after round) — expandable accordion with chevron
+- [x] 📦 `git add -A && git commit -m "[phase-4] AI reasoning panel"`
+- [x] Round transition animation + score delta — fullscreen overlay with zone label, points, bonus
+- [x] 📦 `git add -A && git commit -m "[phase-4] round transition"`
+- [x] End screen — win/loss, score summary with serif typography
+- [x] Share card generation (html2canvas) with Web Share API + clipboard fallback
+- [x] 📦 `git add -A && git commit -m "[phase-4] end screen + share card"`
+- [x] Apply full design system (colors, typography, spacing) — DM Sans + DM Serif Display, warm palette, custom Tailwind tokens (ink, warm, spectrum, personality colors)
+- [x] 📦 committed with splash screen (foundational to all screens)
+- [x] Mobile-first audit — test all screens at 390px width
+- [x] Accessibility pass — focus states, contrast, touch targets
+- [x] 📦 `git add -A && git commit -m "[phase-4] mobile audit + accessibility"`
 
 **Phase 4 complete when:** Full game is playable end-to-end in browser and on mobile. Share card generates correctly.
 
 ---
 
-### Phase 5 — Deploy
-*Depends on Phase 4.*
+### Phase 5 — Gameplay Testing
+*Open-ended iteration phase. Do NOT skip to Phase 6 (Deploy) until gameplay feels solid.*
+
+This phase is different from the others — it's not a linear checklist. We play-test the game, identify issues (gameplay feel, AI quality, UI rough edges, timing, animations, edge cases), log them as tasks below, fix them, and repeat. Tasks will be added and removed as we go.
+
+**How this phase works:**
+1. Play-test the full game loop (both as human psychic and with AI psychic)
+2. Note anything that feels off — gameplay, UI, animations, AI behavior, timing
+3. Add it as a task below with a clear description
+4. Fix it, verify it in-game, commit
+5. Repeat until the human says it's ready for deploy
+
+**Important for all agents:** Do not auto-generate a big backlog of speculative tasks here. Tasks are added by the human during play-testing or collaboratively during a session. This is a "hang out and iterate" phase — stay responsive to what the human wants to work on next.
+
+#### Active Tasks
+
+*Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
+
+- [ ] **Dial UI refinement** — Rework dial target-zone presentation to better resemble official Wavelength’s 2-3-4-3-2 spread while preserving current interaction model and co-op flow.
+
+#### Completed Tasks
+
+*Move tasks here when done, with a brief note. Prune periodically.*
+
+- [x] **Co-op mode overhaul** — Mode selection screen, 7-card deck, alternating psychic, single team score with rating chart, co-op scoring (bullseye 3pts + bonus card, adjacent 3pts, outer 2pts), updated ScoreBar/RoundTransition/EndScreen, cooperative AI prompt framing, 20 unit tests passing. Competitive scaffolding preserved for 1.0.
+- [x] **Co-op pacing refactor** — Added manual reveal step after guesses, staged co-op flow to preserve guess→reveal rhythm, animated AI dial sweep for human-psychic rounds, replaced co-op fullscreen transition with inline summary card + explicit Next Round/See Results, and preserved competitive overlay behavior.
+- [x] **Local AI proxy dev fix** — Added Vite dev middleware to forward `/api/ai` requests to `api/ai.ts` during `npm run dev`, preventing HTML fallback responses and restoring JSON AI responses for clue/dial calls in local play-tests.
+- [x] **Local env loading for AI proxy** — Updated Vite config to load `.env` values into `process.env` in local dev so the `/api/ai` middleware can read `ANTHROPIC_API_KEY` and avoid “Server missing ANTHROPIC_API_KEY.”
+- [x] **Dial reasoning consistency tuning** — Updated dial-placement prompts to explicitly define left/right numeric scale and require consistency between textual reasoning and numeric output to reduce contradictions like “rebellious” with right-leaning placement.
+
+**Phase 5 complete when:** The human says the gameplay loop feels good and we're ready to ship.
+
+---
+
+### Phase 6 — Deploy
+*Depends on Phase 5. Do NOT start until gameplay testing is complete.*
 
 - [ ] Set `ANTHROPIC_API_KEY` in Vercel environment variables
 - [ ] Deploy to Vercel
 - [ ] Smoke test production build — full game, both player types
 - [ ] Verify edge function works in production (check logs)
-- [ ] 📦 `git add -A && git commit -m "[phase-5] production verified"`
+- [ ] 📦 `git add -A && git commit -m "[phase-6] production verified"`
 - [ ] Test share card on iOS and Android
 - [ ] Final mobile test on real device
-- [ ] 📦 `git add -A && git commit -m "[phase-5] MVP complete 🎉"`
+- [ ] 📦 `git add -A && git commit -m "[phase-6] MVP complete 🎉"`
 
-**Phase 5 complete when:** Live URL works end-to-end on real devices. Share card works.
+**Phase 6 complete when:** Live URL works end-to-end on real devices. Share card works.
 
 ---
 
@@ -215,6 +249,14 @@
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-22 | Codex | Phase 5 | Added next active gameplay-testing task for dial UI refinement toward official 2-3-4-3-2 target spread, then prepared branch for merge into `main`. |
+| 2026-02-22 | Codex | Phase 5 | Tuned dial-placement prompts for consistency: added explicit 0/50/100 left-center-right mapping and stronger reasoning-to-position alignment instructions to reduce contradictory Lumen outputs. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Added `.env` loading in Vite config for local server middleware so `/api/ai` can read `ANTHROPIC_API_KEY` during `npm run dev`; fixes local fallback clue/reasoning errors caused by missing server env vars. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Resolved local play-test AI proxy failures (`AI proxy response was not valid JSON`) by wiring a Vite dev `/api/ai` middleware to the edge handler and improving non-JSON proxy diagnostics in `useAI`. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Implemented co-op pacing flow updates from play-test feedback: manual reveal step, inline co-op round summary with continue CTA, AI dial sweep animation before reveal, and competitive-only fullscreen transition. Verified with `npm run test:game`, `npm run build`, and `npm run lint`. |
+| 2026-02-22 | Claude Code | Phase 5 | Completed co-op mode overhaul: ModeScreen, startCoopGame/submitTeamGuess/scoreCoopRound/getCoopRating state machine functions, GameScreen co-op branching, ScoreBar (single score + round X of Y), RoundTransition (bonus card message + running total), EndScreen (score + rating chart), cooperative AI prompt framing, 20 unit tests (12 new co-op + 8 existing competitive). TypeScript clean, build passes. |
+| 2026-02-21 | Claude Code | Phase 4 | Completed mobile-first audit + accessibility pass: focus-visible ring styles, min-h-[44px] touch targets on bonus/retry buttons, ARIA attributes (role=slider on dial, aria-expanded on reasoning panel, aria-hidden on decorative elements, aria-label on clue input), contrast fixes (ink-faint #C4B9AB→#A89888, score-miss #94A3B8→#708296, score-outer #EAB308→#CA8A04). Verified full 2-round game flow at 390px. |
+| 2026-02-21 | Claude Code | Phase 4 | Built all Phase 4 screens: SplashScreen (animated SVG arcs), SetupScreen (personality cards), GameScreen (full AI integration with stable-ref pattern to prevent infinite loops), ScoreBar, ReasoningPanel (accordion), RoundTransition (fullscreen overlay), EndScreen (html2canvas share card). Design system: DM Sans/DM Serif Display, warm palette, custom Tailwind tokens. |
 | 2026-02-21 | Codex | Phase 3 | Investigated iOS Safari haptics on iPhone 16 Pro (iOS 26.2.1), confirmed no reliable Web API behavior in Safari for physical feedback, and logged a follow-up for Phase 4 mobile audit. |
 | 2026-02-21 | Codex | Phase 3 | Built dial UI in isolation, implemented mouse/touch arc dragging with rotated orientation and mobile haptics, added snap/easing + reveal animation, and wired dial flow to the game state machine demo. |
 | 2026-02-21 | Codex | Phase 2 | Completed AI integration in `useAI`, verified live Lumen/Sage/Flux outputs via `/api/ai`, updated model IDs to active Sonnet/Haiku 4.5 variants, and hardened JSON parsing for fenced model responses. |

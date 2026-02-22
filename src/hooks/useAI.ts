@@ -185,6 +185,11 @@ const createFallbackDialPlacement = (
   };
 };
 
+const isLikelyHtml = (value: string): boolean => {
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html') || trimmed.startsWith('<');
+};
+
 const callAIProxy = async (payload: AIProxyRequest): Promise<unknown> => {
   const response = await fetch('/api/ai', {
     method: 'POST',
@@ -194,11 +199,21 @@ const callAIProxy = async (payload: AIProxyRequest): Promise<unknown> => {
     body: JSON.stringify(payload),
   });
 
+  const rawPayload = await response.text();
   let parsedPayload: unknown;
   try {
-    parsedPayload = await response.json();
+    parsedPayload = JSON.parse(rawPayload);
   } catch {
-    throw new Error('AI proxy response was not valid JSON.');
+    if (isLikelyHtml(rawPayload)) {
+      throw new Error(
+        'AI proxy returned HTML instead of JSON. Local dev should route /api/ai through the server handler.',
+      );
+    }
+
+    const contentType = response.headers.get('content-type') ?? 'unknown';
+    throw new Error(
+      `AI proxy response was not valid JSON (HTTP ${response.status}, content-type: ${contentType}).`,
+    );
   }
 
   if (!isAIProxyPayload(parsedPayload)) {
