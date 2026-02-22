@@ -58,6 +58,12 @@ export const buildClueSystemPrompt = (personality: Personality): string => {
     `Personality style: ${profile.styleDescription}`,
     `Clue behavior: ${profile.clueTendency}`,
     'Generate one clue that is 1 to 3 words.',
+    'Never restate the spectrum axis in other words.',
+    'Forbidden: endpoint words, simple variants, and prefixed/negated forms (example: "uncommon" is invalid when endpoint is "common").',
+    'Avoid definitional synonym/antonym clues that directly describe either endpoint.',
+    'Use an external anchor (object, scenario, behavior, or image), not a dictionary-style descriptor of the axis.',
+    'Internally self-check before finalizing: if clue could be interpreted as a direct restatement of either endpoint, regenerate.',
+    'Reasoning must explain anchor-to-position mapping, not endpoint paraphrasing.',
     'Do not include either endpoint concept verbatim in the clue.',
     'Return only valid JSON with exactly this schema: {"clue":"string","reasoning":"string"}',
     'No markdown. No prose outside JSON.',
@@ -71,6 +77,9 @@ export const buildClueUserPrompt = ({
   return [
     `Spectrum: [${card.left}] <-> [${card.right}]`,
     `Hidden target: ${targetPosition}% from the left (0 = far left, 100 = far right).`,
+    `Axis endpoints for this round: "${card.left}" and "${card.right}".`,
+    'Do not use endpoint-adjacent forms (exact, prefixed/negated, comparative/adverb/adjective variants).',
+    'Bad clue style for this game: axis restatement. Good clue style: external anchor.',
     'Respond with JSON only.',
   ].join('\n');
 };
