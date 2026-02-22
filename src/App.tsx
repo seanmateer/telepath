@@ -5,7 +5,12 @@ import { ModeScreen } from './components/ModeScreen';
 import { SetupScreen } from './components/SetupScreen';
 import { GameScreen } from './components/GameScreen';
 import { EndScreen } from './components/EndScreen';
+import {
+  loadPlaytestSettings,
+  savePlaytestSettings,
+} from './lib/playtestSettings';
 import type { GameMode, GameState, Personality } from './types/game';
+import type { PlaytestSettings } from './types/playtest';
 
 type AppScreen = 'splash' | 'mode' | 'setup' | 'game' | 'end';
 
@@ -13,6 +18,9 @@ export const App = () => {
   const [screen, setScreen] = useState<AppScreen>('splash');
   const [gameMode, setGameMode] = useState<GameMode>('coop');
   const [personality, setPersonality] = useState<Personality>('lumen');
+  const [playtestSettings, setPlaytestSettings] = useState<PlaytestSettings>(
+    () => loadPlaytestSettings(),
+  );
   const [endGameState, setEndGameState] = useState<GameState | null>(null);
   const gameKeyRef = useRef(0);
 
@@ -48,6 +56,14 @@ export const App = () => {
     setScreen('setup');
   }, []);
 
+  const handlePlaytestSettingsChange = useCallback(
+    (nextSettings: PlaytestSettings) => {
+      const savedSettings = savePlaytestSettings(nextSettings);
+      setPlaytestSettings(savedSettings);
+    },
+    [],
+  );
+
   return (
     <AnimatePresence mode="wait">
       {screen === 'splash' && (
@@ -80,7 +96,12 @@ export const App = () => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
         >
-          <SetupScreen onStart={handleStart} gameMode={gameMode} />
+          <SetupScreen
+            onStart={handleStart}
+            gameMode={gameMode}
+            playtestSettings={playtestSettings}
+            onPlaytestSettingsChange={handlePlaytestSettingsChange}
+          />
         </motion.div>
       )}
       {screen === 'game' && (
@@ -94,6 +115,8 @@ export const App = () => {
           <GameScreen
             personality={personality}
             gameMode={gameMode}
+            playtestSettings={playtestSettings}
+            onPlaytestSettingsChange={handlePlaytestSettingsChange}
             onGameOver={handleGameOver}
           />
         </motion.div>

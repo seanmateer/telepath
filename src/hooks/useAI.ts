@@ -7,15 +7,18 @@ import {
   buildDialUserPrompt,
 } from '../lib/aiPrompts.js';
 import type { Personality, SpectrumCard } from '../types/game.js';
+import type { AIUsageSample } from '../types/playtest.js';
 
 type ClueResponse = {
   clue: string;
   reasoning: string;
+  usage: AIUsageSample | null;
 };
 
 type DialPlacementResponse = {
   position: number;
   reasoning: string;
+  usage: AIUsageSample | null;
 };
 
 type AIProxyRequest = {
@@ -43,6 +46,11 @@ type AIProxyErrorPayload = {
 
 type AIProxyPayload = AIProxySuccessPayload | AIProxyErrorPayload;
 
+type AIProxyResult = {
+  data: unknown;
+  usage: AIUsageSample;
+};
+
 type GenerateClueInput = {
   card: SpectrumCard;
   targetPosition: number;
@@ -53,6 +61,10 @@ type PlaceDialInput = {
   card: SpectrumCard;
   clue: string;
   personality: Personality;
+};
+
+type UseAIOptions = {
+  useHaikuOnlyClues?: boolean;
 };
 
 const CLUE_MAX_TOKENS = 220;
@@ -157,6 +169,7 @@ const createFallbackClueResponse = (
   return {
     clue: getFallbackClue(input.targetPosition),
     reasoning: `Fallback clue used because AI request failed: ${errorMessage}`,
+    usage: null,
   };
 };
 
@@ -182,6 +195,7 @@ const createFallbackDialPlacement = (
   return {
     position: fallbackPosition,
     reasoning: `Fallback dial placement used because AI request failed: ${errorMessage}`,
+    usage: null,
   };
 };
 
@@ -190,7 +204,20 @@ const isLikelyHtml = (value: string): boolean => {
   return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html') || trimmed.startsWith('<');
 };
 
-const callAIProxy = async (payload: AIProxyRequest): Promise<unknown> => {
+const toUsageSample = (
+  model: string,
+  inputTokens: number,
+  outputTokens: number,
+): AIUsageSample => {
+  return {
+    model,
+    inputTokens,
+    outputTokens,
+    estimatedUsd: null,
+  };
+};
+
+const callAIProxy = async (payload: AIProxyRequest): Promise<AIProxyResult> => {
   const response = await fetch('/api/ai', {
     method: 'POST',
     headers: {
@@ -228,16 +255,25 @@ const callAIProxy = async (payload: AIProxyRequest): Promise<unknown> => {
     throw new Error(errorMessage);
   }
 
-  return parsedPayload.data;
+  return {
+    data: parsedPayload.data,
+    usage: toUsageSample(
+      parsedPayload.model,
+      parsedPayload.usage.inputTokens,
+      parsedPayload.usage.outputTokens,
+    ),
+  };
 };
 
-export const useAI = () => {
+export const useAI = (options: UseAIOptions = {}) => {
+  const clueModel = options.useHaikuOnlyClues ? DIAL_MODEL : CLUE_MODEL;
+
   const generateClue = async (
     input: GenerateClueInput,
   ): Promise<ClueResponse> => {
     try {
-      const data = await callAIProxy({
-        model: CLUE_MODEL,
+      const result = await callAIProxy({
+        model: clueModel,
         systemPrompt: buildClueSystemPrompt(input.personality),
         userPrompt: buildClueUserPrompt({
           card: input.card,
@@ -247,13 +283,14 @@ export const useAI = () => {
         temperature: CLUE_TEMPERATURE,
       });
 
-      if (!isClueResponse(data)) {
+      if (!isClueResponse(result.data)) {
         throw new Error('AI clue response failed validation.');
       }
 
       return {
-        clue: normalizeClue(data.clue),
-        reasoning: normalizeReasoning(data.reasoning),
+        clue: normalizeClue(result.data.clue),
+        reasoning: normalizeReasoning(result.data.reasoning),
+        usage: result.usage,
       };
     } catch (error: unknown) {
       const errorMessage =
@@ -266,7 +303,7 @@ export const useAI = () => {
     input: PlaceDialInput,
   ): Promise<DialPlacementResponse> => {
     try {
-      const data = await callAIProxy({
+      const result = await callAIProxy({
         model: DIAL_MODEL,
         systemPrompt: buildDialSystemPrompt(input.personality),
         userPrompt: buildDialUserPrompt({
@@ -277,13 +314,14 @@ export const useAI = () => {
         temperature: DIAL_TEMPERATURE,
       });
 
-      if (!isDialPlacementResponse(data)) {
+      if (!isDialPlacementResponse(result.data)) {
         throw new Error('AI dial response failed validation.');
       }
 
       return {
-        position: clampDialPosition(data.position),
-        reasoning: normalizeReasoning(data.reasoning),
+        position: clampDialPosition(result.data.position),
+        reasoning: normalizeReasoning(result.data.reasoning),
+        usage: result.usage,
       };
     } catch (error: unknown) {
       const errorMessage =

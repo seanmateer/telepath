@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Dial } from './Dial';
 import { CoopRoundSummary } from './CoopRoundSummary';
+import { PlaytestUtilityPanel } from './PlaytestUtilityPanel';
 import { ScoreBar } from './ScoreBar';
 import { ReasoningPanel } from './ReasoningPanel';
 import { RoundTransition } from './RoundTransition';
@@ -18,13 +19,23 @@ import {
   submitPsychicClue,
   submitTeamGuess,
 } from '../lib/gameState';
+import {
+  clearTelemetry,
+  endGameSession,
+  loadTelemetrySnapshot,
+  recordUsage,
+  startGameSession,
+} from '../lib/playtestTelemetry';
 import { loadShuffledSpectrumDeck } from '../lib/spectrumDeck';
 import { useAI } from '../hooks/useAI';
 import type { BonusDirection, GameMode, GameState, Personality } from '../types/game';
+import type { AIUsageSample, PlaytestSettings } from '../types/playtest';
 
 type GameScreenProps = {
   personality: Personality;
   gameMode: GameMode;
+  playtestSettings: PlaytestSettings;
+  onPlaytestSettingsChange: (settings: PlaytestSettings) => void;
   onGameOver: (state: GameState) => void;
 };
 
@@ -35,7 +46,17 @@ const DEFAULT_DIAL_VALUE = 50;
 
 const easeOutCubic = (value: number): number => 1 - (1 - value) ** 3;
 
-export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProps) => {
+const createGameSessionId = (): string => {
+  return `game-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+export const GameScreen = ({
+  personality,
+  gameMode,
+  playtestSettings,
+  onPlaytestSettingsChange,
+  onGameOver,
+}: GameScreenProps) => {
   const [dialValue, setDialValue] = useState(DEFAULT_DIAL_VALUE);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,9 +65,16 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
   const [showTransition, setShowTransition] = useState(false);
   const [aiReasoning, setAiReasoning] = useState<string | null>(null);
   const [humanClueInput, setHumanClueInput] = useState('');
+  const [telemetrySnapshot, setTelemetrySnapshot] = useState(() =>
+    loadTelemetrySnapshot(),
+  );
   const dialValueRef = useRef(dialValue);
   const animationFrameRef = useRef<number | null>(null);
-  const { generateClue, placeDial } = useAI();
+  const gameSessionIdRef = useRef<string | null>(null);
+  const telemetryEndedRef = useRef(false);
+  const { generateClue, placeDial } = useAI({
+    useHaikuOnlyClues: playtestSettings.haikuOnlyClues,
+  });
 
   // Stable refs for AI functions to avoid re-render loops
   const generateClueRef = useRef(generateClue);
@@ -65,6 +93,14 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+
+      const gameSessionId = gameSessionIdRef.current;
+      if (!gameSessionId || telemetryEndedRef.current) {
+        return;
+      }
+
+      telemetryEndedRef.current = true;
+      endGameSession({ gameSessionId });
     };
   }, []);
 
@@ -74,6 +110,62 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
       animationFrameRef.current = null;
     }
   }, []);
+
+  const recordTelemetryUsage = useCallback(
+    (
+      roundNumber: number,
+      callType: 'clue' | 'dial',
+      usage: AIUsageSample | null,
+    ) => {
+      const gameSessionId = gameSessionIdRef.current;
+      if (!gameSessionId || !usage) {
+        return;
+      }
+
+      setTelemetrySnapshot(
+        recordUsage({
+          gameSessionId,
+          gameMode,
+          roundNumber,
+          callType,
+          usage,
+        }),
+      );
+    },
+    [gameMode],
+  );
+
+  const finalizeTelemetrySession = useCallback((roundsPlayed?: number) => {
+    const gameSessionId = gameSessionIdRef.current;
+    if (!gameSessionId || telemetryEndedRef.current) {
+      return;
+    }
+
+    telemetryEndedRef.current = true;
+    setTelemetrySnapshot(
+      endGameSession({
+        gameSessionId,
+        roundsPlayed,
+      }),
+    );
+  }, []);
+
+  const handleClearTelemetry = useCallback(() => {
+    const gameSessionId = gameSessionIdRef.current;
+
+    if (!gameSessionId || telemetryEndedRef.current) {
+      setTelemetrySnapshot(clearTelemetry());
+      return;
+    }
+
+    clearTelemetry();
+    setTelemetrySnapshot(
+      startGameSession({
+        gameSessionId,
+        gameMode,
+      }),
+    );
+  }, [gameMode]);
 
   const animateDialToValue = useCallback(
     (targetValue: number, durationMs: number): Promise<void> => {
@@ -134,6 +226,16 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
 
         if (cancelled) return;
 
+        const gameSessionId = createGameSessionId();
+        gameSessionIdRef.current = gameSessionId;
+        telemetryEndedRef.current = false;
+        setTelemetrySnapshot(
+          startGameSession({
+            gameSessionId,
+            gameMode,
+          }),
+        );
+
         // Human is psychic first round — no AI call needed
         // AI is psychic on even rounds — generate a clue
         if (nextState.round?.psychicTeam === 'ai') {
@@ -144,6 +246,11 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
             personality,
           });
           if (cancelled) return;
+          recordTelemetryUsage(
+            nextState.round.roundNumber,
+            'clue',
+            clueResult.usage,
+          );
           nextState = submitPsychicClue(nextState, clueResult.clue);
           setAiReasoning(clueResult.reasoning);
           setAiThinking(false);
@@ -238,6 +345,11 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
           clue: trimmedClue,
           personality,
         });
+        recordTelemetryUsage(
+          nextState.round!.roundNumber,
+          'dial',
+          dialResult.usage,
+        );
 
         await animateDialToValue(dialResult.position, AI_DIAL_SWEEP_MS);
 
@@ -254,6 +366,11 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
         clue: trimmedClue,
         personality,
       });
+      recordTelemetryUsage(
+        nextState.round!.roundNumber,
+        'dial',
+        dialResult.usage,
+      );
       nextState = submitHumanGuess(nextState, dialResult.position);
       setAiReasoning(dialResult.reasoning);
       setGameState(nextState);
@@ -271,7 +388,14 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
       setError(message);
       setAiThinking(false);
     }
-  }, [animateDialToValue, gameState, humanClueInput, personality, gameMode]);
+  }, [
+    animateDialToValue,
+    gameState,
+    humanClueInput,
+    personality,
+    gameMode,
+    recordTelemetryUsage,
+  ]);
 
   const handleHumanBonusGuess = useCallback(
     (direction: BonusDirection) => {
@@ -336,6 +460,7 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
     if (!gameState) return;
 
     if (gameState.phase === 'game-over') {
+      finalizeTelemetrySession(gameState.round?.roundNumber ?? 0);
       onGameOverRef.current(gameState);
       return;
     }
@@ -346,6 +471,7 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
       let nextState = startNextRound(gameState);
 
       if (nextState.phase === 'game-over') {
+        finalizeTelemetrySession(nextState.round?.roundNumber ?? 0);
         onGameOverRef.current(nextState);
         return;
       }
@@ -360,6 +486,11 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
           targetPosition: nextState.round.targetPosition,
           personality,
         });
+        recordTelemetryUsage(
+          nextState.round.roundNumber,
+          'clue',
+          clueResult.usage,
+        );
         nextState = submitPsychicClue(nextState, clueResult.clue);
         setAiReasoning(clueResult.reasoning);
         setAiThinking(false);
@@ -374,7 +505,13 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
       setError(message);
       setAiThinking(false);
     }
-  }, [gameState, personality, stopDialAnimation]);
+  }, [
+    finalizeTelemetrySession,
+    gameState,
+    personality,
+    recordTelemetryUsage,
+    stopDialAnimation,
+  ]);
 
   if (loading) {
     return (
@@ -641,6 +778,13 @@ export const GameScreen = ({ personality, gameMode, onGameOver }: GameScreenProp
           />
         )}
       </AnimatePresence>
+
+      <PlaytestUtilityPanel
+        settings={playtestSettings}
+        telemetry={telemetrySnapshot}
+        onSettingsChange={onPlaytestSettingsChange}
+        onClearTelemetry={handleClearTelemetry}
+      />
     </main>
   );
 };

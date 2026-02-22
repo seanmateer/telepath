@@ -186,6 +186,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Playtest cost controls + telemetry panel** — Added persisted playtest settings (`Haiku-only clues` toggle) surfaced through a bottom-left settings icon that opens a modal in setup and in-game screens, plus local AI usage/cost telemetry sourced from `/api/ai` usage metadata (current game + recent games grouped with expandable round lists, per-round haiku-vs-dual model indicator, stored-games aggregate totals, clear action, 10-game/100-round retention).
 - [x] **Co-op mode overhaul** — Mode selection screen, 7-card deck, alternating psychic, single team score with rating chart, co-op scoring (bullseye 3pts + bonus card, adjacent 3pts, outer 2pts), updated ScoreBar/RoundTransition/EndScreen, cooperative AI prompt framing, 20 unit tests passing. Competitive scaffolding preserved for 1.0.
 - [x] **Co-op pacing refactor** — Added manual reveal step after guesses, staged co-op flow to preserve guess→reveal rhythm, animated AI dial sweep for human-psychic rounds, replaced co-op fullscreen transition with inline summary card + explicit Next Round/See Results, and preserved competitive overlay behavior.
 - [x] **Local AI proxy dev fix** — Added Vite dev middleware to forward `/api/ai` requests to `api/ai.ts` during `npm run dev`, preventing HTML fallback responses and restoring JSON AI responses for clue/dial calls in local play-tests.
@@ -249,6 +250,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-22 | Codex | Phase 5 | Implemented playtest spend controls/telemetry: persisted Haiku-only clue mode, usage + estimated USD tracking from proxy metadata, bottom-left settings modal in setup/game, grouped rounds under game accordions (current open by default), per-round model-mode badges, and stored-games aggregate totals. Verified with `npm run lint` and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Added next active gameplay-testing task for dial UI refinement toward official 2-3-4-3-2 target spread, then prepared branch for merge into `main`. |
 | 2026-02-22 | Codex | Phase 5 | Tuned dial-placement prompts for consistency: added explicit 0/50/100 left-center-right mapping and stronger reasoning-to-position alignment instructions to reduce contradictory Lumen outputs. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Added `.env` loading in Vite config for local server middleware so `/api/ai` can read `ANTHROPIC_API_KEY` during `npm run dev`; fixes local fallback clue/reasoning errors caused by missing server env vars. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |

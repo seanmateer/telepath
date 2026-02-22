@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
+import { PlaytestUtilityPanel } from './PlaytestUtilityPanel';
+import { clearTelemetry, loadTelemetrySnapshot } from '../lib/playtestTelemetry';
 import type { GameMode, Personality } from '../types/game';
+import type { PlaytestSettings } from '../types/playtest';
 
 type SetupScreenProps = {
   onStart: (personality: Personality) => void;
   gameMode: GameMode;
+  playtestSettings: PlaytestSettings;
+  onPlaytestSettingsChange: (settings: PlaytestSettings) => void;
 };
 
 type PersonalityOption = {
@@ -51,8 +56,20 @@ const personalities: PersonalityOption[] = [
   },
 ];
 
-export const SetupScreen = ({ onStart, gameMode }: SetupScreenProps) => {
+export const SetupScreen = ({
+  onStart,
+  gameMode,
+  playtestSettings,
+  onPlaytestSettingsChange,
+}: SetupScreenProps) => {
   const [selected, setSelected] = useState<Personality>('lumen');
+  const [telemetrySnapshot, setTelemetrySnapshot] = useState(() =>
+    loadTelemetrySnapshot(),
+  );
+
+  const handleClearTelemetry = useCallback(() => {
+    setTelemetrySnapshot(clearTelemetry());
+  }, []);
 
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center px-6 py-12">
@@ -112,6 +129,13 @@ export const SetupScreen = ({ onStart, gameMode }: SetupScreenProps) => {
           Start Game
         </motion.button>
       </motion.div>
+
+      <PlaytestUtilityPanel
+        settings={playtestSettings}
+        telemetry={telemetrySnapshot}
+        onSettingsChange={onPlaytestSettingsChange}
+        onClearTelemetry={handleClearTelemetry}
+      />
     </main>
   );
 };
