@@ -39,8 +39,8 @@ export const ModeScreen = ({ onSelectMode }: ModeScreenProps) => {
     <main className="flex min-h-[100dvh] flex-col items-center justify-center px-6 py-12">
       <motion.div
         className="w-full max-w-sm"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         <h2 className="font-serif text-3xl tracking-tight text-ink">
@@ -57,11 +57,16 @@ export const ModeScreen = ({ onSelectMode }: ModeScreenProps) => {
               type="button"
               onClick={() => mode.enabled && onSelectMode(mode.id)}
               disabled={!mode.enabled}
-              className={`relative w-full rounded-2xl border-2 px-5 py-4 text-left transition-all ${
+              className={`relative w-full rounded-2xl border-2 px-5 py-4 text-left transition-colors transition-shadow ${
                 mode.enabled
-                  ? 'border-warm-300 bg-white/60 hover:bg-white/80 hover:border-warm-400 hover:shadow-card active:scale-[0.985]'
+                  ? 'border-warm-300 bg-white/60 hover:bg-white/80 hover:border-warm-400 hover:shadow-card'
                   : 'cursor-not-allowed border-warm-200/40 bg-warm-50/30 opacity-60'
               }`}
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                willChange: 'transform, opacity',
+              }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{

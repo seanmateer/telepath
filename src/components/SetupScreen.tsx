@@ -75,8 +75,8 @@ export const SetupScreen = ({
     <main className="flex min-h-[100dvh] flex-col items-center justify-center px-6 py-12">
       <motion.div
         className="w-full max-w-sm"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         <h2 className="font-serif text-3xl tracking-tight text-ink">
@@ -92,11 +92,16 @@ export const SetupScreen = ({
               key={p.id}
               type="button"
               onClick={() => setSelected(p.id)}
-              className={`w-full rounded-2xl border-2 px-5 py-4 text-left transition-all ${
+              className={`w-full rounded-2xl border-2 px-5 py-4 text-left transition-colors transition-shadow ${
                 selected === p.id
                   ? `${p.bgColor} ${p.selectedBorder} shadow-card`
                   : `bg-white/60 ${p.borderColor} hover:bg-white/80`
               }`}
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                willChange: 'transform, opacity',
+              }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.15 + index * 0.08, ease: 'easeOut' }}
@@ -120,7 +125,7 @@ export const SetupScreen = ({
         <motion.button
           type="button"
           onClick={() => onStart(selected)}
-          className="mt-8 w-full rounded-full bg-ink py-3.5 text-sm font-medium tracking-wide text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97]"
+          className="mt-8 w-full rounded-full bg-ink py-3.5 text-sm font-medium tracking-wide text-warm-50 transition-colors transition-shadow hover:bg-ink-light hover:shadow-glow"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.5, ease: 'easeOut' }}

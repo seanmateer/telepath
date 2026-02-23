@@ -99,7 +99,12 @@ export const SplashScreen = ({ onPlay }: SplashScreenProps) => {
         <motion.button
           type="button"
           onClick={onPlay}
-          className="mt-10 rounded-full bg-ink px-8 py-3.5 text-sm font-medium tracking-wide text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97]"
+          className="mt-10 rounded-full bg-ink px-8 py-3.5 text-sm font-medium tracking-wide text-warm-50 transition-colors transition-shadow hover:bg-ink-light hover:shadow-glow"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            willChange: 'transform, opacity',
+          }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.85, ease: 'easeOut' }}
