@@ -9,6 +9,9 @@ import type { Personality, SpectrumCard } from '../../types/game.js';
 const PERSONALITIES: Personality[] = ['lumen', 'sage', 'flux'];
 
 const CLUE_GUARDRAIL_LINES = [
+  'Direction rule is strict: 0 always maps to the LEFT endpoint and 100 always maps to the RIGHT endpoint.',
+  'Never invert endpoint mapping in reasoning (forbidden: claiming 0 = right or 100 = left).',
+  'In reasoning, prefer directional language ("toward LEFT/RIGHT endpoint") over raw percentages.',
   'Never restate the spectrum axis in other words.',
   'Forbidden: endpoint words, simple variants, and prefixed/negated forms (example: "uncommon" is invalid when endpoint is "common").',
   'Avoid definitional synonym/antonym clues that directly describe either endpoint.',
@@ -51,6 +54,10 @@ describe('buildClueUserPrompt', () => {
     assert.ok(
       prompt.includes('Axis endpoints for this round: "Rare" and "Common".'),
     );
+    assert.ok(
+      prompt.includes('Scale for this round: 0 = far Rare, 50 = center, 100 = far Common.'),
+    );
+    assert.ok(prompt.includes('Hidden target value on that scale: 19.'));
     assert.ok(
       prompt.includes(
         'Do not use endpoint-adjacent forms (exact, prefixed/negated, comparative/adverb/adjective variants).',

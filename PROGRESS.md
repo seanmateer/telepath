@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-23
-**Last Session Summary:** Consolidated dial/scoring-zone UI iteration: updated banana dial geometry and rendering to match the board-inspired style, switched scoring thresholds to equal-width zone boundaries, moved labels outside the arc, and tightened SVG viewport/interaction mapping for cleaner layout and reliable drag.
+**Last Session Summary:** Hardened clue-generation endpoint orientation guardrails so clue reasoning and hidden-target semantics consistently use `0 = left endpoint` and `100 = right endpoint`, including explicit per-card scale mapping in clue prompts.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -186,6 +186,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Clue endpoint-orientation hardening** — Strengthened clue-generation prompts to explicitly bind numeric scale to card concepts (`0 = left`, `100 = right`) and added anti-inversion reasoning guardrails so Sage/Lumen/Flux are less likely to describe taboo/acceptable-style endpoints backwards. Added regression coverage in `aiPrompts` tests.
 - [x] **Dial + scoring-zone UI iteration** — Consolidated visual polish across dial geometry, scoring-zone rendering, and label placement; updated scoring thresholds to equal-width zone boundaries; and tightened SVG viewport/interaction mapping to match the play-test mock direction while preserving reveal flow and touch drag behavior.
 - [x] **Dial UI refinement** — Reworked the dial into a wider 120° banana arc (`max-w-[350px]`) with visible target-centered score zones mapped to real scoring thresholds, added co-op center `3` + bonus icon (`4` in competitive), preserved percentage readout, and made zone visibility phase-aware (human psychic clue selection + reveal/results, hidden during active non-psychic guessing).
 - [x] **Playtest cost controls + telemetry panel** — Added persisted playtest settings (`Haiku-only clues` toggle) surfaced through a bottom-left settings icon that opens a modal in setup and in-game screens, plus local AI usage/cost telemetry sourced from `/api/ai` usage metadata (current game + recent games grouped with expandable round lists, per-round haiku-vs-dual model indicator, stored-games aggregate totals, clear action, 10-game/100-round retention).
@@ -252,6 +253,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-23 | Codex | Phase 5 | Fixed clue endpoint-orientation drift observed in play-test reasoning by hardening clue prompt scale semantics (`0 = left endpoint`, `100 = right endpoint`) and adding anti-inversion guardrails plus regression tests in `aiPrompts`. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
 | 2026-02-23 | Codex | Phase 5 | Consolidated dial/scoring-zone UI iteration into one pass: refined zone visuals and label placement, switched scoring thresholds to equal-width zone boundaries, tightened arc-bound geometry and viewport cropping, and aligned dial interaction mapping with the cropped render region. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Switched the dial indicator to a needle-style hand (skinnier than the tapered paddle) to reduce overlap with scoring labels while preserving the single-hand/no-target-dot reveal model. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Replaced dot-based dial markers with a tapered paddle hand and removed the green reveal dot; reveal correctness is now communicated by wedge zones plus a single hand indicator for guess position. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |

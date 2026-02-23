@@ -58,6 +58,9 @@ export const buildClueSystemPrompt = (personality: Personality): string => {
     `Personality style: ${profile.styleDescription}`,
     `Clue behavior: ${profile.clueTendency}`,
     'Generate one clue that is 1 to 3 words.',
+    'Direction rule is strict: 0 always maps to the LEFT endpoint and 100 always maps to the RIGHT endpoint.',
+    'Never invert endpoint mapping in reasoning (forbidden: claiming 0 = right or 100 = left).',
+    'In reasoning, prefer directional language ("toward LEFT/RIGHT endpoint") over raw percentages.',
     'Never restate the spectrum axis in other words.',
     'Forbidden: endpoint words, simple variants, and prefixed/negated forms (example: "uncommon" is invalid when endpoint is "common").',
     'Avoid definitional synonym/antonym clues that directly describe either endpoint.',
@@ -76,8 +79,9 @@ export const buildClueUserPrompt = ({
 }: CluePromptInput): string => {
   return [
     `Spectrum: [${card.left}] <-> [${card.right}]`,
-    `Hidden target: ${targetPosition}% from the left (0 = far left, 100 = far right).`,
     `Axis endpoints for this round: "${card.left}" and "${card.right}".`,
+    `Scale for this round: 0 = far ${card.left}, 50 = center, 100 = far ${card.right}.`,
+    `Hidden target value on that scale: ${targetPosition}.`,
     'Do not use endpoint-adjacent forms (exact, prefixed/negated, comparative/adverb/adjective variants).',
     'Bad clue style for this game: axis restatement. Good clue style: external anchor.',
     'Respond with JSON only.',
