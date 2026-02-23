@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameState, Personality } from '../types/game';
 import { getCoopRating } from '../lib/gameState';
+import { ScoreThermometer } from './ScoreThermometer';
 
 type EndScreenProps = {
   gameState: GameState;
@@ -131,25 +132,55 @@ export const EndScreen = ({
 
             {isCoop ? (
               <>
-                {/* Co-op: single team score */}
-                <div className="mt-5 text-center">
-                  <p className="text-5xl font-semibold tabular-nums text-ink">
-                    {gameState.coopScore}
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-ink-muted">points</p>
+                {/* Co-op: score + thermometer */}
+                <div className="mt-4 flex items-end gap-4">
+                  {/* Score + rating — left */}
+                  <div className="flex flex-col items-center" style={{ minWidth: '4.5rem' }}>
+                    <motion.p
+                      className="text-5xl font-semibold tabular-nums text-ink"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.5, ease: [0.175, 0.885, 0.32, 1.275] }}
+                    >
+                      {gameState.coopScore}
+                    </motion.p>
+                    <motion.p
+                      className="mt-0.5 text-sm font-medium text-ink-muted"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.7 }}
+                    >
+                      points
+                    </motion.p>
+                  </div>
+
+                  {/* Thermometer — right */}
+                  <div className="flex-1">
+                    <ScoreThermometer score={gameState.coopScore} animationDelay={0.6} />
+                  </div>
                 </div>
 
                 {/* Rating */}
-                <p className="mt-4 text-center font-serif text-lg text-ink-light">
+                <motion.p
+                  className="mt-4 text-center font-serif text-lg text-ink-light"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 1.8 }}
+                >
                   &ldquo;{coopRating}&rdquo;
-                </p>
+                </motion.p>
 
                 {/* Details */}
-                <div className="mt-4 flex justify-center gap-4 text-xs text-ink-muted">
+                <motion.div
+                  className="mt-3 flex justify-center gap-4 text-xs text-ink-muted"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 2.0 }}
+                >
                   <span>{roundCount} rounds</span>
                   <span>&middot;</span>
                   <span>w/ {personalityNames[personality]}</span>
-                </div>
+                </motion.div>
               </>
             ) : (
               <>
@@ -197,7 +228,7 @@ export const EndScreen = ({
           className="mt-6 w-full rounded-full border border-warm-200 bg-white/80 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.55 }}
+          transition={{ duration: 0.4, delay: isCoop ? 2.2 : 0.55 }}
           whileTap={{ scale: 0.97 }}
         >
           {shareStatus === 'copied'
@@ -212,7 +243,7 @@ export const EndScreen = ({
           className="mt-4 flex gap-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.65 }}
+          transition={{ duration: 0.4, delay: isCoop ? 2.2 : 0.65 }}
         >
           <button
             type="button"

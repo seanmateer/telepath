@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-23
-**Last Session Summary:** Hardened clue-generation endpoint orientation guardrails so clue reasoning and hidden-target semantics consistently use `0 = left endpoint` and `100 = right endpoint`, including explicit per-card scale mapping in clue prompts.
+**Last Session Summary:** Added co-op score thermometer visualization to the EndScreen — animated vertical fill bar with tier labels, integrated alongside the score number in the share card.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -180,7 +180,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
 
-*No active tasks right now — add the next item during play-testing.*
+- [x] **Co-op score thermometer end screen** — Added `ScoreThermometer` component with animated vertical fill bar showing all 8 co-op rating tiers (0–22+), integrated into `EndScreen` share card alongside the score number. Uses spectrum gradient fill, staggered tier label animations, and score marker line. Fits the warm/minimal design system.
 
 #### Completed Tasks
 
@@ -253,6 +253,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-23 | Claude Code | Phase 5 | Added co-op score thermometer to EndScreen: `ScoreThermometer` component with animated spectrum-gradient fill bar, 8 tier labels (0–22+ pts), score marker, integrated into share card layout. Verified with `npx tsc --noEmit`. |
 | 2026-02-23 | Codex | Phase 5 | Fixed clue endpoint-orientation drift observed in play-test reasoning by hardening clue prompt scale semantics (`0 = left endpoint`, `100 = right endpoint`) and adding anti-inversion guardrails plus regression tests in `aiPrompts`. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
 | 2026-02-23 | Codex | Phase 5 | Consolidated dial/scoring-zone UI iteration into one pass: refined zone visuals and label placement, switched scoring thresholds to equal-width zone boundaries, tightened arc-bound geometry and viewport cropping, and aligned dial interaction mapping with the cropped render region. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Switched the dial indicator to a needle-style hand (skinnier than the tapered paddle) to reduce overlap with scoring labels while preserving the single-hand/no-target-dot reveal model. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
