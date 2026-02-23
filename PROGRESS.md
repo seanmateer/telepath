@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-23
-**Last Session Summary:** Added co-op score thermometer visualization to the EndScreen — animated vertical fill bar with tier labels, integrated alongside the score number in the share card.
+**Last Session Summary:** Smoothed clue lock-in pacing by reusing the horizontal fade transition when the psychic submits a clue, so `Give Clue` now transitions into AI reading/placement states with the same subtle directional motion as round advances.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -180,12 +180,17 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
 
-- [x] **Co-op score thermometer end screen** — Added `ScoreThermometer` component with animated vertical fill bar showing all 8 co-op rating tiers (0–22+), integrated into `EndScreen` share card alongside the score number. Uses spectrum gradient fill, staggered tier label animations, and score marker line. Fits the warm/minimal design system.
+*No active tasks right now — add the next item during play-testing.*
 
 #### Completed Tasks
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Psychic clue lock-in transition smoothing** — Added a scene transition trigger to `GameScreen` so pressing `Give Clue` animates the center gameplay stack with the same subtle horizontal fade (old left, new right), reducing the abrupt switch from clue entry to AI reading/placement.
+- [x] **Next-round spectrum-first transition polish** — Updated `GameScreen` so `Next Round` advances to the new round state before clue generation, added a round-keyed horizontal fade transition (old left, new from right) with reduced-motion fallback, switched waiting copy to personality-specific wording (e.g., “Lumen is thinking of a clue...”), and rendered a static non-interactive dial shell (no hand/value/zones) while awaiting AI clues.
+- [x] **In-game score thermometer modal** — Made the top-left co-op score in `ScoreBar` clickable during gameplay to open a modal containing `ScoreThermometer`, so players can check current score tier + marker at any time instead of waiting for the end screen.
+- [x] **AI clue stability + rationale transparency** — Added a single-flight round-advance guard so repeated `Next Round` interactions cannot launch overlapping clue requests, disabled next-round buttons while AI clue generation is in-flight, and updated clue-generation prompt guidance so reasoning includes one rejected alternate clue and why the final clue was chosen.
+- [x] **Co-op score thermometer end screen** — Added `ScoreThermometer` component with animated vertical fill bar showing all 8 co-op rating tiers (0–22+), integrated into `EndScreen` share card alongside the score number. Uses spectrum gradient fill, staggered tier label animations, and score marker line. Fits the warm/minimal design system.
 - [x] **Clue endpoint-orientation hardening** — Strengthened clue-generation prompts to explicitly bind numeric scale to card concepts (`0 = left`, `100 = right`) and added anti-inversion reasoning guardrails so Sage/Lumen/Flux are less likely to describe taboo/acceptable-style endpoints backwards. Added regression coverage in `aiPrompts` tests.
 - [x] **Dial + scoring-zone UI iteration** — Consolidated visual polish across dial geometry, scoring-zone rendering, and label placement; updated scoring thresholds to equal-width zone boundaries; and tightened SVG viewport/interaction mapping to match the play-test mock direction while preserving reveal flow and touch drag behavior.
 - [x] **Dial UI refinement** — Reworked the dial into a wider 120° banana arc (`max-w-[350px]`) with visible target-centered score zones mapped to real scoring thresholds, added co-op center `3` + bonus icon (`4` in competitive), preserved percentage readout, and made zone visibility phase-aware (human psychic clue selection + reveal/results, hidden during active non-psychic guessing).
@@ -253,6 +258,10 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-23 | Codex | Phase 5 | Smoothed clue lock-in pacing by triggering the same subtle horizontal center-stack transition when the psychic submits `Give Clue`, reducing abrupt state swaps into AI reading/placement. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
+| 2026-02-23 | Codex | Phase 5 | Implemented next-round transition polish: on continue, swap immediately to the next spectrum before AI clue fetch, animate the full center stack with a subtle horizontal fade (old-left/new-right) plus reduced-motion fallback, show personality-specific AI thinking copy, and display a static dial shell while awaiting the clue. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
+| 2026-02-23 | Codex | Phase 5 | Added an in-game co-op score thermometer modal triggered by tapping the top-left score, reusing `ScoreThermometer` so players can view live score tier/marker during rounds. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
+| 2026-02-23 | Codex | Phase 5 | Fixed AI clue flicker from overlapping round-advance actions by adding a single-flight guard in `GameScreen`, disabling next-round controls while AI clue generation is active, and extending clue prompt guardrails to request one rejected alternate clue plus selection rationale in reasoning. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
 | 2026-02-23 | Claude Code | Phase 5 | Added co-op score thermometer to EndScreen: `ScoreThermometer` component with animated spectrum-gradient fill bar, 8 tier labels (0–22+ pts), score marker, integrated into share card layout. Verified with `npx tsc --noEmit`. |
 | 2026-02-23 | Codex | Phase 5 | Fixed clue endpoint-orientation drift observed in play-test reasoning by hardening clue prompt scale semantics (`0 = left endpoint`, `100 = right endpoint`) and adding anti-inversion guardrails plus regression tests in `aiPrompts`. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
 | 2026-02-23 | Codex | Phase 5 | Consolidated dial/scoring-zone UI iteration into one pass: refined zone visuals and label placement, switched scoring thresholds to equal-width zone boundaries, tightened arc-bound geometry and viewport cropping, and aligned dial interaction mapping with the cropped render region. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |

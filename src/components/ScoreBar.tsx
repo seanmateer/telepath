@@ -11,6 +11,7 @@ type ScoreBarProps = {
   coopScore: number;
   totalCards: number;
   cardsRemaining: number;
+  onCoopScoreClick?: () => void;
 };
 
 const personalityNames: Record<Personality, string> = {
@@ -29,17 +30,34 @@ export const ScoreBar = ({
   coopScore,
   totalCards,
   cardsRemaining,
+  onCoopScoreClick,
 }: ScoreBarProps) => {
   if (gameMode === 'coop') {
+    const scoreDisplay = (
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-lg font-semibold tabular-nums text-ink">
+          {coopScore}
+        </span>
+        <span className="text-xs font-medium text-ink-muted">pts</span>
+      </div>
+    );
+
     return (
       <div className="flex items-center justify-between py-2">
         {/* Team score */}
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-lg font-semibold tabular-nums text-ink">
-            {coopScore}
-          </span>
-          <span className="text-xs font-medium text-ink-muted">pts</span>
-        </div>
+        {onCoopScoreClick ? (
+          <button
+            type="button"
+            onClick={onCoopScoreClick}
+            className="-m-2 min-h-[44px] rounded-lg p-2 text-left transition hover:bg-warm-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-300"
+            aria-label={`Open score thermometer (${coopScore} points)`}
+            aria-haspopup="dialog"
+          >
+            {scoreDisplay}
+          </button>
+        ) : (
+          scoreDisplay
+        )}
 
         {/* Round indicator */}
         <motion.div

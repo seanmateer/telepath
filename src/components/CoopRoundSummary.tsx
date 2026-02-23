@@ -5,6 +5,7 @@ type CoopRoundSummaryProps = {
   result: RoundResult;
   coopScore: number;
   isGameOver: boolean;
+  disabled?: boolean;
   onContinue: () => void;
 };
 
@@ -26,6 +27,7 @@ export const CoopRoundSummary = ({
   result,
   coopScore,
   isGameOver,
+  disabled = false,
   onContinue,
 }: CoopRoundSummaryProps) => {
   const zone = result.score.zone;
@@ -59,9 +61,10 @@ export const CoopRoundSummary = ({
       <button
         type="button"
         onClick={onContinue}
-        className="mt-4 min-h-[44px] w-full rounded-full bg-ink px-6 py-3 text-sm font-medium text-warm-50 transition hover:bg-ink-light"
+        disabled={disabled}
+        className="mt-4 min-h-[44px] w-full rounded-full bg-ink px-6 py-3 text-sm font-medium text-warm-50 transition hover:bg-ink-light disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-ink"
       >
-        {isGameOver ? 'See Results' : 'Next Round'}
+        {disabled ? 'Thinking...' : isGameOver ? 'See Results' : 'Next Round'}
       </button>
     </motion.section>
   );
