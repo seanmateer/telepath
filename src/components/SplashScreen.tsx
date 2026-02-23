@@ -93,7 +93,7 @@ export const SplashScreen = ({ onPlay }: SplashScreenProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.55, ease: 'easeOut' }}
         >
-          Read the mind of AI
+          A spectrum guessing game
         </motion.p>
 
         <motion.button
@@ -108,14 +108,14 @@ export const SplashScreen = ({ onPlay }: SplashScreenProps) => {
           Play
         </motion.button>
 
-        <motion.p
+        {/* <motion.p
           className="mt-6 text-xs text-ink-faint"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 1.2 }}
         >
           A spectrum guessing game
-        </motion.p>
+        </motion.p> */}
       </div>
     </main>
   );
