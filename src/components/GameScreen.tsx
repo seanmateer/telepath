@@ -42,6 +42,7 @@ type GameScreenProps = {
 const SNAP_INCREMENT = 5;
 const SNAP_ANIMATION_MS = 180;
 const AI_DIAL_SWEEP_MS = 650;
+const COOP_REVEAL_ANIMATION_MS = 420;
 const DEFAULT_DIAL_VALUE = 50;
 
 const easeOutCubic = (value: number): number => 1 - (1 - value) ** 3;
@@ -65,11 +66,13 @@ export const GameScreen = ({
   const [showTransition, setShowTransition] = useState(false);
   const [aiReasoning, setAiReasoning] = useState<string | null>(null);
   const [humanClueInput, setHumanClueInput] = useState('');
+  const [isRevealingTarget, setIsRevealingTarget] = useState(false);
   const [telemetrySnapshot, setTelemetrySnapshot] = useState(() =>
     loadTelemetrySnapshot(),
   );
   const dialValueRef = useRef(dialValue);
   const animationFrameRef = useRef<number | null>(null);
+  const revealTimerRef = useRef<number | null>(null);
   const gameSessionIdRef = useRef<string | null>(null);
   const telemetryEndedRef = useRef(false);
   const { generateClue, placeDial } = useAI({
@@ -92,6 +95,9 @@ export const GameScreen = ({
     return () => {
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (revealTimerRef.current !== null) {
+        window.clearTimeout(revealTimerRef.current);
       }
 
       const gameSessionId = gameSessionIdRef.current;
@@ -417,18 +423,41 @@ export const GameScreen = ({
   );
 
   const handleRevealCoopRound = useCallback(() => {
-    if (!gameState || gameState.mode !== 'coop' || gameState.phase !== 'reveal') return;
-
-    try {
-      const revealed = revealRound(gameState);
-      const scored = scoreCoopRound(revealed);
-      setGameState(scored);
-    } catch (caughtError: unknown) {
-      const message =
-        caughtError instanceof Error ? caughtError.message : 'Failed to reveal round.';
-      setError(message);
+    if (
+      !gameState ||
+      gameState.mode !== 'coop' ||
+      gameState.phase !== 'reveal' ||
+      isRevealingTarget
+    ) {
+      return;
     }
-  }, [gameState]);
+
+    setError(null);
+    setIsRevealingTarget(true);
+
+    if (revealTimerRef.current !== null) {
+      window.clearTimeout(revealTimerRef.current);
+      revealTimerRef.current = null;
+    }
+
+    const revealState = gameState;
+
+    revealTimerRef.current = window.setTimeout(() => {
+      revealTimerRef.current = null;
+
+      try {
+        const revealed = revealRound(revealState);
+        const scored = scoreCoopRound(revealed);
+        setGameState(scored);
+      } catch (caughtError: unknown) {
+        const message =
+          caughtError instanceof Error ? caughtError.message : 'Failed to reveal round.';
+        setError(message);
+      } finally {
+        setIsRevealingTarget(false);
+      }
+    }, COOP_REVEAL_ANIMATION_MS);
+  }, [gameState, isRevealingTarget]);
 
   const handleLockGuess = useCallback(() => {
     if (!gameState || gameState.phase !== 'human-guess') return;
@@ -499,6 +528,7 @@ export const GameScreen = ({
       setGameState(nextState);
       setDialValue(DEFAULT_DIAL_VALUE);
       stopDialAnimation();
+      setIsRevealingTarget(false);
     } catch (caughtError: unknown) {
       const message =
         caughtError instanceof Error ? caughtError.message : 'Failed to start next round.';
@@ -552,7 +582,22 @@ export const GameScreen = ({
   const isHumanPsychic = currentRound.psychicTeam === 'human';
   const isRevealed =
     gameState.phase === 'next-round' || gameState.phase === 'game-over';
-  const revealValue = isRevealed ? currentRound.targetPosition : null;
+  const isPsychicPreviewPhase =
+    gameState.phase === 'psychic-clue' && isHumanPsychic && !aiThinking;
+  const isRevealPhase = gameState.phase === 'reveal';
+  const showDial =
+    isPsychicPreviewPhase ||
+    gameState.phase === 'human-guess' ||
+    gameState.phase === 'ai-bonus-guess' ||
+    isRevealPhase ||
+    isRevealed;
+  const showScoringZones =
+    isPsychicPreviewPhase || isRevealingTarget || isRevealed;
+  const dialTargetValue = showScoringZones ? currentRound.targetPosition : null;
+  const isDialInteractive =
+    gameState.phase === 'human-guess' &&
+    currentRound.psychicTeam === 'ai' &&
+    !aiThinking;
 
   return (
     <main className="flex min-h-[100dvh] flex-col px-4 pb-8 pt-4 sm:px-6">
@@ -571,7 +616,7 @@ export const GameScreen = ({
 
       {/* Main content */}
       <div className="flex flex-1 flex-col items-center justify-center">
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-sm sm:max-w-[30rem] lg:max-w-[36rem]">
           {/* Phase indicator */}
           <motion.div
             className="mb-6 text-center"
@@ -603,7 +648,9 @@ export const GameScreen = ({
               </p>
             ) : gameState.phase === 'reveal' && gameMode === 'coop' ? (
               <p className="text-sm font-medium text-ink-light">
-                Review the guess, then reveal the target.
+                {isRevealingTarget
+                  ? 'Revealing target...'
+                  : 'Review the guess, then reveal the target.'}
               </p>
             ) : isRevealed ? (
               <p className="text-sm font-medium text-ink-light">
@@ -634,7 +681,7 @@ export const GameScreen = ({
           </AnimatePresence>
 
           {/* Human clue input (when human is psychic) */}
-          {gameState.phase === 'psychic-clue' && isHumanPsychic && !aiThinking && (
+          {isPsychicPreviewPhase && (
             <motion.div
               className="mb-6"
               initial={{ opacity: 0, y: 8 }}
@@ -676,17 +723,19 @@ export const GameScreen = ({
           )}
 
           {/* Dial */}
-          {(gameState.phase === 'human-guess' ||
-            gameState.phase === 'ai-bonus-guess' ||
-            (gameMode === 'coop' && gameState.phase === 'reveal') ||
-            isRevealed) && (
+          {showDial && (
             <Dial
               value={dialValue}
               leftLabel={currentRound.card.left}
               rightLabel={currentRound.card.right}
-              onChange={handleDialChange}
-              onRelease={handleDialRelease}
-              revealValue={revealValue}
+              onChange={isDialInteractive ? handleDialChange : undefined}
+              onRelease={isDialInteractive ? handleDialRelease : undefined}
+              targetValue={dialTargetValue}
+              showScoringZones={showScoringZones}
+              scoringMode={gameMode}
+              interactive={isDialInteractive}
+              showDialHand={!isPsychicPreviewPhase}
+              showValueLabel={!isPsychicPreviewPhase}
             />
           )}
 
@@ -710,13 +759,14 @@ export const GameScreen = ({
               <motion.button
                 type="button"
                 onClick={handleRevealCoopRound}
-                className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97]"
+                disabled={isRevealingTarget}
+                className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-ink disabled:hover:shadow-none"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 whileTap={{ scale: 0.97 }}
               >
-                Reveal Target
+                {isRevealingTarget ? 'Revealing...' : 'Reveal Target'}
               </motion.button>
             )}
 

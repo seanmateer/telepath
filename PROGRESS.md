@@ -19,8 +19,8 @@
 
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
-**Last Updated:** 2026-02-22
-**Last Session Summary:** Improved dial-placement prompt reliability by explicitly defining 0/50/100 left-center-right mapping and adding instruction-level consistency checks between reasoning and numeric position to reduce contradictory AI explanations.
+**Last Updated:** 2026-02-23
+**Last Session Summary:** Consolidated dial/scoring-zone UI iteration: updated banana dial geometry and rendering to match the board-inspired style, switched scoring thresholds to equal-width zone boundaries, moved labels outside the arc, and tightened SVG viewport/interaction mapping for cleaner layout and reliable drag.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -180,12 +180,14 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Tasks are added during play-testing. Keep this list clean — remove tasks that are no longer relevant rather than leaving them checked off forever.*
 
-- [ ] **Dial UI refinement** — Rework dial target-zone presentation to better resemble official Wavelength’s 2-3-4-3-2 spread while preserving current interaction model and co-op flow.
+*No active tasks right now — add the next item during play-testing.*
 
 #### Completed Tasks
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Dial + scoring-zone UI iteration** — Consolidated visual polish across dial geometry, scoring-zone rendering, and label placement; updated scoring thresholds to equal-width zone boundaries; and tightened SVG viewport/interaction mapping to match the play-test mock direction while preserving reveal flow and touch drag behavior.
+- [x] **Dial UI refinement** — Reworked the dial into a wider 120° banana arc (`max-w-[350px]`) with visible target-centered score zones mapped to real scoring thresholds, added co-op center `3` + bonus icon (`4` in competitive), preserved percentage readout, and made zone visibility phase-aware (human psychic clue selection + reveal/results, hidden during active non-psychic guessing).
 - [x] **Playtest cost controls + telemetry panel** — Added persisted playtest settings (`Haiku-only clues` toggle) surfaced through a bottom-left settings icon that opens a modal in setup and in-game screens, plus local AI usage/cost telemetry sourced from `/api/ai` usage metadata (current game + recent games grouped with expandable round lists, per-round haiku-vs-dual model indicator, stored-games aggregate totals, clear action, 10-game/100-round retention).
 - [x] **Co-op mode overhaul** — Mode selection screen, 7-card deck, alternating psychic, single team score with rating chart, co-op scoring (bullseye 3pts + bonus card, adjacent 3pts, outer 2pts), updated ScoreBar/RoundTransition/EndScreen, cooperative AI prompt framing, 20 unit tests passing. Competitive scaffolding preserved for 1.0.
 - [x] **Co-op pacing refactor** — Added manual reveal step after guesses, staged co-op flow to preserve guess→reveal rhythm, animated AI dial sweep for human-psychic rounds, replaced co-op fullscreen transition with inline summary card + explicit Next Round/See Results, and preserved competitive overlay behavior.
@@ -250,6 +252,13 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-23 | Codex | Phase 5 | Consolidated dial/scoring-zone UI iteration into one pass: refined zone visuals and label placement, switched scoring thresholds to equal-width zone boundaries, tightened arc-bound geometry and viewport cropping, and aligned dial interaction mapping with the cropped render region. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Switched the dial indicator to a needle-style hand (skinnier than the tapered paddle) to reduce overlap with scoring labels while preserving the single-hand/no-target-dot reveal model. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Replaced dot-based dial markers with a tapered paddle hand and removed the green reveal dot; reveal correctness is now communicated by wedge zones plus a single hand indicator for guess position. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Adjusted psychic preview dial presentation: removed black dial marker and percentage text during clue-picking to reduce visual noise while keeping marker/value in interactive guess flow. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Updated co-op reveal flow: scoring zones are hidden during pre-reveal review and now animate in only after pressing `Reveal Target`, with a short reveal animation window and disabled reveal button while resolving the round. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Iterated on dial visuals from play-test feedback: made dial sizing responsive on larger breakpoints, widened main game content width for desktop, and changed scoring-zone visuals to center-reaching sector wedges to better mirror the physical board. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
+| 2026-02-22 | Codex | Phase 5 | Implemented dial UI refinement: 120° banana arc geometry, score-zone segment math from existing thresholds, visible psychic-preview/reveal zone rendering with competitive/co-op center labeling split, and interactive-only drag affordances. Updated dial math tests for arc boundaries and zone clipping. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Implemented playtest spend controls/telemetry: persisted Haiku-only clue mode, usage + estimated USD tracking from proxy metadata, bottom-left settings modal in setup/game, grouped rounds under game accordions (current open by default), per-round model-mode badges, and stored-games aggregate totals. Verified with `npm run lint` and `npm run test:game`. |
 | 2026-02-22 | Codex | Phase 5 | Added next active gameplay-testing task for dial UI refinement toward official 2-3-4-3-2 target spread, then prepared branch for merge into `main`. |
 | 2026-02-22 | Codex | Phase 5 | Tuned dial-placement prompts for consistency: added explicit 0/50/100 left-center-right mapping and stronger reasoning-to-position alignment instructions to reduce contradictory Lumen outputs. Verified with `npm run lint`, `npm run build`, and `npm run test:game`. |

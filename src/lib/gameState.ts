@@ -14,9 +14,12 @@ export const DEFAULT_POINTS_TO_WIN = 10;
 export const COOP_DECK_SIZE = 7;
 export const MIN_POSITION = 0;
 export const MAX_POSITION = 100;
-export const BULLSEYE_MAX_DISTANCE = 4;
-export const ADJACENT_MAX_DISTANCE = 10;
-export const OUTER_MAX_DISTANCE = 18;
+export const SCORE_ZONE_WEDGE_WIDTH = 7;
+export const BULLSEYE_MAX_DISTANCE = SCORE_ZONE_WEDGE_WIDTH / 2; // 3.5
+export const ADJACENT_MAX_DISTANCE =
+  BULLSEYE_MAX_DISTANCE + SCORE_ZONE_WEDGE_WIDTH; // 10.5
+export const OUTER_MAX_DISTANCE =
+  ADJACENT_MAX_DISTANCE + SCORE_ZONE_WEDGE_WIDTH; // 17.5
 export const BONUS_POINT_VALUE = 1;
 
 type InitialGameOptions = {
