@@ -66,6 +66,7 @@ export const buildClueSystemPrompt = (personality: Personality): string => {
     'Avoid definitional synonym/antonym clues that directly describe either endpoint.',
     'Use an external anchor (object, scenario, behavior, or image), not a dictionary-style descriptor of the axis.',
     'Internally self-check before finalizing: if clue could be interpreted as a direct restatement of either endpoint, regenerate.',
+    'In reasoning, name one alternate clue you rejected and why the final clue is better for this target.',
     'Reasoning must explain anchor-to-position mapping, not endpoint paraphrasing.',
     'Do not include either endpoint concept verbatim in the clue.',
     'Return only valid JSON with exactly this schema: {"clue":"string","reasoning":"string"}',

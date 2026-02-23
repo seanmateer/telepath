@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Dial } from './Dial';
 import { CoopRoundSummary } from './CoopRoundSummary';
 import { PlaytestUtilityPanel } from './PlaytestUtilityPanel';
 import { ScoreBar } from './ScoreBar';
+import { ScoreThermometerModal } from './ScoreThermometerModal';
 import { ReasoningPanel } from './ReasoningPanel';
 import { RoundTransition } from './RoundTransition';
 import {
   createInitialGameState,
+  getCoopRating,
   revealRound,
   scoreCoopRound,
   scoreRound,
@@ -51,6 +53,12 @@ const createGameSessionId = (): string => {
   return `game-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const personalityNames: Record<Personality, string> = {
+  lumen: 'Lumen',
+  sage: 'Sage',
+  flux: 'Flux',
+};
+
 export const GameScreen = ({
   personality,
   gameMode,
@@ -58,12 +66,15 @@ export const GameScreen = ({
   onPlaytestSettingsChange,
   onGameOver,
 }: GameScreenProps) => {
+  const prefersReducedMotion = useReducedMotion();
   const [dialValue, setDialValue] = useState(DEFAULT_DIAL_VALUE);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [aiThinking, setAiThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTransition, setShowTransition] = useState(false);
+  const [showScoreThermometer, setShowScoreThermometer] = useState(false);
+  const [sceneTransitionTick, setSceneTransitionTick] = useState(0);
   const [aiReasoning, setAiReasoning] = useState<string | null>(null);
   const [humanClueInput, setHumanClueInput] = useState('');
   const [isRevealingTarget, setIsRevealingTarget] = useState(false);
@@ -75,6 +86,7 @@ export const GameScreen = ({
   const revealTimerRef = useRef<number | null>(null);
   const gameSessionIdRef = useRef<string | null>(null);
   const telemetryEndedRef = useRef(false);
+  const roundAdvanceInFlightRef = useRef(false);
   const { generateClue, placeDial } = useAI({
     useHaikuOnlyClues: playtestSettings.haikuOnlyClues,
   });
@@ -332,7 +344,7 @@ export const GameScreen = ({
   }, []);
 
   const handleSubmitClue = useCallback(async () => {
-    if (!gameState || gameState.phase !== 'psychic-clue') return;
+    if (!gameState || gameState.phase !== 'psychic-clue' || aiThinking) return;
     const trimmedClue = humanClueInput.trim();
     if (trimmedClue.length === 0) return;
 
@@ -343,6 +355,7 @@ export const GameScreen = ({
 
       if (gameMode === 'coop') {
         // Show clue immediately, then let AI visibly place the dial before reveal.
+        setSceneTransitionTick((tick) => tick + 1);
         setGameState(nextState);
         setHumanClueInput('');
 
@@ -379,6 +392,7 @@ export const GameScreen = ({
       );
       nextState = submitHumanGuess(nextState, dialResult.position);
       setAiReasoning(dialResult.reasoning);
+      setSceneTransitionTick((tick) => tick + 1);
       setGameState(nextState);
       setDialValue(dialResult.position);
       setHumanClueInput('');
@@ -395,6 +409,7 @@ export const GameScreen = ({
       setAiThinking(false);
     }
   }, [
+    aiThinking,
     animateDialToValue,
     gameState,
     humanClueInput,
@@ -484,19 +499,27 @@ export const GameScreen = ({
   }, [chooseAIBonusDirection, gameState, gameMode]);
 
   const handleTransitionDone = useCallback(async () => {
-    setShowTransition(false);
-
-    if (!gameState) return;
-
-    if (gameState.phase === 'game-over') {
-      finalizeTelemetrySession(gameState.round?.roundNumber ?? 0);
-      onGameOverRef.current(gameState);
+    if (roundAdvanceInFlightRef.current) {
       return;
     }
 
-    if (gameState.phase !== 'next-round') return;
-
+    roundAdvanceInFlightRef.current = true;
+    setShowTransition(false);
     try {
+      if (!gameState) {
+        return;
+      }
+
+      if (gameState.phase === 'game-over') {
+        finalizeTelemetrySession(gameState.round?.roundNumber ?? 0);
+        onGameOverRef.current(gameState);
+        return;
+      }
+
+      if (gameState.phase !== 'next-round') {
+        return;
+      }
+
       let nextState = startNextRound(gameState);
 
       if (nextState.phase === 'game-over') {
@@ -506,6 +529,10 @@ export const GameScreen = ({
       }
 
       setAiReasoning(null);
+      setGameState(nextState);
+      setDialValue(DEFAULT_DIAL_VALUE);
+      stopDialAnimation();
+      setIsRevealingTarget(false);
 
       // If AI is psychic, generate a clue
       if (nextState.round?.psychicTeam === 'ai') {
@@ -522,18 +549,17 @@ export const GameScreen = ({
         );
         nextState = submitPsychicClue(nextState, clueResult.clue);
         setAiReasoning(clueResult.reasoning);
-        setAiThinking(false);
       }
 
       setGameState(nextState);
-      setDialValue(DEFAULT_DIAL_VALUE);
-      stopDialAnimation();
-      setIsRevealingTarget(false);
+      setAiThinking(false);
     } catch (caughtError: unknown) {
       const message =
         caughtError instanceof Error ? caughtError.message : 'Failed to start next round.';
       setError(message);
       setAiThinking(false);
+    } finally {
+      roundAdvanceInFlightRef.current = false;
     }
   }, [
     finalizeTelemetrySession,
@@ -580,12 +606,21 @@ export const GameScreen = ({
 
   const currentRound = gameState.round;
   const isHumanPsychic = currentRound.psychicTeam === 'human';
+  const isAwaitingAiClue =
+    aiThinking &&
+    gameState.phase === 'psychic-clue' &&
+    currentRound.psychicTeam === 'ai';
+  const isAiReadingHumanClue =
+    aiThinking &&
+    gameState.phase === 'human-guess' &&
+    isHumanPsychic;
   const isRevealed =
     gameState.phase === 'next-round' || gameState.phase === 'game-over';
   const isPsychicPreviewPhase =
     gameState.phase === 'psychic-clue' && isHumanPsychic && !aiThinking;
   const isRevealPhase = gameState.phase === 'reveal';
   const showDial =
+    isAwaitingAiClue ||
     isPsychicPreviewPhase ||
     gameState.phase === 'human-guess' ||
     gameState.phase === 'ai-bonus-guess' ||
@@ -598,6 +633,16 @@ export const GameScreen = ({
     gameState.phase === 'human-guess' &&
     currentRound.psychicTeam === 'ai' &&
     !aiThinking;
+  const coopRating = gameMode === 'coop' ? getCoopRating(gameState.coopScore) : null;
+  const roundContentTransition = prefersReducedMotion
+    ? { duration: 0.24, ease: 'easeOut' as const }
+    : { duration: 0.36, ease: 'easeOut' as const };
+  const roundContentInitial = prefersReducedMotion
+    ? { opacity: 0, x: 0 }
+    : { opacity: 0, x: 18 };
+  const roundContentExit = prefersReducedMotion
+    ? { opacity: 0, x: 0 }
+    : { opacity: 0, x: -18 };
 
   return (
     <main className="flex min-h-[100dvh] flex-col px-4 pb-8 pt-4 sm:px-6">
@@ -612,208 +657,228 @@ export const GameScreen = ({
         coopScore={gameState.coopScore}
         totalCards={gameState.totalCards}
         cardsRemaining={gameState.deck.length}
+        onCoopScoreClick={
+          gameMode === 'coop' ? () => setShowScoreThermometer(true) : undefined
+        }
       />
 
       {/* Main content */}
       <div className="flex flex-1 flex-col items-center justify-center">
-        <div className="w-full max-w-sm sm:max-w-[30rem] lg:max-w-[36rem]">
-          {/* Phase indicator */}
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            className="mb-6 text-center"
-            key={`phase-${gameState.phase}-${currentRound.roundNumber}`}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            key={`round-${currentRound.roundNumber}-scene-${sceneTransitionTick}`}
+            className="w-full max-w-sm sm:max-w-[30rem] lg:max-w-[36rem]"
+            initial={roundContentInitial}
+            animate={{ opacity: 1, x: 0 }}
+            exit={roundContentExit}
+            transition={roundContentTransition}
           >
-            {aiThinking ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-muted" />
-                <p className="text-sm text-ink-muted">
-                  {isHumanPsychic ? 'AI is reading your clue...' : 'AI is thinking of a clue...'}
+            {/* Phase indicator */}
+            <motion.div
+              className="mb-6 text-center"
+              key={`phase-${gameState.phase}-${currentRound.roundNumber}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {isAwaitingAiClue ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-muted" />
+                  <p className="text-sm text-ink-muted">
+                    {personalityNames[personality]} is thinking of a clue...
+                  </p>
+                </div>
+              ) : isAiReadingHumanClue ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-ink-muted" />
+                  <p className="text-sm text-ink-muted">
+                    AI is reading your clue...
+                  </p>
+                </div>
+              ) : gameState.phase === 'psychic-clue' && isHumanPsychic ? (
+                <p className="text-sm font-medium text-ink-light">
+                  You&apos;re the psychic. Give a clue.
                 </p>
-              </div>
-            ) : gameState.phase === 'psychic-clue' && isHumanPsychic ? (
-              <p className="text-sm font-medium text-ink-light">
-                You&apos;re the psychic. Give a clue.
-              </p>
-            ) : gameState.phase === 'human-guess' ? (
-              <p className="text-sm font-medium text-ink-light">
-                {isHumanPsychic
-                  ? 'AI is placing the dial...'
-                  : 'Place the dial where you think the target is.'}
-              </p>
-            ) : gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' ? (
-              <p className="text-sm font-medium text-ink-light">
-                Is the real target left or right of the guess?
-              </p>
-            ) : gameState.phase === 'reveal' && gameMode === 'coop' ? (
-              <p className="text-sm font-medium text-ink-light">
-                {isRevealingTarget
-                  ? 'Revealing target...'
-                  : 'Review the guess, then reveal the target.'}
-              </p>
-            ) : isRevealed ? (
-              <p className="text-sm font-medium text-ink-light">
-                Round complete
-              </p>
-            ) : null}
-          </motion.div>
+              ) : gameState.phase === 'human-guess' ? (
+                <p className="text-sm font-medium text-ink-light">
+                  {isHumanPsychic
+                    ? 'AI is placing the dial...'
+                    : 'Place the dial where you think the target is.'}
+                </p>
+              ) : gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' ? (
+                <p className="text-sm font-medium text-ink-light">
+                  Is the real target left or right of the guess?
+                </p>
+              ) : gameState.phase === 'reveal' && gameMode === 'coop' ? (
+                <p className="text-sm font-medium text-ink-light">
+                  {isRevealingTarget
+                    ? 'Revealing target...'
+                    : 'Review the guess, then reveal the target.'}
+                </p>
+              ) : isRevealed ? (
+                <p className="text-sm font-medium text-ink-light">
+                  Round complete
+                </p>
+              ) : null}
+            </motion.div>
 
-          {/* Clue display */}
-          <AnimatePresence mode="wait">
-            {currentRound.clue && (
+            {/* Clue display */}
+            <AnimatePresence mode="wait">
+              {currentRound.clue && (
+                <motion.div
+                  key={`clue-${currentRound.roundNumber}`}
+                  className="mb-6 text-center"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  <p className="text-xs font-medium uppercase tracking-widest text-ink-faint">
+                    {isHumanPsychic ? 'Your clue' : 'AI\'s clue'}
+                  </p>
+                  <p className="mt-1 font-serif text-3xl text-ink">
+                    {currentRound.clue}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Human clue input (when human is psychic) */}
+            {isPsychicPreviewPhase && (
               <motion.div
-                key={`clue-${currentRound.roundNumber}`}
-                className="mb-6 text-center"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.35 }}
+                className="mb-6"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
               >
-                <p className="text-xs font-medium uppercase tracking-widest text-ink-faint">
-                  {isHumanPsychic ? 'Your clue' : 'AI\'s clue'}
-                </p>
-                <p className="mt-1 font-serif text-3xl text-ink">
-                  {currentRound.clue}
-                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={humanClueInput}
+                    onChange={(e) => setHumanClueInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleSubmitClue();
+                    }}
+                    placeholder="Enter your clue..."
+                    maxLength={40}
+                    aria-label="Enter a one-word clue for your team"
+                    autoComplete="off"
+                    className="flex-1 rounded-xl border border-warm-200 bg-white/80 px-4 py-3 text-center text-lg font-medium text-ink placeholder:text-ink-faint focus:border-warm-400 focus:outline-none focus:ring-1 focus:ring-warm-300"
+                  />
+                </div>
+                <div className="mt-2 text-center">
+                  <p className="text-xs text-ink-faint">
+                    {currentRound.card.left} &larr; &middot; &middot; &middot; &rarr; {currentRound.card.right}
+                  </p>
+                  <p className="mt-1 text-xs text-ink-faint">
+                    Target at {currentRound.targetPosition}%
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleSubmitClue()}
+                  disabled={humanClueInput.trim().length === 0}
+                  className="mt-3 w-full rounded-full bg-ink py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light disabled:opacity-40 disabled:hover:bg-ink"
+                >
+                  Give Clue
+                </button>
               </motion.div>
             )}
-          </AnimatePresence>
 
-          {/* Human clue input (when human is psychic) */}
-          {isPsychicPreviewPhase && (
-            <motion.div
-              className="mb-6"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={humanClueInput}
-                  onChange={(e) => setHumanClueInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') void handleSubmitClue();
-                  }}
-                  placeholder="Enter your clue..."
-                  maxLength={40}
-                  aria-label="Enter a one-word clue for your team"
-                  autoComplete="off"
-                  className="flex-1 rounded-xl border border-warm-200 bg-white/80 px-4 py-3 text-center text-lg font-medium text-ink placeholder:text-ink-faint focus:border-warm-400 focus:outline-none focus:ring-1 focus:ring-warm-300"
+            {/* Dial */}
+            {showDial && (
+              <Dial
+                value={dialValue}
+                leftLabel={currentRound.card.left}
+                rightLabel={currentRound.card.right}
+                onChange={isDialInteractive ? handleDialChange : undefined}
+                onRelease={isDialInteractive ? handleDialRelease : undefined}
+                targetValue={dialTargetValue}
+                showScoringZones={showScoringZones}
+                scoringMode={gameMode}
+                interactive={isDialInteractive}
+                showDialHand={!isPsychicPreviewPhase && !isAwaitingAiClue}
+                showValueLabel={!isPsychicPreviewPhase && !isAwaitingAiClue}
+              />
+            )}
+
+            {/* Action area */}
+            <div className="mt-6 flex justify-center">
+              {gameState.phase === 'human-guess' && currentRound.psychicTeam === 'ai' && (
+                <motion.button
+                  type="button"
+                  onClick={handleLockGuess}
+                  className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97]"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Lock Guess
+                </motion.button>
+              )}
+
+              {gameMode === 'coop' && gameState.phase === 'reveal' && (
+                <motion.button
+                  type="button"
+                  onClick={handleRevealCoopRound}
+                  disabled={isRevealingTarget}
+                  className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-ink disabled:hover:shadow-none"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {isRevealingTarget ? 'Revealing...' : 'Reveal Target'}
+                </motion.button>
+              )}
+
+              {gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' && (
+                <motion.div
+                  className="flex gap-3"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleHumanBonusGuess('left')}
+                    className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
+                  >
+                    &larr; Left
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleHumanBonusGuess('right')}
+                    className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
+                  >
+                    Right &rarr;
+                  </button>
+                </motion.div>
+              )}
+            </div>
+
+            {gameMode === 'coop' && currentRound.result && isRevealed && (
+              <CoopRoundSummary
+                result={currentRound.result}
+                coopScore={gameState.coopScore}
+                isGameOver={gameState.phase === 'game-over'}
+                disabled={aiThinking}
+                onContinue={() => void handleTransitionDone()}
+              />
+            )}
+
+            {/* Reasoning panel (after reveal) */}
+            {isRevealed && aiReasoning && (
+              <div className="mt-6">
+                <ReasoningPanel
+                  reasoning={aiReasoning}
+                  personality={personality}
                 />
               </div>
-              <div className="mt-2 text-center">
-                <p className="text-xs text-ink-faint">
-                  {currentRound.card.left} &larr; &middot; &middot; &middot; &rarr; {currentRound.card.right}
-                </p>
-                <p className="mt-1 text-xs text-ink-faint">
-                  Target at {currentRound.targetPosition}%
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => void handleSubmitClue()}
-                disabled={humanClueInput.trim().length === 0}
-                className="mt-3 w-full rounded-full bg-ink py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light disabled:opacity-40 disabled:hover:bg-ink"
-              >
-                Give Clue
-              </button>
-            </motion.div>
-          )}
-
-          {/* Dial */}
-          {showDial && (
-            <Dial
-              value={dialValue}
-              leftLabel={currentRound.card.left}
-              rightLabel={currentRound.card.right}
-              onChange={isDialInteractive ? handleDialChange : undefined}
-              onRelease={isDialInteractive ? handleDialRelease : undefined}
-              targetValue={dialTargetValue}
-              showScoringZones={showScoringZones}
-              scoringMode={gameMode}
-              interactive={isDialInteractive}
-              showDialHand={!isPsychicPreviewPhase}
-              showValueLabel={!isPsychicPreviewPhase}
-            />
-          )}
-
-          {/* Action area */}
-          <div className="mt-6 flex justify-center">
-            {gameState.phase === 'human-guess' && currentRound.psychicTeam === 'ai' && (
-              <motion.button
-                type="button"
-                onClick={handleLockGuess}
-                className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97]"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                Lock Guess
-              </motion.button>
             )}
-
-            {gameMode === 'coop' && gameState.phase === 'reveal' && (
-              <motion.button
-                type="button"
-                onClick={handleRevealCoopRound}
-                disabled={isRevealingTarget}
-                className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-ink disabled:hover:shadow-none"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                {isRevealingTarget ? 'Revealing...' : 'Reveal Target'}
-              </motion.button>
-            )}
-
-            {gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' && (
-              <motion.div
-                className="flex gap-3"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleHumanBonusGuess('left')}
-                  className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
-                >
-                  &larr; Left
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleHumanBonusGuess('right')}
-                  className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
-                >
-                  Right &rarr;
-                </button>
-              </motion.div>
-            )}
-          </div>
-
-          {gameMode === 'coop' && currentRound.result && isRevealed && (
-            <CoopRoundSummary
-              result={currentRound.result}
-              coopScore={gameState.coopScore}
-              isGameOver={gameState.phase === 'game-over'}
-              onContinue={() => void handleTransitionDone()}
-            />
-          )}
-
-          {/* Reasoning panel (after reveal) */}
-          {isRevealed && aiReasoning && (
-            <div className="mt-6">
-              <ReasoningPanel
-                reasoning={aiReasoning}
-                personality={personality}
-              />
-            </div>
-          )}
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Round transition overlay */}
@@ -824,10 +889,18 @@ export const GameScreen = ({
             isGameOver={gameState.phase === 'game-over'}
             gameMode={gameMode}
             coopScore={gameState.coopScore}
+            disabled={aiThinking}
             onDone={() => void handleTransitionDone()}
           />
         )}
       </AnimatePresence>
+
+      <ScoreThermometerModal
+        isOpen={gameMode === 'coop' && showScoreThermometer}
+        score={gameState.coopScore}
+        rating={coopRating ?? ''}
+        onClose={() => setShowScoreThermometer(false)}
+      />
 
       <PlaytestUtilityPanel
         settings={playtestSettings}

@@ -6,6 +6,7 @@ type RoundTransitionProps = {
   isGameOver: boolean;
   gameMode: GameMode;
   coopScore: number;
+  disabled?: boolean;
   onDone: () => void;
 };
 
@@ -23,7 +24,14 @@ const zoneColors: Record<string, string> = {
   miss: 'text-score-miss',
 };
 
-export const RoundTransition = ({ result, isGameOver, gameMode, coopScore, onDone }: RoundTransitionProps) => {
+export const RoundTransition = ({
+  result,
+  isGameOver,
+  gameMode,
+  coopScore,
+  disabled = false,
+  onDone,
+}: RoundTransitionProps) => {
   const zone = result.score.zone;
   const basePoints = result.score.basePoints;
   const bonusCorrect = result.score.bonusCorrect;
@@ -107,13 +115,14 @@ export const RoundTransition = ({ result, isGameOver, gameMode, coopScore, onDon
         <motion.button
           type="button"
           onClick={onDone}
-          className="mt-8 rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition hover:bg-ink-light"
+          disabled={disabled}
+          className="mt-8 rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition hover:bg-ink-light disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-ink"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.8 }}
           whileTap={{ scale: 0.97 }}
         >
-          {isGameOver ? 'See Results' : 'Next Round'}
+          {disabled ? 'Thinking...' : isGameOver ? 'See Results' : 'Next Round'}
         </motion.button>
       </motion.div>
     </motion.div>
