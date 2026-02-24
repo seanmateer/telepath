@@ -15,7 +15,7 @@
 - **Game modes:** MVP uses co-op mode (human + AI teammates, official Wavelength co-op rules). Competitive mode (humans vs AI) deferred to 1.0 with multiplayer. Mode selection screen shows both options with competitive disabled.
 - **Solo co-op rules:** 7 cards per game, alternating psychic (random first), bullseye = 3 pts + bonus card, end-of-game score rated on chart.
 - **Bonus guess:** Not used in co-op mode (no opposing team). Kept in codebase for competitive mode in 1.0.
-- **Spectrum deck:** LLM-generated pairs. 80-card core deck shipped as static JSON (see `spectrum-deck.json`). Additional LLM-generated packs in 1.0, player-generated in 2.0.
+- **Spectrum deck:** LLM-generated pairs. 80-card core deck shipped as static JSON (see `public/spectrum-deck.json`). Additional LLM-generated packs in 1.0, player-generated in 2.0.
 - **Multiplayer:** MVP is solo only. 1.0 adds human multiplayer with websockets — priority 1 after working MVP.
 - **Scoring:** Co-op: score rated on chart at game end. Competitive (1.0): first to 10 points. Configurable scoring planned for post-1.0.
 - **AI explanation:** Yes — shown after reveal, hidden behind a tap. Both for player interest and prompt/model tuning purposes.
@@ -73,7 +73,7 @@ The AI has a distinct personality that affects its clue style and dial placement
 - 7 cards per game; bullseye grants bonus card (extra round)
 - End-of-game score rated on chart (0–3 terrible → 22+ psychic for real)
 - Post-reveal AI reasoning panel (hidden behind tap)
-- Static 80-card core spectrum deck (`spectrum-deck.json`) — 7 drawn per game
+- Static 80-card core spectrum deck (`public/spectrum-deck.json`) — 7 drawn per game
 - Animated splash screen
 - Share card on game end (score + rating + AI personality)
 - Mobile-first responsive design
@@ -184,13 +184,13 @@ Respond only as JSON: { "position": <number 0-100>, "reasoning": "..." }
 
 ### Spectrum Deck — MVP
 
-80 original pairs in `spectrum-deck.json`. Covers a range of:
+80 original pairs in `public/spectrum-deck.json`. Covers a range of:
 - Concrete/sensory: Cold/Hot, Soft/Hard, Dark/Bright
 - Behavioral: Impulsive/Deliberate, Humble/Arrogant, Calm/Chaotic
 - Cultural/evaluative: Overrated/Underrated, Lowbrow/Highbrow, Niche/Universal
 - Abstract: Literal/Metaphorical, Cerebral/Visceral, Grounded/Dreamy
 
-*See `spectrum-deck.json` for full list.*
+*See `public/spectrum-deck.json` for full list.*
 
 ### MVP Build Phases
 
