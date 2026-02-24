@@ -172,18 +172,21 @@ export const darkTheme: ThemePalette = {
   'shadow-card': '0 2px 20px -4px rgba(0, 0, 0, 0.3)',
   'shadow-card-hover': '0 4px 30px -4px rgba(0, 0, 0, 0.4)',
 
-  'dial-track': '#3E3648',
+  'dial-track': '#2D251F',
   'dial-hand': '#EAE6E0',
   'dial-hub-fill': '#1C1A22',
   'dial-hub-stroke': '#EAE6E0',
   'dial-hub-center': '#EAE6E0',
 
-  'dial-zone-outer': '#5A5060',
-  'dial-zone-adjacent': '#C08040',
-  'dial-zone-bullseye': '#D96D49',
-  'dial-zone-label-outer': '#6A6070',
-  'dial-zone-label-adjacent': '#D09050',
-  'dial-zone-label-bullseye': '#E07858',
+  // 2
+  'dial-zone-outer': '#563A25',
+  // 3
+  'dial-zone-adjacent': '#7B4513',
+  // 4 or 3+
+  'dial-zone-bullseye': '#91310B',
+  'dial-zone-label-outer': 'var(--dial-zone-outer)',
+  'dial-zone-label-adjacent': 'var(--dial-zone-adjacent)',
+  'dial-zone-label-bullseye': 'var(--dial-zone-bullseye)',
 
   'focus-ring': '#B8995C',
   'selection-bg': 'rgba(53, 47, 58, 0.7)',
