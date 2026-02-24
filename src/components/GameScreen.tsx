@@ -7,7 +7,6 @@ import { ScoreBar } from './ScoreBar';
 import { ScoreThermometerModal } from './ScoreThermometerModal';
 import { ReasoningPanel } from './ReasoningPanel';
 import { RoundTransition } from './RoundTransition';
-import { SlideToConfirm } from './SlideToConfirm';
 import {
   createInitialGameState,
   getCoopRating,
@@ -438,31 +437,6 @@ export const GameScreen = ({
     [gameState],
   );
 
-  const queueCoopReveal = useCallback((stateToReveal: GameState) => {
-    setIsRevealingTarget(true);
-
-    if (revealTimerRef.current !== null) {
-      window.clearTimeout(revealTimerRef.current);
-      revealTimerRef.current = null;
-    }
-
-    revealTimerRef.current = window.setTimeout(() => {
-      revealTimerRef.current = null;
-
-      try {
-        const revealed = revealRound(stateToReveal);
-        const scored = scoreCoopRound(revealed);
-        setGameState(scored);
-      } catch (caughtError: unknown) {
-        const message =
-          caughtError instanceof Error ? caughtError.message : 'Failed to reveal round.';
-        setError(message);
-      } finally {
-        setIsRevealingTarget(false);
-      }
-    }, COOP_REVEAL_ANIMATION_MS);
-  }, []);
-
   const handleRevealCoopRound = useCallback(() => {
     if (
       !gameState ||
@@ -474,49 +448,49 @@ export const GameScreen = ({
     }
 
     setError(null);
-    queueCoopReveal(gameState);
-  }, [gameState, isRevealingTarget, queueCoopReveal]);
+    setIsRevealingTarget(true);
 
-  const handleCoopSlideReveal = useCallback((): boolean => {
-    if (
-      !gameState ||
-      gameMode !== 'coop' ||
-      gameState.phase !== 'human-guess' ||
-      gameState.round?.psychicTeam !== 'ai' ||
-      aiThinking ||
-      isRevealingTarget
-    ) {
-      return false;
+    if (revealTimerRef.current !== null) {
+      window.clearTimeout(revealTimerRef.current);
+      revealTimerRef.current = null;
     }
 
-    try {
-      setError(null);
-      const withGuess = submitTeamGuess(gameState, dialValueRef.current);
-      setGameState(withGuess);
-      queueCoopReveal(withGuess);
-      return true;
-    } catch (caughtError: unknown) {
-      const message =
-        caughtError instanceof Error ? caughtError.message : 'Failed to resolve round.';
-      setError(message);
-      setIsRevealingTarget(false);
-      return false;
-    }
-  }, [aiThinking, gameMode, gameState, isRevealingTarget, queueCoopReveal]);
+    const revealState = gameState;
+
+    revealTimerRef.current = window.setTimeout(() => {
+      revealTimerRef.current = null;
+
+      try {
+        const revealed = revealRound(revealState);
+        const scored = scoreCoopRound(revealed);
+        setGameState(scored);
+      } catch (caughtError: unknown) {
+        const message =
+          caughtError instanceof Error ? caughtError.message : 'Failed to reveal round.';
+        setError(message);
+      } finally {
+        setIsRevealingTarget(false);
+      }
+    }, COOP_REVEAL_ANIMATION_MS);
+  }, [gameState, isRevealingTarget]);
 
   const handleLockGuess = useCallback(() => {
-    if (!gameState || gameState.phase !== 'human-guess' || gameMode !== 'competitive') {
-      return;
-    }
+    if (!gameState || gameState.phase !== 'human-guess') return;
 
     try {
-      // Competitive: AI makes bonus guess, then reveal → score
-      const withGuess = submitHumanGuess(gameState, dialValueRef.current);
-      const withBonusGuess = submitBonusGuess(withGuess, chooseAIBonusDirection(withGuess));
-      const revealed = revealRound(withBonusGuess);
-      const scored = scoreRound(revealed);
-      setGameState(scored);
-      setShowTransition(true);
+      if (gameMode === 'coop') {
+        // Co-op: lock guess first, then let players manually reveal.
+        const withGuess = submitTeamGuess(gameState, dialValueRef.current);
+        setGameState(withGuess);
+      } else {
+        // Competitive: AI makes bonus guess, then reveal → score
+        const withGuess = submitHumanGuess(gameState, dialValueRef.current);
+        const withBonusGuess = submitBonusGuess(withGuess, chooseAIBonusDirection(withGuess));
+        const revealed = revealRound(withBonusGuess);
+        const scored = scoreRound(revealed);
+        setGameState(scored);
+        setShowTransition(true);
+      }
     } catch (caughtError: unknown) {
       const message =
         caughtError instanceof Error ? caughtError.message : 'Failed to resolve round.';
@@ -739,7 +713,7 @@ export const GameScreen = ({
                 <p className="text-sm font-medium text-ink-light">
                   {isRevealingTarget
                     ? 'Revealing target...'
-                    : 'Target locked. Reveal when ready.'}
+                    : 'Review the guess, then reveal the target.'}
                 </p>
               ) : isRevealed ? (
                 <p className="text-sm font-medium text-ink-light">
@@ -830,28 +804,7 @@ export const GameScreen = ({
 
             {/* Action area */}
             <div className="mt-6 flex justify-center">
-              {gameMode === 'coop' &&
-                gameState.phase === 'human-guess' &&
-                currentRound.psychicTeam === 'ai' && (
-                <motion.div
-                  className="w-full"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                >
-                  <SlideToConfirm
-                    prompt="Slide to reveal target"
-                    completeLabel="Revealing target..."
-                    onComplete={handleCoopSlideReveal}
-                    disabled={aiThinking || isRevealingTarget}
-                    resetKey={`${currentRound.roundNumber}-${gameState.phase}`}
-                  />
-                </motion.div>
-              )}
-
-              {gameMode === 'competitive' &&
-                gameState.phase === 'human-guess' &&
-                currentRound.psychicTeam === 'ai' && (
+              {gameState.phase === 'human-guess' && currentRound.psychicTeam === 'ai' && (
                 <motion.button
                   type="button"
                   onClick={handleLockGuess}
@@ -865,17 +818,18 @@ export const GameScreen = ({
                 </motion.button>
               )}
 
-              {gameMode === 'coop' && gameState.phase === 'reveal' && !isRevealingTarget && (
+              {gameMode === 'coop' && gameState.phase === 'reveal' && (
                 <motion.button
                   type="button"
                   onClick={handleRevealCoopRound}
+                  disabled={isRevealingTarget}
                   className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-ink disabled:hover:shadow-none"
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  Reveal Target
+                  {isRevealingTarget ? 'Revealing...' : 'Reveal Target'}
                 </motion.button>
               )}
 
