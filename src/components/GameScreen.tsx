@@ -28,6 +28,11 @@ import {
   recordUsage,
   startGameSession,
 } from '../lib/playtestTelemetry';
+import {
+  clearGameSessionSnapshot,
+  loadGameSessionSnapshot,
+  saveGameSessionSnapshot,
+} from '../lib/sessionState';
 import { loadShuffledSpectrumDeck } from '../lib/spectrumDeck';
 import { useAI } from '../hooks/useAI';
 import type { BonusDirection, GameMode, GameState, Personality } from '../types/game';
@@ -121,6 +126,42 @@ export const GameScreen = ({
       endGameSession({ gameSessionId });
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      loading ||
+      aiThinking ||
+      isRevealingTarget ||
+      !gameState ||
+      error ||
+      gameState.phase === 'game-over'
+    ) {
+      if (gameState?.phase === 'game-over') {
+        clearGameSessionSnapshot();
+      }
+      return;
+    }
+
+    saveGameSessionSnapshot({
+      personality,
+      gameMode,
+      gameState,
+      dialValue,
+      aiReasoning,
+      humanClueInput,
+    });
+  }, [
+    aiReasoning,
+    aiThinking,
+    dialValue,
+    error,
+    gameMode,
+    gameState,
+    humanClueInput,
+    isRevealingTarget,
+    loading,
+    personality,
+  ]);
 
   const stopDialAnimation = useCallback(() => {
     if (animationFrameRef.current !== null) {
@@ -233,6 +274,34 @@ export const GameScreen = ({
       setAiReasoning(null);
 
       try {
+        const savedSession = loadGameSessionSnapshot();
+        if (
+          savedSession &&
+          savedSession.personality === personality &&
+          savedSession.gameMode === gameMode
+        ) {
+          const gameSessionId = createGameSessionId();
+          gameSessionIdRef.current = gameSessionId;
+          telemetryEndedRef.current = false;
+          setTelemetrySnapshot(
+            startGameSession({
+              gameSessionId,
+              gameMode,
+            }),
+          );
+
+          setGameState(savedSession.gameState);
+          setDialValue(savedSession.dialValue);
+          setAiReasoning(savedSession.aiReasoning);
+          setHumanClueInput(savedSession.humanClueInput);
+          setLoading(false);
+          return;
+        }
+
+        if (savedSession) {
+          clearGameSessionSnapshot();
+        }
+
         const shuffledDeck = await loadShuffledSpectrumDeck();
         let nextState = createInitialGameState({ personality, pointsToWin: 10 });
 
@@ -291,7 +360,7 @@ export const GameScreen = ({
 
     void init();
     return () => { cancelled = true; };
-  }, [personality]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gameMode, personality]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDialChange = useCallback(
     (value: number) => {
@@ -512,6 +581,7 @@ export const GameScreen = ({
 
       if (gameState.phase === 'game-over') {
         finalizeTelemetrySession(gameState.round?.roundNumber ?? 0);
+        clearGameSessionSnapshot();
         onGameOverRef.current(gameState);
         return;
       }
@@ -524,6 +594,7 @@ export const GameScreen = ({
 
       if (nextState.phase === 'game-over') {
         finalizeTelemetrySession(nextState.round?.roundNumber ?? 0);
+        clearGameSessionSnapshot();
         onGameOverRef.current(nextState);
         return;
       }
@@ -594,7 +665,10 @@ export const GameScreen = ({
           </p>
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              clearGameSessionSnapshot();
+              window.location.reload();
+            }}
             className="mt-4 min-h-[44px] rounded-full border border-flux/30 bg-flux-light px-5 py-3 text-sm font-medium text-flux transition hover:bg-flux/10"
           >
             Retry
@@ -734,7 +808,7 @@ export const GameScreen = ({
                   transition={{ duration: 0.35 }}
                 >
                   <p className="text-xs font-medium uppercase tracking-widest text-ink-faint">
-                    {isHumanPsychic ? 'Your clue' : 'AI\'s clue'}
+                    {isHumanPsychic ? 'Your clue' : `${personalityNames[personality]}'s clue`}
                   </p>
                   <p className="mt-1 font-serif text-3xl text-ink">
                     {currentRound.clue}
