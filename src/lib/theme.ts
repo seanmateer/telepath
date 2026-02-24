@@ -142,8 +142,8 @@ export const lightTheme: ThemePalette = {
 // ---------------------------------------------------------------------------
 
 export const darkTheme: ThemePalette = {
-  canvas: c('#131118'),
-  surface: c('#1C1A22'),
+  canvas: c('#181614'),
+  surface: c('#1B1917'),
   ink: c('#EAE6E0'),
   'ink-light': c('#C0B8AE'),
   'ink-muted': c('#A49B92'),
