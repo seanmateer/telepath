@@ -9,7 +9,7 @@ export const ThemeToggle = () => {
       type="button"
       onClick={toggleTheme}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="fixed right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-warm-200 bg-surface/80 text-ink-muted shadow-card backdrop-blur-sm transition hover:bg-warm-100 active:scale-[0.95]"
+      className="fixed bottom-4 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-warm-200 bg-surface/80 text-ink-muted shadow-card backdrop-blur-sm transition hover:bg-warm-100 active:scale-[0.95]"
     >
       {isDark ? (
         /* Sun icon */
