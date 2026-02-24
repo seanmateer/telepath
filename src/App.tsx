@@ -5,6 +5,7 @@ import { ModeScreen } from './components/ModeScreen';
 import { SetupScreen } from './components/SetupScreen';
 import { GameScreen } from './components/GameScreen';
 import { EndScreen } from './components/EndScreen';
+import { ThemeDebug } from './components/ThemeDebug';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useTheme } from './hooks/useTheme';
 import {
@@ -68,6 +69,10 @@ export const App = () => {
     },
     [],
   );
+
+  if (window.location.pathname === '/theme') {
+    return <ThemeDebug />;
+  }
 
   return (
     <>
