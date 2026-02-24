@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-24
-**Last Session Summary:** Replaced the co-op two-click lock/reveal flow with a one-swipe `slide to reveal target` control that snaps back on partial drags and auto-runs lock + reveal on completion.
+**Last Session Summary:** Tuned co-op swipe reveal feel by smoothing drag physics, using touch-safe drag handling, reducing reveal latency, and keeping the slider visible in a completed state during reveal to avoid abrupt UI jumps.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -186,6 +186,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Co-op swipe feel tuning** — Refined `SlideToConfirm` with lower completion threshold + fast-swipe completion, smoother spring reset, larger handle hit target, progress fill, keyboard Enter/Space activation, and `touch-action` adjustments for cleaner drag input. Updated `GameScreen` to keep the slider visible in a completed/revealing state, disable dial interactivity while revealing, and reduce reveal latency to 320ms.
 - [x] **Co-op reveal swipe gesture** — Replaced separate `Lock Guess` and `Reveal Target` taps with a single slide-to-confirm control in co-op AI-psychic guess rounds; completed swipes now lock + auto-reveal, while incomplete swipes spring back to start. Kept the reveal button only as a fallback if reveal fails and the round remains in `reveal`.
 - [x] **Psychic clue lock-in transition smoothing** — Added a scene transition trigger to `GameScreen` so pressing `Give Clue` animates the center gameplay stack with the same subtle horizontal fade (old left, new right), reducing the abrupt switch from clue entry to AI reading/placement.
 - [x] **Next-round spectrum-first transition polish** — Updated `GameScreen` so `Next Round` advances to the new round state before clue generation, added a round-keyed horizontal fade transition (old left, new from right) with reduced-motion fallback, switched waiting copy to personality-specific wording (e.g., “Lumen is thinking of a clue...”), and rendered a static non-interactive dial shell (no hand/value/zones) while awaiting AI clues.
@@ -259,6 +260,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-24 | Codex | Phase 5 | Investigated swipe clunkiness with web docs (Motion drag guidance + touch-action behavior) and tuned co-op reveal interactions: lower threshold + fast-swipe completion, smoother reset spring, larger handle/progress fill, touch-safe drag input, reveal slider persistence during reveal, and reduced reveal latency. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
 | 2026-02-24 | Codex | Phase 5 | Replaced the co-op `Lock Guess` → `Reveal Target` two-click flow with a single slide-to-confirm gesture that springs back when not fully completed and auto-runs lock + reveal when completed. Added `SlideToConfirm` and wired co-op reveal queueing in `GameScreen`. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
 | 2026-02-23 | Codex | Phase 5 | Smoothed clue lock-in pacing by triggering the same subtle horizontal center-stack transition when the psychic submits `Give Clue`, reducing abrupt state swaps into AI reading/placement. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
 | 2026-02-23 | Codex | Phase 5 | Implemented next-round transition polish: on continue, swap immediately to the next spectrum before AI clue fetch, animate the full center stack with a subtle horizontal fade (old-left/new-right) plus reduced-motion fallback, show personality-specific AI thinking copy, and display a static dial shell while awaiting the clue. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |

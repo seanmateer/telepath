@@ -45,7 +45,7 @@ type GameScreenProps = {
 const SNAP_INCREMENT = 5;
 const SNAP_ANIMATION_MS = 180;
 const AI_DIAL_SWEEP_MS = 650;
-const COOP_REVEAL_ANIMATION_MS = 420;
+const COOP_REVEAL_ANIMATION_MS = 320;
 const DEFAULT_DIAL_VALUE = 50;
 
 const easeOutCubic = (value: number): number => 1 - (1 - value) ** 3;
@@ -658,7 +658,8 @@ export const GameScreen = ({
   const isDialInteractive =
     gameState.phase === 'human-guess' &&
     currentRound.psychicTeam === 'ai' &&
-    !aiThinking;
+    !aiThinking &&
+    !isRevealingTarget;
   const coopRating = gameMode === 'coop' ? getCoopRating(gameState.coopScore) : null;
   const roundContentTransition = prefersReducedMotion
     ? { duration: 0.24, ease: 'easeOut' as const }
@@ -831,8 +832,8 @@ export const GameScreen = ({
             {/* Action area */}
             <div className="mt-6 flex justify-center">
               {gameMode === 'coop' &&
-                gameState.phase === 'human-guess' &&
-                currentRound.psychicTeam === 'ai' && (
+                ((gameState.phase === 'human-guess' && currentRound.psychicTeam === 'ai') ||
+                  (gameState.phase === 'reveal' && isRevealingTarget)) && (
                 <motion.div
                   className="w-full"
                   initial={{ opacity: 0, y: 6 }}
@@ -844,7 +845,8 @@ export const GameScreen = ({
                     completeLabel="Revealing target..."
                     onComplete={handleCoopSlideReveal}
                     disabled={aiThinking || isRevealingTarget}
-                    resetKey={`${currentRound.roundNumber}-${gameState.phase}`}
+                    resetKey={currentRound.roundNumber}
+                    forceComplete={isRevealingTarget}
                   />
                 </motion.div>
               )}
