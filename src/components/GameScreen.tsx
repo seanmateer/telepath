@@ -707,6 +707,9 @@ export const GameScreen = ({
     gameState.phase === 'human-guess' &&
     currentRound.psychicTeam === 'ai' &&
     !aiThinking;
+  const dialClueLabel = isHumanPsychic
+    ? 'Your clue'
+    : `${personalityNames[personality]}'s clue`;
   const coopRating = gameMode === 'coop' ? getCoopRating(gameState.coopScore) : null;
   const roundContentTransition = prefersReducedMotion
     ? { duration: 0.24, ease: 'easeOut' as const }
@@ -796,27 +799,6 @@ export const GameScreen = ({
               ) : null}
             </motion.div>
 
-            {/* Clue display */}
-            <AnimatePresence mode="wait">
-              {currentRound.clue && (
-                <motion.div
-                  key={`clue-${currentRound.roundNumber}`}
-                  className="mb-6 text-center"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.35 }}
-                >
-                  <p className="text-xs font-medium uppercase tracking-widest text-ink-faint">
-                    {isHumanPsychic ? 'Your clue' : `${personalityNames[personality]}'s clue`}
-                  </p>
-                  <p className="mt-1 font-serif text-3xl text-ink">
-                    {currentRound.clue}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Human clue input (when human is psychic) */}
             {isPsychicPreviewPhase && (
               <motion.div
@@ -865,6 +847,8 @@ export const GameScreen = ({
                 value={dialValue}
                 leftLabel={currentRound.card.left}
                 rightLabel={currentRound.card.right}
+                clueLabel={currentRound.clue ? dialClueLabel : undefined}
+                clueText={currentRound.clue ?? undefined}
                 onChange={isDialInteractive ? handleDialChange : undefined}
                 onRelease={isDialInteractive ? handleDialRelease : undefined}
                 targetValue={dialTargetValue}

@@ -6,7 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type TouchEvent as ReactTouchEvent,
 } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   DIAL_ARC_END_DEGREES,
   DIAL_ARC_START_DEGREES,
@@ -22,6 +22,8 @@ type DialProps = {
   value: number;
   leftLabel: string;
   rightLabel: string;
+  clueLabel?: string;
+  clueText?: string;
   size?: number;
   onChange?: (value: number) => void;
   onRelease?: (value: number) => void;
@@ -152,6 +154,8 @@ export const Dial = ({
   value,
   leftLabel,
   rightLabel,
+  clueLabel,
+  clueText,
   size = 350,
   onChange,
   onRelease,
@@ -382,6 +386,26 @@ export const Dial = ({
 
   return (
     <section className="mx-auto w-full max-w-[400px] rounded-2xl border border-warm-200/60 bg-surface/50 p-4 shadow-card sm:max-w-[520px] lg:max-w-[720px]">
+      <AnimatePresence mode="wait">
+        {clueText && (
+          <motion.div
+            key={`dial-clue-${clueLabel ?? 'clue'}-${clueText}`}
+            className="mb-4 text-center"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.35 }}
+          >
+            {clueLabel && (
+              <p className="text-xs font-medium uppercase tracking-widest text-ink-faint">
+                {clueLabel}
+              </p>
+            )}
+            <p className="mt-1 font-serif text-3xl text-ink">{clueText}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="mb-4 flex items-center justify-between text-xs font-medium uppercase tracking-widest text-ink-muted">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>

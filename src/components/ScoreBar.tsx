@@ -43,7 +43,7 @@ export const ScoreBar = ({
     );
 
     return (
-      <div className="flex items-center justify-between py-2">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2">
         {/* Team score */}
         {onCoopScoreClick ? (
           <button
@@ -70,7 +70,7 @@ export const ScoreBar = ({
           <p className="text-[10px] font-medium uppercase tracking-widest text-ink-faint">
             Round {roundNumber} of {totalCards}
           </p>
-          <div className="mt-0.5 flex items-center gap-1" aria-hidden="true">
+          <div className="mt-0.5 flex items-center justify-center gap-1" aria-hidden="true">
             {Array.from({ length: totalCards }).map((_, i) => (
               <div
                 key={i}
@@ -83,7 +83,7 @@ export const ScoreBar = ({
         </motion.div>
 
         {/* Partner name */}
-        <div className="flex items-baseline gap-1.5 text-right">
+        <div className="flex items-baseline justify-end gap-1.5 text-right">
           <span className="text-xs font-medium text-ink-muted">
             w/ {personalityNames[personality]}
           </span>
@@ -97,7 +97,7 @@ export const ScoreBar = ({
 
   // Competitive mode
   return (
-    <div className="flex items-center justify-between py-2">
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2">
       <div className="flex items-baseline gap-1.5">
         <span className="text-lg font-semibold tabular-nums text-ink">
           {humanScore}
@@ -131,7 +131,7 @@ export const ScoreBar = ({
         </div>
       </motion.div>
 
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex items-baseline justify-end gap-1.5">
         <span className="text-xs font-medium text-ink-muted">
           {personalityNames[personality]}
         </span>
