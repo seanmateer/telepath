@@ -95,7 +95,7 @@ export const SetupScreen = ({
               className={`w-full rounded-2xl border-2 px-5 py-4 text-left transition-colors transition-shadow ${
                 selected === p.id
                   ? `${p.bgColor} ${p.selectedBorder} shadow-card`
-                  : `bg-white/60 ${p.borderColor} hover:bg-white/80`
+                  : `bg-surface/60 ${p.borderColor} hover:bg-surface/80`
               }`}
               style={{
                 backfaceVisibility: 'hidden',

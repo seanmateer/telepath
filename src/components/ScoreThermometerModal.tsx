@@ -68,7 +68,7 @@ export const ScoreThermometerModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-warm-300 bg-white text-ink transition hover:bg-warm-100"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-warm-300 bg-surfacetext-ink transition hover:bg-warm-100"
                 aria-label="Close score thermometer"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -82,7 +82,7 @@ export const ScoreThermometerModal = ({
               </button>
             </div>
 
-            <div className="mt-4 rounded-xl border border-warm-200/60 bg-white/75 p-3 sm:p-4">
+            <div className="mt-4 rounded-xl border border-warm-200/60 bg-surface/75 p-3 sm:p-4">
               <ScoreThermometer score={score} animationDelay={0.15} />
             </div>
           </motion.section>

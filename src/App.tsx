@@ -5,6 +5,9 @@ import { ModeScreen } from './components/ModeScreen';
 import { SetupScreen } from './components/SetupScreen';
 import { GameScreen } from './components/GameScreen';
 import { EndScreen } from './components/EndScreen';
+import { ThemeDebug } from './components/ThemeDebug';
+import { ThemeToggle } from './components/ThemeToggle';
+import { useTheme } from './hooks/useTheme';
 import {
   loadPlaytestSettings,
   savePlaytestSettings,
@@ -15,6 +18,9 @@ import type { PlaytestSettings } from './types/playtest';
 type AppScreen = 'splash' | 'mode' | 'setup' | 'game' | 'end';
 
 export const App = () => {
+  // Initialize the theme system — applies CSS variables on mount.
+  useTheme();
+
   const [screen, setScreen] = useState<AppScreen>('splash');
   const [gameMode, setGameMode] = useState<GameMode>('coop');
   const [personality, setPersonality] = useState<Personality>('lumen');
@@ -64,7 +70,13 @@ export const App = () => {
     [],
   );
 
+  if (window.location.pathname === '/theme') {
+    return <ThemeDebug />;
+  }
+
   return (
+    <>
+    <ThemeToggle />
     <AnimatePresence mode="wait">
       {screen === 'splash' && (
         <motion.div
@@ -137,5 +149,6 @@ export const App = () => {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 };

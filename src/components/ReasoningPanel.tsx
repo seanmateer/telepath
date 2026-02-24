@@ -17,7 +17,7 @@ export const ReasoningPanel = ({ reasoning, personality }: ReasoningPanelProps) 
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-warm-200/60 bg-white/50">
+    <div className="overflow-hidden rounded-xl border border-warm-200/60 bg-surface/50">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

@@ -98,7 +98,7 @@ const TelemetryGameAccordion = ({
   }, [rounds]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-warm-200/60 bg-white/80">
+    <div className="overflow-hidden rounded-lg border border-warm-200/60 bg-surface/80">
       <button
         type="button"
         onClick={() => setIsOpen((open) => !open)}
@@ -150,7 +150,7 @@ const TelemetryGameAccordion = ({
                 roundsAscending.map((round) => (
                   <div
                     key={round.id}
-                    className="rounded-md border border-warm-200/50 bg-white/70 px-2 py-1.5 text-xs text-ink-light"
+                    className="rounded-md border border-warm-200/50 bg-surface/70 px-2 py-1.5 text-xs text-ink-light"
                   >
                     <p className="font-medium text-ink">
                       Round {round.roundNumber} · {summarizeRound(round)}
@@ -251,7 +251,7 @@ export const PlaytestUtilityPanel = ({
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label="Open playtest utilities"
-        className="fixed bottom-4 left-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-warm-300 bg-white/90 text-ink shadow-card transition hover:bg-warm-100 active:scale-[0.97]"
+        className="fixed bottom-4 left-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-warm-300 bg-surface/90 text-ink shadow-card transition hover:bg-warm-100 active:scale-[0.97]"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path
@@ -294,7 +294,7 @@ export const PlaytestUtilityPanel = ({
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-300 bg-white text-ink transition hover:bg-warm-100"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-warm-300 bg-surface text-ink transition hover:bg-warm-100"
                   aria-label="Close playtest utilities"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -309,7 +309,7 @@ export const PlaytestUtilityPanel = ({
               </div>
 
               <div className="space-y-4">
-                <label className="flex items-start gap-3 rounded-lg border border-warm-200/60 bg-white/80 px-3 py-2">
+                <label className="flex items-start gap-3 rounded-lg border border-warm-200/60 bg-surface/80 px-3 py-2">
                   <input
                     type="checkbox"
                     checked={settings.haikuOnlyClues}
@@ -333,7 +333,7 @@ export const PlaytestUtilityPanel = ({
                   <h4 className="text-xs font-semibold uppercase tracking-widest text-ink-faint">
                     Stored Games Total
                   </h4>
-                  <div className="mt-2 rounded-lg border border-warm-200/60 bg-white/80 px-3 py-2 text-xs text-ink-light">
+                  <div className="mt-2 rounded-lg border border-warm-200/60 bg-surface/80 px-3 py-2 text-xs text-ink-light">
                     <p className="font-medium text-ink">
                       {storedGamesSummary.games} games · {storedGamesSummary.aiCalls} calls
                     </p>
@@ -392,7 +392,7 @@ export const PlaytestUtilityPanel = ({
                 <button
                   type="button"
                   onClick={onClearTelemetry}
-                  className="w-full rounded-full border border-warm-300 bg-white py-2 text-xs font-medium text-ink transition hover:bg-warm-100"
+                  className="w-full rounded-full border border-warm-300 bg-surface py-2 text-xs font-medium text-ink transition hover:bg-warm-100"
                 >
                   Clear telemetry
                 </button>

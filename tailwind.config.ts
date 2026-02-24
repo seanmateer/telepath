@@ -1,5 +1,13 @@
 import type { Config } from 'tailwindcss';
 
+/**
+ * Wrap a CSS custom property (containing space-separated R G B channels)
+ * with rgb() so Tailwind's <alpha-value> placeholder works for opacity
+ * modifiers like `bg-canvas/90` or `border-warm-200/60`.
+ */
+const rgb = (varName: string) =>
+  `rgb(var(--${varName}) / <alpha-value>)`;
+
 const config: Config = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
@@ -9,52 +17,53 @@ const config: Config = {
         serif: ['"DM Serif Display"', 'Georgia', 'serif'],
       },
       colors: {
-        canvas: '#FAF7F2',
+        canvas: rgb('canvas'),
+        surface: rgb('surface'),
         ink: {
-          DEFAULT: '#2C2418',
-          light: '#6B5E4F',
-          muted: '#9C8E7D',
-          faint: '#A89888',
+          DEFAULT: rgb('ink'),
+          light: rgb('ink-light'),
+          muted: rgb('ink-muted'),
+          faint: rgb('ink-faint'),
         },
         warm: {
-          50: '#FDF8F0',
-          100: '#F8EFE2',
-          200: '#F0DEC6',
-          300: '#E5C9A0',
-          400: '#D4A96F',
-          500: '#C08B4A',
+          50: rgb('warm-50'),
+          100: rgb('warm-100'),
+          200: rgb('warm-200'),
+          300: rgb('warm-300'),
+          400: rgb('warm-400'),
+          500: rgb('warm-500'),
         },
         spectrum: {
-          left: '#F59E0B',
-          mid: '#F97316',
-          right: '#EF4444',
+          left: rgb('spectrum-left'),
+          mid: rgb('spectrum-mid'),
+          right: rgb('spectrum-right'),
         },
         lumen: {
-          DEFAULT: '#5B8DEF',
-          light: '#E8F0FE',
+          DEFAULT: rgb('lumen'),
+          light: rgb('lumen-light'),
         },
         sage: {
-          DEFAULT: '#E09C3F',
-          light: '#FFF3E0',
+          DEFAULT: rgb('sage'),
+          light: rgb('sage-light'),
         },
         flux: {
-          DEFAULT: '#E05B5B',
-          light: '#FDE8E8',
+          DEFAULT: rgb('flux'),
+          light: rgb('flux-light'),
         },
         score: {
-          bullseye: '#22C55E',
-          adjacent: '#84CC16',
-          outer: '#CA8A04',
-          miss: '#708296',
+          bullseye: rgb('score-bullseye'),
+          adjacent: rgb('score-adjacent'),
+          outer: rgb('score-outer'),
+          miss: rgb('score-miss'),
         },
       },
       borderRadius: {
         '4xl': '2rem',
       },
       boxShadow: {
-        glow: '0 0 40px -10px rgba(192, 139, 74, 0.3)',
-        card: '0 2px 20px -4px rgba(44, 36, 24, 0.08)',
-        'card-hover': '0 4px 30px -4px rgba(44, 36, 24, 0.12)',
+        glow: 'var(--shadow-glow)',
+        card: 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
