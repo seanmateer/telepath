@@ -5,11 +5,11 @@ type SplashScreenProps = {
 };
 
 const ARC_COLORS = [
-  'rgba(245, 158, 11, 0.15)',
-  'rgba(249, 115, 22, 0.12)',
-  'rgba(239, 68, 68, 0.10)',
-  'rgba(224, 156, 63, 0.08)',
-  'rgba(91, 141, 239, 0.06)',
+  'rgb(var(--spectrum-left) / 0.15)',
+  'rgb(var(--spectrum-mid) / 0.12)',
+  'rgb(var(--spectrum-right) / 0.10)',
+  'rgb(var(--sage) / 0.08)',
+  'rgb(var(--lumen) / 0.06)',
 ];
 
 const Arc = ({

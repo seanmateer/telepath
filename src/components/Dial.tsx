@@ -124,13 +124,21 @@ const createNeedleHandGeometry = (
   };
 };
 
-const scoreZoneCapColors = {
-  'outer-left': '#CFBDA7',
-  'adjacent-left': '#E8A062',
-  bullseye: '#D96D49',
-  'adjacent-right': '#E8A062',
-  'outer-right': '#CFBDA7',
-} as const;
+/** Zone cap fill colours — resolved at render time from CSS variables. */
+const getZoneCapColor = (name: string): string => {
+  const style = getComputedStyle(document.documentElement);
+  if (name === 'bullseye') return style.getPropertyValue('--dial-zone-bullseye').trim();
+  if (name.startsWith('adjacent')) return style.getPropertyValue('--dial-zone-adjacent').trim();
+  return style.getPropertyValue('--dial-zone-outer').trim();
+};
+
+/** Zone label colours — resolved at render time from CSS variables. */
+const getZoneLabelColor = (name: string): string => {
+  const style = getComputedStyle(document.documentElement);
+  if (name === 'bullseye') return style.getPropertyValue('--dial-zone-label-bullseye').trim();
+  if (name.startsWith('adjacent')) return style.getPropertyValue('--dial-zone-label-adjacent').trim();
+  return style.getPropertyValue('--dial-zone-label-outer').trim();
+};
 
 const zoneLabelByName = {
   'outer-left': '2',
@@ -138,14 +146,6 @@ const zoneLabelByName = {
   bullseye: '4',
   'adjacent-right': '3',
   'outer-right': '2',
-} as const;
-
-const zoneLabelColors = {
-  'outer-left': '#CFBDA7',
-  'adjacent-left': '#E08A55',
-  bullseye: '#D96D49',
-  'adjacent-right': '#E08A55',
-  'outer-right': '#CFBDA7',
 } as const;
 
 export const Dial = ({
@@ -381,7 +381,7 @@ export const Dial = ({
     : 'cursor-default';
 
   return (
-    <section className="mx-auto w-full max-w-[400px] rounded-2xl border border-warm-200/60 bg-white/50 p-4 shadow-card sm:max-w-[520px] lg:max-w-[720px]">
+    <section className="mx-auto w-full max-w-[400px] rounded-2xl border border-warm-200/60 bg-surface/50 p-4 shadow-card sm:max-w-[520px] lg:max-w-[720px]">
       <div className="mb-4 flex items-center justify-between text-xs font-medium uppercase tracking-widest text-ink-muted">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
@@ -411,7 +411,7 @@ export const Dial = ({
           <path
             d={fullArcPath}
             fill="none"
-            stroke="#E8D1BA"
+            stroke="var(--dial-track)"
             strokeWidth={trackStrokeWidth}
             strokeLinecap="round"
           />
@@ -433,11 +433,13 @@ export const Dial = ({
                 segment.endAngle,
               );
 
+              const zoneCapColor = getZoneCapColor(segment.name);
+
               return (
                 <g key={segment.name}>
                   <motion.path
                     d={translucentInnerSectorPath}
-                    fill={scoreZoneCapColors[segment.name]}
+                    fill={zoneCapColor}
                     stroke="none"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.34 }}
@@ -445,7 +447,7 @@ export const Dial = ({
                   />
                   <motion.path
                     d={opaqueCapSectorPath}
-                    fill={scoreZoneCapColors[segment.name]}
+                    fill={zoneCapColor}
                     stroke="none"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.92 }}
@@ -462,7 +464,7 @@ export const Dial = ({
                 y1={handGeometry.start.y}
                 x2={handGeometry.end.x}
                 y2={handGeometry.end.y}
-                stroke="#2C2418"
+                stroke="var(--dial-hand)"
                 strokeWidth={handStrokeWidth}
                 strokeLinecap="round"
               />
@@ -481,6 +483,8 @@ export const Dial = ({
               );
               const zoneLabel = zoneLabelByName[segment.name];
 
+              const labelColor = getZoneLabelColor(segment.name);
+
               return (
                 <g key={`${segment.name}-label`}>
                   <text
@@ -488,7 +492,7 @@ export const Dial = ({
                     y={zoneLabelPoint.y}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fill={zoneLabelColors[segment.name]}
+                    fill={labelColor}
                     fontSize={size * 0.047}
                     fontWeight={700}
                   >
@@ -500,7 +504,7 @@ export const Dial = ({
                       y={zoneLabelPoint.y - size * 0.02}
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      fill={zoneLabelColors[segment.name]}
+                      fill={labelColor}
                       fontSize={size * 0.026}
                       fontWeight={700}
                     >
@@ -524,11 +528,11 @@ export const Dial = ({
               cx={center}
               cy={center}
               r={hubOuterRadius}
-              fill="#F8F5EF"
-              stroke="#1D1710"
+              fill="var(--dial-hub-fill)"
+              stroke="var(--dial-hub-stroke)"
               strokeWidth={Math.max(1.2, size * 0.0036)}
             />
-            <circle cx={center} cy={center} r={hubInnerRadius} fill="#1D1710" />
+            <circle cx={center} cy={center} r={hubInnerRadius} fill="var(--dial-hub-center)" />
           </>
         </svg>
       </div>

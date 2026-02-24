@@ -2,6 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme CSS custom properties — light-theme defaults.
+ *
+ * Colour tokens use space-separated R G B channels so Tailwind's
+ * opacity modifiers work (bg-canvas/90, border-warm-200/60, etc.).
+ * At runtime, applyTheme() in theme.ts overwrites every variable on
+ * <html> for whichever mode is active (light or dark).
+ */
+:root {
+  --canvas: 250 247 242;
+  --surface: 255 255 255;
+
+  --ink: 44 36 24;
+  --ink-light: 107 94 79;
+  --ink-muted: 156 142 125;
+  --ink-faint: 168 152 136;
+
+  --warm-50: 253 248 240;
+  --warm-100: 248 239 226;
+  --warm-200: 240 222 198;
+  --warm-300: 229 201 160;
+  --warm-400: 212 169 111;
+  --warm-500: 192 139 74;
+
+  --spectrum-left: 245 158 11;
+  --spectrum-mid: 249 115 22;
+  --spectrum-right: 239 68 68;
+
+  --lumen: 91 141 239;
+  --lumen-light: 232 240 254;
+
+  --sage: 224 156 63;
+  --sage-light: 255 243 224;
+
+  --flux: 224 91 91;
+  --flux-light: 253 232 232;
+
+  --score-bullseye: 34 197 94;
+  --score-adjacent: 132 204 22;
+  --score-outer: 202 138 4;
+  --score-miss: 112 130 150;
+
+  --shadow-glow: 0 0 40px -10px rgba(192, 139, 74, 0.3);
+  --shadow-card: 0 2px 20px -4px rgba(44, 36, 24, 0.08);
+  --shadow-card-hover: 0 4px 30px -4px rgba(44, 36, 24, 0.12);
+
+  --dial-track: #E8D1BA;
+  --dial-hand: #2C2418;
+  --dial-hub-fill: #F8F5EF;
+  --dial-hub-stroke: #1D1710;
+  --dial-hub-center: #1D1710;
+
+  --dial-zone-outer: #CFBDA7;
+  --dial-zone-adjacent: #E8A062;
+  --dial-zone-bullseye: #D96D49;
+  --dial-zone-label-outer: #CFBDA7;
+  --dial-zone-label-adjacent: #E08A55;
+  --dial-zone-label-bullseye: #D96D49;
+
+  --focus-ring: #C08B4A;
+  --selection-bg: rgba(240, 222, 198, 0.6);
+  --canvas-hex: #FAF7F2;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -21,8 +85,8 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #faf7f2;
-  color: #2c2418;
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink));
   overflow-x: hidden;
 }
 
@@ -40,11 +104,11 @@ body {
 button:focus-visible,
 input:focus-visible,
 [role="button"]:focus-visible {
-  outline: 2px solid #C08B4A;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 /* Selection color */
 ::selection {
-  background-color: rgba(240, 222, 198, 0.6);
+  background-color: var(--selection-bg);
 }

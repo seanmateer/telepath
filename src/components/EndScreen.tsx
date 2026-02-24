@@ -43,7 +43,7 @@ export const EndScreen = ({
     try {
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(cardEl, {
-        backgroundColor: '#FAF7F2',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--canvas-hex').trim() || '#FAF7F2',
         scale: 2,
       });
 
@@ -121,7 +121,7 @@ export const EndScreen = ({
         {/* Share card */}
         <motion.div
           ref={shareCardRef}
-          className="mt-8 overflow-hidden rounded-2xl border border-warm-200/60 bg-white/70 shadow-card"
+          className="mt-8 overflow-hidden rounded-2xl border border-warm-200/60 bg-surface/70 shadow-card"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.35 }}
@@ -225,7 +225,7 @@ export const EndScreen = ({
         <motion.button
           type="button"
           onClick={() => void handleShare()}
-          className="mt-6 w-full rounded-full border border-warm-200 bg-white/80 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
+          className="mt-6 w-full rounded-full border border-warm-200 bg-surface/80 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: isCoop ? 2.2 : 0.55 }}
@@ -255,7 +255,7 @@ export const EndScreen = ({
           <button
             type="button"
             onClick={onChangePersonality}
-            className="flex-1 rounded-full border border-warm-200 bg-white/80 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
+            className="flex-1 rounded-full border border-warm-200 bg-surface/80 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
           >
             Change AI
           </button>

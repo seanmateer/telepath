@@ -763,7 +763,7 @@ export const GameScreen = ({
                     maxLength={40}
                     aria-label="Enter a one-word clue for your team"
                     autoComplete="off"
-                    className="flex-1 rounded-xl border border-warm-200 bg-white/80 px-4 py-3 text-center text-lg font-medium text-ink placeholder:text-ink-faint focus:border-warm-400 focus:outline-none focus:ring-1 focus:ring-warm-300"
+                    className="flex-1 rounded-xl border border-warm-200 bg-surface/80 px-4 py-3 text-center text-lg font-medium text-ink placeholder:text-ink-faint focus:border-warm-400 focus:outline-none focus:ring-1 focus:ring-warm-300"
                   />
                 </div>
                 <div className="mt-2 text-center">
@@ -843,14 +843,14 @@ export const GameScreen = ({
                   <button
                     type="button"
                     onClick={() => handleHumanBonusGuess('left')}
-                    className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
+                    className="min-h-[44px] rounded-full border border-warm-200 bg-surface/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
                   >
                     &larr; Left
                   </button>
                   <button
                     type="button"
                     onClick={() => handleHumanBonusGuess('right')}
-                    className="min-h-[44px] rounded-full border border-warm-200 bg-white/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
+                    className="min-h-[44px] rounded-full border border-warm-200 bg-surface/80 px-6 py-3 text-sm font-medium text-ink transition hover:bg-warm-100"
                   >
                     Right &rarr;
                   </button>

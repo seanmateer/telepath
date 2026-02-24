@@ -59,7 +59,7 @@ export const ModeScreen = ({ onSelectMode }: ModeScreenProps) => {
               disabled={!mode.enabled}
               className={`relative w-full rounded-2xl border-2 px-5 py-4 text-left transition-colors transition-shadow ${
                 mode.enabled
-                  ? 'border-warm-300 bg-white/60 hover:bg-white/80 hover:border-warm-400 hover:shadow-card'
+                  ? 'border-warm-300 bg-surface/60 hover:bg-surface/80 hover:border-warm-400 hover:shadow-card'
                   : 'cursor-not-allowed border-warm-200/40 bg-warm-50/30 opacity-60'
               }`}
               style={{

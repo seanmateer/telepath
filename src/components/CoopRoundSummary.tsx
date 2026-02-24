@@ -36,7 +36,7 @@ export const CoopRoundSummary = ({
 
   return (
     <motion.section
-      className="mt-6 rounded-2xl border border-warm-200/70 bg-white/75 px-5 py-5 text-center shadow-card"
+      className="mt-6 rounded-2xl border border-warm-200/70 bg-surface/75 px-5 py-5 text-center shadow-card"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}

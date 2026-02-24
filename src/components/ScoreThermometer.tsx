@@ -107,7 +107,7 @@ export const ScoreThermometer = ({
         <motion.div
           className="absolute bottom-0 left-0 right-0 rounded-full"
           style={{
-            background: 'linear-gradient(to top, #F59E0B, #F97316, #EF4444, #E05B5B)',
+            background: 'linear-gradient(to top, rgb(var(--spectrum-left)), rgb(var(--spectrum-mid)), rgb(var(--spectrum-right)), rgb(var(--flux)))',
           }}
           initial={{ height: '0%' }}
           animate={{ height: `${fillPercent}%` }}
@@ -126,7 +126,7 @@ export const ScoreThermometer = ({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: animationDelay + 1.2 }}
         >
-          <div className="h-0.5 w-full bg-white/90 shadow-sm" />
+          <div className="h-0.5 w-full bg-surface/90 shadow-sm" />
         </motion.div>
       </div>
     </div>
