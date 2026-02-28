@@ -90,7 +90,7 @@ function c(hex: string): string {
 
 export const lightTheme: ThemePalette = {
   canvas: c('#FAF7F2'),
-  surface: c('#FFFFFF'),
+  surface: c('#FFF9F4'),
   ink: c('#2C2418'),
   'ink-light': c('#6B5E4F'),
   'ink-muted': c('#9C8E7D'),

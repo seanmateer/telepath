@@ -1,5 +1,66 @@
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { GameMode, Personality } from '../types/game';
+
+/* ── Slot-machine digit roller ───────────────────────────────── */
+
+const DIGIT_HEIGHT = 1.25; // em, matches line-height
+
+const SlotDigit = ({ digit }: { digit: number }) => {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return <span>{digit}</span>;
+  }
+
+  return (
+    <span
+      className="inline-block overflow-hidden"
+      style={{ height: `${DIGIT_HEIGHT}em`, lineHeight: `${DIGIT_HEIGHT}em` }}
+    >
+      <motion.span
+        className="inline-flex flex-col"
+        animate={{ y: `${-digit * DIGIT_HEIGHT}em` }}
+        transition={{
+          duration: 0.5,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+      >
+        {Array.from({ length: 10 }, (_, d) => (
+          <span
+            key={d}
+            className="block text-center"
+            style={{ height: `${DIGIT_HEIGHT}em` }}
+            aria-hidden={d !== digit}
+          >
+            {d}
+          </span>
+        ))}
+      </motion.span>
+    </span>
+  );
+};
+
+const SlotMachineNumber = ({ value }: { value: number }) => {
+  const digits = String(value).split('');
+
+  return (
+    <span className="inline-flex text-lg font-semibold tabular-nums text-ink">
+      <AnimatePresence initial={false}>
+        {digits.map((d, i) => (
+          <motion.span
+            key={`pos-${digits.length - i}`}
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: 'auto' }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <SlotDigit digit={Number(d)} />
+          </motion.span>
+        ))}
+      </AnimatePresence>
+    </span>
+  );
+};
 
 type ScoreBarProps = {
   humanScore: number;
@@ -35,9 +96,7 @@ export const ScoreBar = ({
   if (gameMode === 'coop') {
     const scoreDisplay = (
       <div className="flex items-baseline gap-1.5">
-        <span className="text-lg font-semibold tabular-nums text-ink">
-          {coopScore}
-        </span>
+        <SlotMachineNumber value={coopScore} />
         <span className="text-xs font-medium text-ink-muted">pts</span>
       </div>
     );

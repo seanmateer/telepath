@@ -17,6 +17,8 @@ import {
   valueToDialAngle,
 } from '../lib/dialMath.js';
 import { triggerHapticPulse } from '../lib/haptics.js';
+import { RoundScorePill } from './RoundScorePill.js';
+import type { ScoreZone } from '../types/game';
 
 type DialProps = {
   value: number;
@@ -33,6 +35,11 @@ type DialProps = {
   interactive?: boolean;
   showDialHand?: boolean;
   showValueLabel?: boolean;
+  roundScorePill?: {
+    zone: ScoreZone;
+    points: number;
+    bonusCardDrawn: boolean;
+  } | null;
 };
 
 type ScoreZoneGeometry = {
@@ -165,6 +172,7 @@ export const Dial = ({
   interactive = true,
   showDialHand = true,
   showValueLabel = true,
+  roundScorePill = null,
 }: DialProps) => {
   const dialRef = useRef<HTMLDivElement | null>(null);
   const latestValueRef = useRef<number>(clampDialValue(value));
@@ -410,6 +418,18 @@ export const Dial = ({
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
       </div>
+
+      <AnimatePresence>
+        {roundScorePill && (
+          <div className="mb-3 flex justify-center">
+            <RoundScorePill
+              zone={roundScorePill.zone}
+              points={roundScorePill.points}
+              bonusCardDrawn={roundScorePill.bonusCardDrawn}
+            />
+          </div>
+        )}
+      </AnimatePresence>
 
       <div
         ref={dialRef}

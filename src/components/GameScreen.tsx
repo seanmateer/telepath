@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Dial } from './Dial';
-import { CoopRoundSummary } from './CoopRoundSummary';
 import { PlaytestUtilityPanel } from './PlaytestUtilityPanel';
 import { ScoreBar } from './ScoreBar';
 import { ScoreThermometerModal } from './ScoreThermometerModal';
@@ -83,6 +82,7 @@ export const GameScreen = ({
   const [aiReasoning, setAiReasoning] = useState<string | null>(null);
   const [humanClueInput, setHumanClueInput] = useState('');
   const [isRevealingTarget, setIsRevealingTarget] = useState(false);
+  const [displayedCoopScore, setDisplayedCoopScore] = useState(0);
   const [telemetrySnapshot, setTelemetrySnapshot] = useState(() =>
     loadTelemetrySnapshot(),
   );
@@ -162,6 +162,24 @@ export const GameScreen = ({
     loading,
     personality,
   ]);
+
+  // Delay the displayed co-op score to create the pill → score roll sequence
+  useEffect(() => {
+    if (!gameState) return;
+    const score = gameState.coopScore;
+    // If there's a revealed result, delay the score update for the slot animation
+    if (gameState.phase === 'next-round' || gameState.phase === 'game-over') {
+      if (displayedCoopScore !== score) {
+        const timer = window.setTimeout(() => {
+          setDisplayedCoopScore(score);
+        }, 500);
+        return () => window.clearTimeout(timer);
+      }
+    } else {
+      // Sync immediately for non-reveal phases (game start, rehydration)
+      setDisplayedCoopScore(score);
+    }
+  }, [gameState?.coopScore, gameState?.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopDialAnimation = useCallback(() => {
     if (animationFrameRef.current !== null) {
@@ -731,7 +749,7 @@ export const GameScreen = ({
         roundNumber={currentRound.roundNumber}
         pointsToWin={gameState.settings.pointsToWin}
         gameMode={gameMode}
-        coopScore={gameState.coopScore}
+        coopScore={displayedCoopScore}
         totalCards={gameState.totalCards}
         cardsRemaining={gameState.deck.length}
         onCoopScoreClick={
@@ -857,6 +875,15 @@ export const GameScreen = ({
                 interactive={isDialInteractive}
                 showDialHand={!isPsychicPreviewPhase && !isAwaitingAiClue}
                 showValueLabel={!isPsychicPreviewPhase && !isAwaitingAiClue}
+                roundScorePill={
+                  gameMode === 'coop' && currentRound.result && isRevealed
+                    ? {
+                        zone: currentRound.result.score.zone,
+                        points: currentRound.result.score.basePoints,
+                        bonusCardDrawn: currentRound.result.bonusCardDrawn === true,
+                      }
+                    : null
+                }
               />
             )}
 
@@ -916,14 +943,26 @@ export const GameScreen = ({
               )}
             </div>
 
+            {/* Next Round / See Results button (co-op, after round reveal) */}
             {gameMode === 'coop' && currentRound.result && isRevealed && (
-              <CoopRoundSummary
-                result={currentRound.result}
-                coopScore={gameState.coopScore}
-                isGameOver={gameState.phase === 'game-over'}
-                disabled={aiThinking}
-                onContinue={() => void handleTransitionDone()}
-              />
+              <div className="mt-6 flex justify-center">
+                <motion.button
+                  type="button"
+                  onClick={() => void handleTransitionDone()}
+                  disabled={aiThinking}
+                  className="rounded-full bg-ink px-8 py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light hover:shadow-glow active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-ink disabled:hover:shadow-none"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.6 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {aiThinking
+                    ? 'Thinking...'
+                    : gameState.phase === 'game-over'
+                      ? 'See Results'
+                      : 'Next Round'}
+                </motion.button>
+              </div>
             )}
 
             {/* Reasoning panel (after reveal) */}
