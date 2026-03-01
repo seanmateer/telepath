@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import {
   buildClueSystemPrompt,
   buildClueUserPrompt,
+  DIAL_MODEL,
+  resolveClueModel,
 } from '../aiPrompts.js';
 import type { Personality, SpectrumCard } from '../../types/game.js';
 
@@ -69,5 +71,12 @@ describe('buildClueUserPrompt', () => {
         'Bad clue style for this game: axis restatement. Good clue style: external anchor.',
       ),
     );
+  });
+});
+
+describe('resolveClueModel', () => {
+  it('locks clue generation to Haiku during MVP regardless of settings', () => {
+    assert.equal(resolveClueModel(false), DIAL_MODEL);
+    assert.equal(resolveClueModel(true), DIAL_MODEL);
   });
 });

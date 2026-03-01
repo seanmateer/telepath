@@ -1,10 +1,10 @@
 import {
-  CLUE_MODEL,
-  DIAL_MODEL,
   buildClueSystemPrompt,
   buildClueUserPrompt,
   buildDialSystemPrompt,
   buildDialUserPrompt,
+  DIAL_MODEL,
+  resolveClueModel,
 } from '../lib/aiPrompts.js';
 import type { Personality, SpectrumCard } from '../types/game.js';
 import type { AIUsageSample } from '../types/playtest.js';
@@ -266,7 +266,7 @@ const callAIProxy = async (payload: AIProxyRequest): Promise<AIProxyResult> => {
 };
 
 export const useAI = (options: UseAIOptions = {}) => {
-  const clueModel = options.useHaikuOnlyClues ? DIAL_MODEL : CLUE_MODEL;
+  const clueModel = resolveClueModel(options.useHaikuOnlyClues ?? false);
 
   const generateClue = async (
     input: GenerateClueInput,

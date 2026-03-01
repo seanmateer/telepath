@@ -2,6 +2,16 @@ import type { Personality, SpectrumCard } from '../types/game.js';
 
 export const CLUE_MODEL = 'claude-sonnet-4-5-20250929';
 export const DIAL_MODEL = 'claude-haiku-4-5-20251001';
+const LOCK_CLUE_GENERATION_TO_HAIKU_FOR_MVP = true;
+
+export const resolveClueModel = (preferHaikuOnlyClues: boolean): string => {
+  // TODO(post-MVP): restore configurable Sonnet clue generation after launch cost testing.
+  if (LOCK_CLUE_GENERATION_TO_HAIKU_FOR_MVP) {
+    return DIAL_MODEL;
+  }
+
+  return preferHaikuOnlyClues ? DIAL_MODEL : CLUE_MODEL;
+};
 
 type PersonalityPromptProfile = {
   name: string;

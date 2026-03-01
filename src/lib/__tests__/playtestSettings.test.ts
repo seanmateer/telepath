@@ -51,12 +51,23 @@ describe('playtest settings storage', () => {
     assert.deepEqual(loadPlaytestSettings(storage), DEFAULT_PLAYTEST_SETTINGS);
   });
 
-  it('round-trips saved settings through local storage', () => {
+  it('forces saved settings to keep Haiku clue generation enabled', () => {
     const storage = new MemoryStorage();
 
-    savePlaytestSettings({ haikuOnlyClues: true }, storage);
+    savePlaytestSettings({ haikuOnlyClues: false }, storage);
     const loaded = loadPlaytestSettings(storage);
 
     assert.deepEqual(loaded, { haikuOnlyClues: true });
+  });
+
+  it('migrates stale stored false values back to the MVP lock', () => {
+    const storage = new MemoryStorage();
+
+    storage.setItem(
+      PLAYTEST_SETTINGS_STORAGE_KEY,
+      JSON.stringify({ haikuOnlyClues: false }),
+    );
+
+    assert.deepEqual(loadPlaytestSettings(storage), { haikuOnlyClues: true });
   });
 });

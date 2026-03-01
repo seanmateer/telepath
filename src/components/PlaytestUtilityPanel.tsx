@@ -56,6 +56,10 @@ const formatCostLabel = (
   return formatUsd(estimatedUsd);
 };
 
+const HAIKU_CLUE_LOCK_TOOLTIP_ID = 'haiku-clue-lock-tooltip';
+const HAIKU_CLUE_LOCK_TOOLTIP =
+  'Locked during MVP so clue generation always uses Haiku while Sonnet costs are being validated. Re-enable model selection in a post-MVP phase.';
+
 const summarizeGame = (game: TelemetryGameSummary): string => {
   return `${game.aiCalls} calls · ${game.inputTokens} in / ${game.outputTokens} out`;
 };
@@ -309,25 +313,51 @@ export const PlaytestUtilityPanel = ({
               </div>
 
               <div className="space-y-4">
-                <label className="flex items-start gap-3 rounded-lg border border-warm-200/60 bg-surface/80 px-3 py-2">
+                <div className="flex items-start gap-3 rounded-lg border border-warm-200/60 bg-surface/80 px-3 py-2">
                   <input
                     type="checkbox"
-                    checked={settings.haikuOnlyClues}
-                    onChange={(event) =>
+                    checked
+                    disabled
+                    onChange={() =>
                       onSettingsChange({
                         ...settings,
-                        haikuOnlyClues: event.target.checked,
+                        haikuOnlyClues: true,
                       })
                     }
-                    className="mt-0.5 h-4 w-4 rounded border-warm-300 text-ink focus:ring-warm-300"
+                    className="mt-0.5 h-4 w-4 rounded border-warm-300 text-ink opacity-70 focus:ring-warm-300 disabled:cursor-not-allowed"
                   />
-                  <div>
-                    <p className="text-sm font-medium text-ink">Use Haiku for clue generation</p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-ink">
+                        Clue generation locked to Haiku
+                      </p>
+                      <span className="rounded-full bg-warm-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                        MVP
+                      </span>
+                      <div className="group relative">
+                        <button
+                          type="button"
+                          aria-label="Why clue generation is locked to Haiku"
+                          aria-describedby={HAIKU_CLUE_LOCK_TOOLTIP_ID}
+                          title={HAIKU_CLUE_LOCK_TOOLTIP}
+                          className="flex h-5 w-5 items-center justify-center rounded-full border border-warm-200 text-[11px] font-semibold text-ink-muted transition hover:bg-warm-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm-300"
+                        >
+                          i
+                        </button>
+                        <div
+                          id={HAIKU_CLUE_LOCK_TOOLTIP_ID}
+                          role="tooltip"
+                          className="pointer-events-none invisible absolute right-0 top-full z-10 mt-2 w-56 rounded-lg border border-warm-200 bg-surface px-3 py-2 text-[11px] leading-relaxed text-ink-light opacity-0 shadow-card transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                        >
+                          {HAIKU_CLUE_LOCK_TOOLTIP}
+                        </div>
+                      </div>
+                    </div>
                     <p className="text-xs text-ink-muted">
-                      Reduces playtest costs with lower-cost clue model; quality may vary.
+                      Cheaper clue calls for MVP ship testing. Sonnet clue generation is intentionally unavailable for now.
                     </p>
                   </div>
-                </label>
+                </div>
 
                 <section>
                   <h4 className="text-xs font-semibold uppercase tracking-widest text-ink-faint">

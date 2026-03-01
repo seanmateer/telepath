@@ -3,7 +3,7 @@ import type { PlaytestSettings } from '../types/playtest.js';
 export const PLAYTEST_SETTINGS_STORAGE_KEY = 'telepath.playtestSettings.v1';
 
 export const DEFAULT_PLAYTEST_SETTINGS: PlaytestSettings = {
-  haikuOnlyClues: false,
+  haikuOnlyClues: true,
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
@@ -28,10 +28,8 @@ const normalizePlaytestSettings = (value: unknown): PlaytestSettings => {
   }
 
   return {
-    haikuOnlyClues:
-      typeof value.haikuOnlyClues === 'boolean'
-        ? value.haikuOnlyClues
-        : DEFAULT_PLAYTEST_SETTINGS.haikuOnlyClues,
+    // TODO(post-MVP): restore persisted clue-model selection once Sonnet costs are acceptable.
+    haikuOnlyClues: true,
   };
 };
 

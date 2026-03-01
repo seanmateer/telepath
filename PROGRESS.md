@@ -19,7 +19,7 @@
 
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
-**Last Updated:** 2026-02-28
+**Last Updated:** 2026-03-01
 **Last Session Summary:** Fixed the co-op header score affordance so its hover/focus treatment wraps the score text instead of stretching across the full grid column.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
@@ -202,6 +202,7 @@ This phase is different from the others — it's not a linear checklist. We play
 - [x] **Local AI proxy dev fix** — Added Vite dev middleware to forward `/api/ai` requests to `api/ai.ts` during `npm run dev`, preventing HTML fallback responses and restoring JSON AI responses for clue/dial calls in local play-tests.
 - [x] **Local env loading for AI proxy** — Updated Vite config to load `.env` values into `process.env` in local dev so the `/api/ai` middleware can read `ANTHROPIC_API_KEY` and avoid “Server missing ANTHROPIC_API_KEY.”
 - [x] **Dial reasoning consistency tuning** — Updated dial-placement prompts to explicitly define left/right numeric scale and require consistency between textual reasoning and numeric output to reduce contradictions like “rebellious” with right-leaning placement.
+- [x] **Haiku-only clue generation MVP lock** — Forced clue generation to Haiku in runtime and persisted playtest settings, disabled the playtest toggle with an explanatory tooltip, and left post-MVP TODOs where Sonnet clue selection can be restored later.
 
 **Phase 5 complete when:** The human says the gameplay loop feels good and we're ready to ship.
 
@@ -260,6 +261,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-01 | Codex | Phase 5 | Locked clue generation to Haiku for MVP ship testing, disabled the playtest toggle with a tooltip explaining the temporary cost guardrail, added post-MVP TODOs where model selection can be restored, and verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, `npm run build`, and a local `npm run dev -- --host 127.0.0.1 --port 4173` boot plus `curl -I http://127.0.0.1:4173/`. |
 | 2026-02-28 | Codex | Phase 5 | Fixed the co-op header score affordance in `ScoreBar` by preventing the score control from stretching across its grid column, so the interactive background now wraps the score text. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run build`. |
 | 2026-02-28 | Codex | Phase 5 | Moved clue copy into the dial card, replaced the co-op reveal summary card with an inline round-score pill and delayed slot-roll score update, simplified the co-op post-reveal CTA, and warmed the base surface token. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
 | 2026-02-24 | Codex | Phase 5 | Added reload-safe shell routing (`/` splash, `/game` gameplay flow) plus session-storage rehydration for app shell + in-progress game state so theme token edits no longer reset to splash. Added snapshot storage tests and verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
