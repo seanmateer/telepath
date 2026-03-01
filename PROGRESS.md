@@ -186,6 +186,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Splash arc light-mode contrast bump** — Increased the splash illustration arc opacity in light mode by roughly 15% while preserving the existing darker treatment in dark mode, so the layered background reads more clearly behind the title.
 - [x] **Splash illustration recentering** — Lowered the animated splash arc illustration so the outer arcs no longer clip at the top edge and the layered art sits more centrally behind the title on the landing screen.
 - [x] **Basic production visitor tracking** — Added `@vercel/analytics` to the app shell so the published Vercel deployment reports high-level visitor traffic in the Vercel Analytics dashboard with no custom event plumbing.
 - [x] **Reload-safe routing + game session rehydration** — Added URL-based shell routing (`/` for splash, `/game` for mode/setup/game/end), app-shell snapshot persistence, and stable game-session snapshot restore in `GameScreen` so full reloads during theme edits return to the active flow instead of resetting to splash. Added typed snapshot storage tests in `sessionState`.
@@ -263,6 +264,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-01 | Codex | Phase 5 | Increased splash-screen arc opacity in light mode by about 15% while keeping dark mode at the prior values, so the background illustration reads more clearly without over-weighting the dark theme. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Recentered the splash-screen arc illustration by lowering the SVG art anchor and background offset so the top arc no longer clips and the layered animation sits lower behind the title. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Added basic Vercel Web Analytics tracking with `@vercel/analytics` in the React entrypoint so production deploys report visitor traffic in the Vercel dashboard. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Locked clue generation to Haiku for MVP ship testing, disabled the playtest toggle with a tooltip explaining the temporary cost guardrail, added post-MVP TODOs where model selection can be restored, and verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, `npm run build`, and a local `npm run dev -- --host 127.0.0.1 --port 4173` boot plus `curl -I http://127.0.0.1:4173/`. |

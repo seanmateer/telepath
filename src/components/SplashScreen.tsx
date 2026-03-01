@@ -1,24 +1,32 @@
 import { motion } from 'framer-motion';
+import { useTheme } from '../hooks/useTheme';
 
 type SplashScreenProps = {
   onPlay: () => void;
 };
 
-const ARC_COLORS = [
-  'rgb(var(--spectrum-left) / 0.15)',
-  'rgb(var(--spectrum-mid) / 0.12)',
-  'rgb(var(--spectrum-right) / 0.10)',
-  'rgb(var(--sage) / 0.08)',
-  'rgb(var(--lumen) / 0.06)',
-];
+const ARC_COLOR_CHANNELS = [
+  '--spectrum-left',
+  '--spectrum-mid',
+  '--spectrum-right',
+  '--sage',
+  '--lumen',
+] as const;
+
+const ARC_OPACITIES = {
+  light: [0.17, 0.14, 0.115, 0.092, 0.069],
+  dark: [0.15, 0.12, 0.1, 0.08, 0.06],
+} as const;
 
 const ARC_CENTER_X = 200;
 const ARC_CENTER_Y = 300;
 
 const Arc = ({
   index,
+  stroke,
 }: {
   index: number;
+  stroke: string;
 }) => {
   const baseRadius = 80 + index * 52;
   const startAngle = 200 + index * 8;
@@ -43,7 +51,7 @@ const Arc = ({
     <motion.path
       d={d}
       fill="none"
-      stroke={ARC_COLORS[index % ARC_COLORS.length]}
+      stroke={stroke}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       initial={{ pathLength: 0, opacity: 0 }}
@@ -64,6 +72,11 @@ const Arc = ({
 };
 
 export const SplashScreen = ({ onPlay }: SplashScreenProps) => {
+  const { theme } = useTheme();
+  const arcColors = ARC_COLOR_CHANNELS.map(
+    (channel, index) => `rgb(var(${channel}) / ${ARC_OPACITIES[theme][index]})`,
+  );
+
   return (
     <main className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-6">
       {/* Background arcs */}
@@ -74,7 +87,7 @@ export const SplashScreen = ({ onPlay }: SplashScreenProps) => {
           aria-hidden="true"
         >
           {Array.from({ length: 5 }).map((_, i) => (
-            <Arc key={i} index={i} />
+            <Arc key={i} index={i} stroke={arcColors[i]} />
           ))}
         </svg>
       </div>
