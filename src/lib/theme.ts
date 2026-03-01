@@ -119,7 +119,7 @@ export const lightTheme: ThemePalette = {
   'shadow-card': '0 2px 20px -4px rgba(44, 36, 24, 0.08)',
   'shadow-card-hover': '0 4px 30px -4px rgba(44, 36, 24, 0.12)',
 
-  'dial-track': '#E8D1BA',
+  'dial-track': '#DDD0BF',
   'dial-hand': '#2C2418',
   'dial-hub-fill': '#F8F5EF',
   'dial-hub-stroke': '#1D1710',
@@ -138,20 +138,20 @@ export const lightTheme: ThemePalette = {
 };
 
 // ---------------------------------------------------------------------------
-// Dark theme  (inspired by the provided screenshot — deep warm darks)
+// Dark theme  (deep warm darks — all warm-scale values use brown/amber hues)
 // ---------------------------------------------------------------------------
 
 export const darkTheme: ThemePalette = {
   canvas: c('#181614'),
-  surface: c('#1B1917'),
+  surface: c('#211E1A'),
   ink: c('#EAE6E0'),
   'ink-light': c('#C0B8AE'),
   'ink-muted': c('#A49B92'),
   'ink-faint': c('#887F77'),
-  'warm-50': c('#1A1820'),
-  'warm-100': c('#262330'),
-  'warm-200': c('#3D3744'),
-  'warm-300': c('#584F62'),
+  'warm-50': c('#1F1C18'),
+  'warm-100': c('#2C2720'),
+  'warm-200': c('#3F372B'),
+  'warm-300': c('#554D40'),
   'warm-400': c('#8A7F72'),
   'warm-500': c('#C4A464'),
   'spectrum-left': c('#F5A623'),
@@ -172,25 +172,25 @@ export const darkTheme: ThemePalette = {
   'shadow-card': '0 2px 20px -4px rgba(0, 0, 0, 0.3)',
   'shadow-card-hover': '0 4px 30px -4px rgba(0, 0, 0, 0.4)',
 
-  'dial-track': '#2D251F',
+  'dial-track': '#382F24',
   'dial-hand': '#EAE6E0',
-  'dial-hub-fill': '#1C1A22',
+  'dial-hub-fill': '#1F1C18',
   'dial-hub-stroke': '#EAE6E0',
   'dial-hub-center': '#EAE6E0',
 
   // 2
-  'dial-zone-outer': '#563A25',
+  'dial-zone-outer': '#4E3B28',
   // 3
-  'dial-zone-adjacent': '#7B4513',
+  'dial-zone-adjacent': '#6E4A1E',
   // 4 or 3+
-  'dial-zone-bullseye': '#91310B',
+  'dial-zone-bullseye': '#8B3315',
   'dial-zone-label-outer': 'var(--dial-zone-outer)',
   'dial-zone-label-adjacent': 'var(--dial-zone-adjacent)',
   'dial-zone-label-bullseye': 'var(--dial-zone-bullseye)',
 
   'focus-ring': '#B8995C',
-  'selection-bg': 'rgba(53, 47, 58, 0.7)',
-  'canvas-hex': '#131118',
+  'selection-bg': 'rgba(58, 53, 46, 0.7)',
+  'canvas-hex': '#181614',
 };
 
 // ---------------------------------------------------------------------------
