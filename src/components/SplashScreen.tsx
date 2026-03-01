@@ -12,6 +12,9 @@ const ARC_COLORS = [
   'rgb(var(--lumen) / 0.06)',
 ];
 
+const ARC_CENTER_X = 200;
+const ARC_CENTER_Y = 300;
+
 const Arc = ({
   index,
 }: {
@@ -24,8 +27,8 @@ const Arc = ({
 
   const startRad = (startAngle * Math.PI) / 180;
   const endRad = (endAngle * Math.PI) / 180;
-  const cx = 200;
-  const cy = 260;
+  const cx = ARC_CENTER_X;
+  const cy = ARC_CENTER_Y;
 
   const x1 = cx + baseRadius * Math.cos(startRad);
   const y1 = cy + baseRadius * Math.sin(startRad);
@@ -67,7 +70,7 @@ export const SplashScreen = ({ onPlay }: SplashScreenProps) => {
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <svg
           viewBox="0 0 400 400"
-          className="h-[min(100vw,500px)] w-[min(100vw,500px)] opacity-80"
+          className="h-[min(100vw,500px)] w-[min(100vw,500px)] translate-y-[clamp(1rem,5vh,2.75rem)] opacity-80"
           aria-hidden="true"
         >
           {Array.from({ length: 5 }).map((_, i) => (
