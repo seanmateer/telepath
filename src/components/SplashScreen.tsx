@@ -14,7 +14,7 @@ const ARC_COLOR_CHANNELS = [
 ] as const;
 
 const ARC_OPACITIES = {
-  light: [0.17, 0.14, 0.115, 0.092, 0.069],
+  light: [0.20, 0.17, 0.15, 0.12, 0.1],
   dark: [0.15, 0.12, 0.1, 0.08, 0.06],
 } as const;
 
