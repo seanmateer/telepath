@@ -95,10 +95,10 @@ export const ScoreBar = ({
 }: ScoreBarProps) => {
   if (gameMode === 'coop') {
     const scoreDisplay = (
-      <div className="flex items-baseline gap-1.5">
+      <span className="inline-flex items-baseline gap-1.5">
         <SlotMachineNumber value={coopScore} />
         <span className="text-xs font-medium text-ink-muted">pts</span>
-      </div>
+      </span>
     );
 
     return (
@@ -108,14 +108,14 @@ export const ScoreBar = ({
           <button
             type="button"
             onClick={onCoopScoreClick}
-            className="-m-2 min-h-[44px] rounded-lg p-2 text-left transition hover:bg-warm-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-300"
+            className="justify-self-start -m-2 inline-flex min-h-[44px] w-fit items-center rounded-lg p-2 text-left transition hover:bg-warm-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-300"
             aria-label={`Open score thermometer (${coopScore} points)`}
             aria-haspopup="dialog"
           >
             {scoreDisplay}
           </button>
         ) : (
-          scoreDisplay
+          <div className="justify-self-start">{scoreDisplay}</div>
         )}
 
         {/* Round indicator */}

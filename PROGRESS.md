@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-02-28
-**Last Session Summary:** Folded clue copy into the dial card, replaced the co-op reveal summary card with an inline round-score pill plus delayed score roll animation, and warmed the base surface token to better match the current visual direction.
+**Last Session Summary:** Fixed the co-op header score affordance so its hover/focus treatment wraps the score text instead of stretching across the full grid column.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -260,6 +260,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-02-28 | Codex | Phase 5 | Fixed the co-op header score affordance in `ScoreBar` by preventing the score control from stretching across its grid column, so the interactive background now wraps the score text. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run build`. |
 | 2026-02-28 | Codex | Phase 5 | Moved clue copy into the dial card, replaced the co-op reveal summary card with an inline round-score pill and delayed slot-roll score update, simplified the co-op post-reveal CTA, and warmed the base surface token. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
 | 2026-02-24 | Codex | Phase 5 | Added reload-safe shell routing (`/` splash, `/game` gameplay flow) plus session-storage rehydration for app shell + in-progress game state so theme token edits no longer reset to splash. Added snapshot storage tests and verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
 | 2026-02-23 | Codex | Phase 5 | Smoothed clue lock-in pacing by triggering the same subtle horizontal center-stack transition when the psychic submits `Give Clue`, reducing abrupt state swaps into AI reading/placement. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |
