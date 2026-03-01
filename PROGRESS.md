@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-03-01
-**Last Session Summary:** Fixed the co-op header score affordance so its hover/focus treatment wraps the score text instead of stretching across the full grid column.
+**Last Session Summary:** Added basic Vercel Web Analytics wiring so the deployed app reports visitor traffic in the Vercel dashboard with no custom backend work.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -186,6 +186,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Basic production visitor tracking** — Added `@vercel/analytics` to the app shell so the published Vercel deployment reports high-level visitor traffic in the Vercel Analytics dashboard with no custom event plumbing.
 - [x] **Reload-safe routing + game session rehydration** — Added URL-based shell routing (`/` for splash, `/game` for mode/setup/game/end), app-shell snapshot persistence, and stable game-session snapshot restore in `GameScreen` so full reloads during theme edits return to the active flow instead of resetting to splash. Added typed snapshot storage tests in `sessionState`.
 - [x] **Co-op reveal feedback + in-dial clue placement** — Moved clue labels/text into the dial card, replaced the separate co-op round summary card with a compact round-score pill rendered inside the dial, delayed co-op score updates to roll after the pill lands, simplified the post-reveal CTA to a standalone button, and nudged the light theme surface token warmer to match the revised board treatment.
 - [x] **Psychic clue lock-in transition smoothing** — Added a scene transition trigger to `GameScreen` so pressing `Give Clue` animates the center gameplay stack with the same subtle horizontal fade (old left, new right), reducing the abrupt switch from clue entry to AI reading/placement.
@@ -261,6 +262,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-01 | Codex | Phase 5 | Added basic Vercel Web Analytics tracking with `@vercel/analytics` in the React entrypoint so production deploys report visitor traffic in the Vercel dashboard. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Locked clue generation to Haiku for MVP ship testing, disabled the playtest toggle with a tooltip explaining the temporary cost guardrail, added post-MVP TODOs where model selection can be restored, and verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, `npm run build`, and a local `npm run dev -- --host 127.0.0.1 --port 4173` boot plus `curl -I http://127.0.0.1:4173/`. |
 | 2026-02-28 | Codex | Phase 5 | Fixed the co-op header score affordance in `ScoreBar` by preventing the score control from stretching across its grid column, so the interactive background now wraps the score text. Verified with `npm run lint`, `npx tsc --noEmit`, and `npm run build`. |
 | 2026-02-28 | Codex | Phase 5 | Moved clue copy into the dial card, replaced the co-op reveal summary card with an inline round-score pill and delayed slot-roll score update, simplified the co-op post-reveal CTA, and warmed the base surface token. Verified with `npm run lint`, `npx tsc --noEmit`, `npm run test:game`, and `npm run build`. |

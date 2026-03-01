@@ -20,6 +20,7 @@
     "@anthropic-ai/sdk": "^0.78.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.2",
+    "@vercel/analytics": "^1.6.1",
     "framer-motion": "^12.34.3",
     "html2canvas": "^1.4.1",
     "react": "^18.3.1",
