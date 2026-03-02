@@ -748,6 +748,11 @@ export const GameScreen = ({
     gameState.phase === 'human-guess' &&
     currentRound.psychicTeam === 'ai' &&
     !aiThinking;
+  const shouldPulseDialHub = isAwaitingAiClue;
+  const shouldAnimateDialHandEntrance =
+    currentRound.psychicTeam === 'ai' &&
+    gameState.phase === 'human-guess' &&
+    !aiThinking;
   const dialClueLabel = isHumanPsychic
     ? 'Your clue'
     : `${personalityNames[personality]}'s clue`;
@@ -856,6 +861,8 @@ export const GameScreen = ({
                 interactive={isDialInteractive}
                 showDialHand={!isPsychicPreviewPhase && !isAwaitingAiClue}
                 showValueLabel={!isAwaitingAiClue}
+                pulseHub={shouldPulseDialHub}
+                animateHandEntrance={shouldAnimateDialHandEntrance}
                 valueLabelText={
                   isPsychicPreviewPhase
                     ? `Target at ${currentRound.targetPosition}%`

@@ -27,6 +27,8 @@ type DialProps = {
   clueLabel?: string;
   clueText?: string;
   valueLabelText?: string;
+  pulseHub?: boolean;
+  animateHandEntrance?: boolean;
   size?: number;
   onChange?: (value: number) => void;
   onRelease?: (value: number) => void;
@@ -165,6 +167,8 @@ export const Dial = ({
   clueLabel,
   clueText,
   valueLabelText,
+  pulseHub = false,
+  animateHandEntrance = false,
   size = 350,
   onChange,
   onRelease,
@@ -520,7 +524,28 @@ export const Dial = ({
             })}
 
           {showDialHand && (
-            <g>
+            <motion.g
+              initial={
+                animateHandEntrance && !prefersReducedMotion
+                  ? { scale: 0 }
+                  : false
+              }
+              animate={
+                animateHandEntrance && !prefersReducedMotion
+                  ? { scale: [0, 1.08, 1] }
+                  : { scale: 1 }
+              }
+              transition={
+                animateHandEntrance && !prefersReducedMotion
+                  ? {
+                      duration: 0.42,
+                      times: [0, 0.72, 1],
+                      ease: [0.34, 1.56, 0.64, 1],
+                    }
+                  : { duration: 0.18, ease: 'easeOut' }
+              }
+              style={{ transformOrigin: `${center}px ${center}px` }}
+            >
               <line
                 x1={handGeometry.start.x}
                 y1={handGeometry.start.y}
@@ -530,7 +555,7 @@ export const Dial = ({
                 strokeWidth={handStrokeWidth}
                 strokeLinecap="round"
               />
-            </g>
+            </motion.g>
           )}
 
           {shouldShowZones &&
@@ -594,7 +619,23 @@ export const Dial = ({
             strokeLinecap="round"
           />
 
-          <>
+          <motion.g
+            animate={
+              pulseHub && !prefersReducedMotion
+                ? { scale: [1, 1.06, 1] }
+                : { scale: 1 }
+            }
+            transition={
+              pulseHub && !prefersReducedMotion
+                ? {
+                    duration: 1.8,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }
+                : { duration: 0.2, ease: 'easeOut' }
+            }
+            style={{ transformOrigin: `${center}px ${center}px` }}
+          >
             <circle
               cx={center}
               cy={center}
@@ -604,7 +645,7 @@ export const Dial = ({
               strokeWidth={Math.max(1.2, size * 0.0036)}
             />
             <circle cx={center} cy={center} r={hubInnerRadius} fill="var(--dial-hub-center)" />
-          </>
+          </motion.g>
         </svg>
         <AnimatePresence>
           {roundScorePill && (
