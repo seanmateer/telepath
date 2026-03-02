@@ -1,4 +1,8 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { lightTheme, darkTheme, type ThemePalette } from '../lib/theme';
+import { resolveScoreZone, getBasePointsForZone } from '../lib/gameState';
+import { Dial } from './Dial';
+import { SlideToReveal } from './SlideToReveal';
 
 /**
  * Converts an "R G B" channel string to a CSS rgb() value.
@@ -167,7 +171,87 @@ export const ThemeDebug = () => {
             </table>
           </div>
         ))}
+        <InteractiveDemo />
       </div>
     </main>
   );
 };
+
+const randomTarget = () => 10 + Math.floor(Math.random() * 80);
+
+function InteractiveDemo() {
+  const [dialValue, setDialValue] = useState(50);
+  const [target, setTarget] = useState(randomTarget);
+  const [revealed, setRevealed] = useState(false);
+  const [slideKey, setSlideKey] = useState(0);
+  const resetTimer = useRef<number | null>(null);
+
+  const distance = Math.abs(target - dialValue);
+  const zone = resolveScoreZone(distance);
+  const points = getBasePointsForZone(zone);
+
+  const handleSlideComplete = useCallback(() => {
+    setRevealed(true);
+  }, []);
+
+  // Auto-reset 3s after reveal
+  useEffect(() => {
+    if (!revealed) return;
+    resetTimer.current = window.setTimeout(() => {
+      resetTimer.current = null;
+      setRevealed(false);
+      setTarget(randomTarget());
+      setDialValue(50);
+      setSlideKey((k) => k + 1);
+    }, 3000);
+    return () => {
+      if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
+    };
+  }, [revealed]);
+
+  return (
+    <div className="mt-12">
+      <h2
+        className="mb-2 text-sm font-semibold uppercase tracking-widest"
+        style={{ color: '#9C8E7D' }}
+      >
+        Interactive Components
+      </h2>
+
+      <div className="mt-4 rounded-2xl border border-warm-200/60 bg-surface/50 p-6">
+        <p className="mb-4 text-sm font-medium text-ink">Dial + Slide to Reveal</p>
+        <Dial
+          value={dialValue}
+          leftLabel="LEFT"
+          rightLabel="RIGHT"
+          clueLabel="TARGET"
+          clueText={`${target}%`}
+          interactive={!revealed}
+          showDialHand
+          showValueLabel
+          onChange={setDialValue}
+          targetValue={revealed ? target : null}
+          showScoringZones={revealed}
+          scoringMode="coop"
+          roundScorePill={
+            revealed
+              ? { zone, points, bonusCardDrawn: zone === 'bullseye' }
+              : null
+          }
+        />
+        <div className="mt-4 flex justify-center">
+          {!revealed ? (
+            <SlideToReveal
+              key={slideKey}
+              onComplete={handleSlideComplete}
+            />
+          ) : (
+            <p className="text-sm text-warm-400">
+              Resetting in 3s...
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
