@@ -15,7 +15,7 @@ type SlideToRevealProps = {
 
 const THUMB_SIZE = 44;
 const TRACK_PADDING = 4;
-const COMPLETION_THRESHOLD = 0.85;
+const COMPLETION_THRESHOLD = 0.80;
 
 export function SlideToReveal({ onComplete, disabled = false }: SlideToRevealProps) {
   const trackRef = useRef<HTMLDivElement>(null);

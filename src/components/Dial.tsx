@@ -6,7 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type TouchEvent as ReactTouchEvent,
 } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   DIAL_ARC_END_DEGREES,
   DIAL_ARC_START_DEGREES,
@@ -179,6 +179,7 @@ export const Dial = ({
   const lastHapticBucketRef = useRef<number | null>(null);
   const [isMouseDragging, setIsMouseDragging] = useState(false);
   const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const clampedValue = clampDialValue(value);
   const clampedTargetValue =
     targetValue === null ? null : clampDialValue(targetValue);
@@ -419,18 +420,6 @@ export const Dial = ({
         <span>{rightLabel}</span>
       </div>
 
-      <AnimatePresence>
-        {roundScorePill && (
-          <div className="mb-3 flex justify-center">
-            <RoundScorePill
-              zone={roundScorePill.zone}
-              points={roundScorePill.points}
-              bonusCardDrawn={roundScorePill.bonusCardDrawn}
-            />
-          </div>
-        )}
-      </AnimatePresence>
-
       <div
         ref={dialRef}
         role={interactive ? 'slider' : 'img'}
@@ -440,7 +429,7 @@ export const Dial = ({
         aria-valuemax={interactive ? 100 : undefined}
         aria-valuenow={interactive ? Math.round(clampedValue) : undefined}
         tabIndex={interactive ? 0 : -1}
-        className={`relative mx-auto w-full max-w-[360px] touch-none sm:max-w-[500px] lg:max-w-[640px] ${cursorClass}`}
+        className={`relative mt-10 mx-auto w-full max-w-[360px] touch-none sm:max-w-[500px] lg:max-w-[640px] ${cursorClass}`}
         style={{ aspectRatio: `${viewBoxWidth} / ${viewBoxHeight}` }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -460,7 +449,7 @@ export const Dial = ({
             strokeLinecap="round"
           />
           {shouldShowZones &&
-            scoreZoneGeometry.map((segment) => {
+            scoreZoneGeometry.map((segment, zoneIndex) => {
               const translucentInnerSectorPath = createSectorPath(
                 center,
                 center,
@@ -478,26 +467,43 @@ export const Dial = ({
               );
 
               const zoneCapColor = getZoneCapColor(segment.name);
+              const zoneDelay = zoneIndex * 0.07;
 
               return (
-                <g key={segment.name}>
-                  <motion.path
+                <motion.g
+                  key={segment.name}
+                  initial={
+                    prefersReducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, scale: 0 }
+                  }
+                  animate={
+                    prefersReducedMotion
+                      ? { opacity: 1 }
+                      : { opacity: 1, scale: 1 }
+                  }
+                  transition={{
+                    duration: 0.3,
+                    delay: zoneDelay,
+                    ease: prefersReducedMotion
+                      ? 'easeOut'
+                      : [0.34, 1.56, 0.64, 1],
+                  }}
+                  style={{ transformOrigin: `${center}px ${center}px` }}
+                >
+                  <path
                     d={translucentInnerSectorPath}
                     fill={zoneCapColor}
                     stroke="none"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.34 }}
-                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    opacity={0.34}
                   />
-                  <motion.path
+                  <path
                     d={opaqueCapSectorPath}
                     fill={zoneCapColor}
                     stroke="none"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.92 }}
-                    transition={{ duration: 0.22, ease: 'easeOut' }}
+                    opacity={0.92}
                   />
-                </g>
+                </motion.g>
               );
             })}
 
@@ -516,7 +522,7 @@ export const Dial = ({
           )}
 
           {shouldShowZones &&
-            scoreZoneGeometry.map((segment) => {
+            scoreZoneGeometry.map((segment, zoneIndex) => {
               const isCoopBullseye =
                 segment.name === 'bullseye' && scoringMode === 'coop';
               const zoneLabelPoint = pointOnCircle(
@@ -530,7 +536,16 @@ export const Dial = ({
               const labelColor = getZoneLabelColor(segment.name);
 
               return (
-                <g key={`${segment.name}-label`}>
+                <motion.g
+                  key={`${segment.name}-label`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: zoneIndex * 0.07 + 0.05,
+                    ease: 'easeOut',
+                  }}
+                >
                   <text
                     x={zoneLabelPoint.x}
                     y={zoneLabelPoint.y}
@@ -555,7 +570,7 @@ export const Dial = ({
                       +
                     </text>
                   )}
-                </g>
+                </motion.g>
               );
             })}
 
@@ -579,6 +594,18 @@ export const Dial = ({
             <circle cx={center} cy={center} r={hubInnerRadius} fill="var(--dial-hub-center)" />
           </>
         </svg>
+        <AnimatePresence>
+          {roundScorePill && (
+            <div className="absolute inset-x-0 top-[-5%] z-20 flex justify-center">
+              <RoundScorePill
+                zone={roundScorePill.zone}
+                points={roundScorePill.points}
+                bonusCardDrawn={roundScorePill.bonusCardDrawn}
+                delay={0.55}
+              />
+            </div>
+          )}
+        </AnimatePresence>
       </div>
 
       {showValueLabel && (

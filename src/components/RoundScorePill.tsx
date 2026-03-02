@@ -5,6 +5,7 @@ type RoundScorePillProps = {
   zone: ScoreZone;
   points: number;
   bonusCardDrawn: boolean;
+  delay?: number;
 };
 
 const zoneLabels: Record<ScoreZone, string> = {
@@ -32,6 +33,7 @@ export const RoundScorePill = ({
   zone,
   points,
   bonusCardDrawn,
+  delay = 0,
 }: RoundScorePillProps) => {
   const prefersReducedMotion = useReducedMotion();
 
@@ -50,6 +52,7 @@ export const RoundScorePill = ({
       }
       transition={{
         duration: 0.4,
+        delay,
         ease: prefersReducedMotion
           ? 'easeOut'
           : [0.175, 0.885, 0.32, 1.275],
