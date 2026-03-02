@@ -20,7 +20,7 @@
 **Active Milestone:** MVP
 **Current Phase:** Phase 5 — Gameplay Testing (in progress)
 **Last Updated:** 2026-03-01
-**Last Session Summary:** Added basic Vercel Web Analytics wiring so the deployed app reports visitor traffic in the Vercel dashboard with no custom backend work.
+**Last Session Summary:** Restored the co-op reveal affordance after AI dial placement on human-psychic rounds so the target can be revealed and the round can progress normally again.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
 
 ---
@@ -186,6 +186,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 *Move tasks here when done, with a brief note. Prune periodically.*
 
+- [x] **Co-op human-psychic reveal control restoration** — Rewired the co-op action area so once the AI finishes placing the dial for a human clue, the reveal slider appears in the `reveal` phase and advances into target reveal/scoring instead of leaving the round stuck with no progression control.
 - [x] **Splash arc light-mode contrast bump** — Increased the splash illustration arc opacity in light mode by roughly 15% while preserving the existing darker treatment in dark mode, so the layered background reads more clearly behind the title.
 - [x] **Splash illustration recentering** — Lowered the animated splash arc illustration so the outer arcs no longer clip at the top edge and the layered art sits more centrally behind the title on the landing screen.
 - [x] **Basic production visitor tracking** — Added `@vercel/analytics` to the app shell so the published Vercel deployment reports high-level visitor traffic in the Vercel Analytics dashboard with no custom event plumbing.
@@ -264,6 +265,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-01 | Codex | Phase 5 | Restored the missing co-op reveal slider after AI dial placement on human-psychic rounds, so the post-guess `reveal` state now exposes a progression control again. Verified with `npm run lint`, `npm run test:game`, and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Increased splash-screen arc opacity in light mode by about 15% while keeping dark mode at the prior values, so the background illustration reads more clearly without over-weighting the dark theme. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Recentered the splash-screen arc illustration by lowering the SVG art anchor and background offset so the top arc no longer clips and the layered animation sits lower behind the title. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Added basic Vercel Web Analytics tracking with `@vercel/analytics` in the React entrypoint so production deploys report visitor traffic in the Vercel dashboard. Verified with `npm run lint` and `npm run build`. |

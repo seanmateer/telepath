@@ -923,6 +923,13 @@ export const GameScreen = ({
                 />
               )}
 
+              {gameMode === 'coop' && gameState.phase === 'reveal' && (
+                <SlideToReveal
+                  onComplete={handleSlideRevealCoopTarget}
+                  disabled={isRevealingTarget}
+                />
+              )}
+
               {gameState.phase === 'ai-bonus-guess' && gameMode === 'competitive' && (
                 <motion.div
                   className="flex gap-3"
