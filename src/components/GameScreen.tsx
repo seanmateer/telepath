@@ -871,14 +871,7 @@ export const GameScreen = ({
                     Target at {currentRound.targetPosition}%
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void handleSubmitClue()}
-                  disabled={humanClueInput.trim().length === 0}
-                  className="mt-3 w-full rounded-full bg-ink py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light disabled:opacity-40 disabled:hover:bg-ink"
-                >
-                  Give Clue
-                </button>
+                
               </motion.div>
             )}
 
@@ -910,18 +903,22 @@ export const GameScreen = ({
               />
             )}
 
+            {isPsychicPreviewPhase && (
+              <button
+                type="button"
+                onClick={() => void handleSubmitClue()}
+                disabled={humanClueInput.trim().length === 0}
+                className="mt-3 w-full rounded-full bg-ink py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light disabled:opacity-40 disabled:hover:bg-ink"
+              >
+              Give Clue
+              </button>
+            )}
+
             {/* Action area */}
             <div className="mt-6 flex justify-center">
               {gameState.phase === 'human-guess' && currentRound.psychicTeam === 'ai' && (
                 <SlideToReveal
                   onComplete={handleSlideReveal}
-                  disabled={isRevealingTarget}
-                />
-              )}
-
-              {gameMode === 'coop' && gameState.phase === 'reveal' && (
-                <SlideToReveal
-                  onComplete={handleSlideRevealCoopTarget}
                   disabled={isRevealingTarget}
                 />
               )}

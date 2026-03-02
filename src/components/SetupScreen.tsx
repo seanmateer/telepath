@@ -83,7 +83,7 @@ export const SetupScreen = ({
           {gameMode === 'coop' ? 'Choose your partner' : 'Choose your opponent'}
         </h2>
         <p className="mt-2 text-sm text-ink-muted">
-          Each AI has a different way of thinking.
+          Each personality has a different way of thinking.
         </p>
 
         <div className="mt-8 space-y-3">
