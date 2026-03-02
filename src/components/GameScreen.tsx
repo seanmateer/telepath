@@ -840,37 +840,6 @@ export const GameScreen = ({
               ) : null}
             </motion.div>
 
-            {/* Human clue input (when human is psychic) */}
-            {isPsychicPreviewPhase && (
-              <motion.div
-                className="mb-6"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={humanClueInput}
-                    onChange={(e) => setHumanClueInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') void handleSubmitClue();
-                    }}
-                    placeholder="Enter your clue..."
-                    maxLength={40}
-                    aria-label="Enter a one-word clue for your team"
-                    autoComplete="off"
-                    className="flex-1 rounded-xl border border-warm-200 bg-surface/80 px-4 py-3 text-center text-lg font-medium text-ink placeholder:text-ink-faint focus:border-warm-400 focus:outline-none focus:ring-1 focus:ring-warm-300"
-                  />
-                </div>
-                <div className="mt-2 text-center">
-                  <p className="text-xs text-ink-faint">
-                    {currentRound.card.left} &larr; &middot; &middot; &middot; &rarr; {currentRound.card.right}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
             {/* Dial */}
             {showDial && (
               <Dial
@@ -895,24 +864,48 @@ export const GameScreen = ({
                 roundScorePill={
                   gameMode === 'coop' && currentRound.result && isRevealed
                     ? {
-                        zone: currentRound.result.score.zone,
-                        points: currentRound.result.score.basePoints,
-                        bonusCardDrawn: currentRound.result.bonusCardDrawn === true,
-                      }
+                      zone: currentRound.result.score.zone,
+                      points: currentRound.result.score.basePoints,
+                      bonusCardDrawn: currentRound.result.bonusCardDrawn === true,
+                    }
                     : null
                 }
               />
             )}
 
+            {/* Human clue input (when human is psychic) */}
             {isPsychicPreviewPhase && (
-              <button
-                type="button"
-                onClick={() => void handleSubmitClue()}
-                disabled={humanClueInput.trim().length === 0}
-                className="mt-3 w-full rounded-full bg-ink py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light disabled:opacity-40 disabled:hover:bg-ink"
-              >
-              Give Clue
-              </button>
+              <div className="flex flex-col items-center">
+                <motion.div
+                  className="mt-8 w-[80%]"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={humanClueInput}
+                      onChange={(e) => setHumanClueInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void handleSubmitClue();
+                      }}
+                      placeholder="Enter your clue..."
+                      maxLength={40}
+                      aria-label="Enter a one-word clue for your team"
+                      autoComplete="off"
+                      className="flex-1 rounded-xl border border-warm-200 bg-surface/80 px-4 py-3 text-center text-lg font-medium text-ink placeholder:text-ink-faint focus:border-warm-400 focus:outline-none focus:ring-1 focus:ring-warm-300" />
+                  </div>
+                </motion.div>
+                <button
+                  type="button"
+                  onClick={() => void handleSubmitClue()}
+                  disabled={humanClueInput.trim().length === 0}
+                  className="mt-4 w-[80%] w-full rounded-full bg-ink py-3 text-sm font-medium text-warm-50 transition-all hover:bg-ink-light disabled:opacity-40 disabled:hover:bg-ink"
+                >
+                  Give Clue
+                </button>
+              </div>
             )}
 
             {/* Action area */}

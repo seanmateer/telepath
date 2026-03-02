@@ -417,9 +417,19 @@ export const Dial = ({
         )}
       </AnimatePresence>
 
-      <div className="mb-4 flex items-center justify-between text-xs font-medium uppercase tracking-widest text-ink-muted">
-        <span>{leftLabel}</span>
-        <span>{rightLabel}</span>
+      <div className="mb-4 flex min-w-0 items-center text-xs font-medium uppercase tracking-widest text-ink-muted">
+        <span className="shrink-0">{leftLabel}</span>
+        <div className="mx-2 flex min-w-0 flex-1 items-center text-ink-faint text-[10px]">
+          <span className="shrink-0">&larr;</span>
+          <span
+            aria-hidden
+            className="mx-2 min-w-0 flex-1 overflow-hidden whitespace-nowrap text-center tracking-[0.3em]"
+          >
+            ·······························································································
+          </span>
+          <span className="shrink-0">&rarr;</span>
+        </div>
+        <span className="shrink-0 text-right">{rightLabel}</span>
       </div>
 
       <div

@@ -255,16 +255,12 @@ export const PlaytestUtilityPanel = ({
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label="Open playtest utilities"
-        className="fixed bottom-4 left-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-warm-300 bg-surface/90 text-ink shadow-card transition hover:bg-warm-100 active:scale-[0.97]"
+        className="fixed bottom-4 left-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-warm-200 bg-surface/80 text-ink-muted shadow-card backdrop-blur-sm transition hover:bg-warm-100 active:scale-[0.95]"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           <path
-            d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"
-            stroke="currentColor"
-            strokeWidth="1.6"
-          />
-          <path
-            d="m19.4 13.5 1.4-1.5-1.4-1.5-2 .1a6.6 6.6 0 0 0-.8-1.8l1.2-1.6-2.1-2.1-1.6 1.2a6.7 6.7 0 0 0-1.8-.8l.1-2H11l.1 2a6.7 6.7 0 0 0-1.8.8L7.7 4.1 5.6 6.2l1.2 1.6a6.6 6.6 0 0 0-.8 1.8l-2-.1L2.6 12l1.4 1.5 2-.1c.2.6.4 1.2.8 1.8l-1.2 1.6 2.1 2.1 1.6-1.2c.6.4 1.2.6 1.8.8l-.1 2h3l-.1-2c.6-.2 1.2-.4 1.8-.8l1.6 1.2 2.1-2.1-1.2-1.6c.4-.6.6-1.2.8-1.8l2 .1Z"
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
             stroke="currentColor"
             strokeWidth="1.6"
             strokeLinecap="round"
