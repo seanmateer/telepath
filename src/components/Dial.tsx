@@ -26,6 +26,7 @@ type DialProps = {
   rightLabel: string;
   clueLabel?: string;
   clueText?: string;
+  valueLabelText?: string;
   size?: number;
   onChange?: (value: number) => void;
   onRelease?: (value: number) => void;
@@ -163,6 +164,7 @@ export const Dial = ({
   rightLabel,
   clueLabel,
   clueText,
+  valueLabelText,
   size = 350,
   onChange,
   onRelease,
@@ -610,7 +612,7 @@ export const Dial = ({
 
       {showValueLabel && (
         <p className="mt-2 text-center text-sm tabular-nums text-ink-muted">
-          {Math.round(clampedValue)}%
+          {valueLabelText ?? `${Math.round(clampedValue)}%`}
         </p>
       )}
     </section>

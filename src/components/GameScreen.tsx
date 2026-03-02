@@ -867,11 +867,7 @@ export const GameScreen = ({
                   <p className="text-xs text-ink-faint">
                     {currentRound.card.left} &larr; &middot; &middot; &middot; &rarr; {currentRound.card.right}
                   </p>
-                  <p className="mt-1 text-xs text-ink-faint">
-                    Target at {currentRound.targetPosition}%
-                  </p>
                 </div>
-                
               </motion.div>
             )}
 
@@ -890,7 +886,12 @@ export const GameScreen = ({
                 scoringMode={gameMode}
                 interactive={isDialInteractive}
                 showDialHand={!isPsychicPreviewPhase && !isAwaitingAiClue}
-                showValueLabel={!isPsychicPreviewPhase && !isAwaitingAiClue}
+                showValueLabel={!isAwaitingAiClue}
+                valueLabelText={
+                  isPsychicPreviewPhase
+                    ? `Target at ${currentRound.targetPosition}%`
+                    : undefined
+                }
                 roundScorePill={
                   gameMode === 'coop' && currentRound.result && isRevealed
                     ? {
