@@ -85,6 +85,7 @@ describe('/api/ai handler hardening', () => {
       {
         NODE_ENV: 'production',
         VERCEL_ENV: 'production',
+        ALLOWED_ORIGINS: 'https://telepath.example',
         UPSTASH_REDIS_REST_URL: undefined,
         UPSTASH_REDIS_REST_TOKEN: undefined,
       },
@@ -99,6 +100,31 @@ describe('/api/ai handler hardening', () => {
         const payload = await toErrorPayload(response);
         assert.equal(response.status, 403);
         assert.match(payload.error, /Origin not allowed/);
+      },
+    );
+  });
+
+  it('returns 500 in production when ALLOWED_ORIGINS is missing', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'production',
+        VERCEL_ENV: 'production',
+        ALLOWED_ORIGINS: undefined,
+        UPSTASH_REDIS_REST_URL: undefined,
+        UPSTASH_REDIS_REST_TOKEN: undefined,
+      },
+      async () => {
+        resetRateLimiterForTests();
+        const response = await handler(
+          createRequest(validGenerateClueBody, {
+            origin: 'https://telepath.example',
+            'x-forwarded-for': '198.51.100.17',
+          }),
+        );
+
+        const payload = await toErrorPayload(response);
+        assert.equal(response.status, 500);
+        assert.match(payload.error, /origin allowlist is not configured/i);
       },
     );
   });

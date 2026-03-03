@@ -102,8 +102,18 @@ const getRateLimitHeaders = (
 export default async function handler(req: Request): Promise<Response> {
   const originHeader = req.headers.get('origin');
   const isProduction = isProductionEnvironment();
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
+
+  if (isProduction && !allowedOriginsEnv?.trim()) {
+    return createJsonResponse(
+      { ok: false, error: 'Server origin allowlist is not configured.' },
+      500,
+      createCorsHeaders(originHeader, new Set()),
+    );
+  }
+
   const allowedOrigins = buildAllowedOrigins(
-    process.env.ALLOWED_ORIGINS,
+    allowedOriginsEnv,
     req.headers.get('host'),
     { includeLocalDevOrigins: !isProduction },
   );

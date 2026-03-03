@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 6 — Pre-Deploy Hardening (in progress)
+**Current Phase:** Phase 7 — Deploy (ready)
 **Last Updated:** 2026-03-02
-**Last Session Summary:** Started Phase 6 hardening: `/api/ai` now accepts task-scoped game actions, builds Anthropic prompts server-side, and enforces stricter production origin rules with regression coverage.
+**Last Session Summary:** Completed Phase 6 pre-deploy hardening and review: `/api/ai` is task-scoped, builds prompts server-side, enforces strict production origin config, and now fails closed when `ALLOWED_ORIGINS` is missing in production.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 7 real-device testing.
 
 ---
@@ -222,9 +222,9 @@ This phase is different from the others — it's not a linear checklist. We play
 - [x] Tighten `/api/ai` access rules for production (missing `Origin` rejection and strict `ALLOWED_ORIGINS` behavior)
 - [x] Add regression coverage for prompt-relay rejection and strict origin enforcement
 - [x] Finalize production env/config checklist for `/api/ai` (`ANTHROPIC_API_KEY`, Upstash, `ALLOWED_ORIGINS`, allowed models)
-- [ ] 📦 `git add -A && git commit -m "[phase-6] pre-deploy proxy hardening"`
-- [ ] Run a final pre-deploy security review after hardening lands
-- [ ] 📦 `git add -A && git commit -m "[phase-6] pre-deploy review complete"`
+- [x] 📦 `git add -A && git commit -m "[phase-6] pre-deploy proxy hardening"`
+- [x] Run a final pre-deploy security review after hardening lands
+- [x] 📦 `git add -A && git commit -m "[phase-6] pre-deploy review complete"`
 
 **Phase 6 complete when:** The public AI proxy is locked to Telepath game actions, abuse controls are verified by tests, and the app is ready for production deploy.
 
@@ -283,6 +283,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-02 | Codex | Phase 6 | Closed the remaining production fail-open path by requiring `ALLOWED_ORIGINS` in production, reran the final pre-deploy security review, and verified with `npm run lint`, `npm run test`, and `npm run build`. |
 | 2026-03-02 | Codex | Phase 6 | Started pre-deploy hardening for `/api/ai`: replaced raw prompt relay payloads with task-scoped game actions, moved prompt construction into the edge function, tightened production origin handling (`ALLOWED_ORIGINS` + missing-origin rejection), updated security/env docs, and verified with `npm run lint`, `npm run test`, and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Added AI clue-state dial motion polish: the dial hub now pulses during AI clue generation and the hand pops out with a brief overshoot when the clue locks in and guessing begins. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Moved the co-op human-psychic preview target percentage into the dial footer readout and removed the duplicate helper line above the dial, so preview uses the same percentage slot as guessing. Verified with `npm run lint` and `npm run build`. |

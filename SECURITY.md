@@ -25,6 +25,7 @@ Current edge proxy controls:
 
 Production notes:
 - Set `ALLOWED_ORIGINS` in Vercel to the exact deployed browser origin(s) that should be allowed to call `/api/ai`
+- Production requests fail closed if `ALLOWED_ORIGINS` is unset
 - Missing `Origin` headers are rejected in production
 - Preview deployments should not share production AI secrets unless their origins are intentionally included
 
