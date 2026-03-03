@@ -1,11 +1,4 @@
-import {
-  buildClueSystemPrompt,
-  buildClueUserPrompt,
-  buildDialSystemPrompt,
-  buildDialUserPrompt,
-  DIAL_MODEL,
-  resolveClueModel,
-} from '../lib/aiPrompts.js';
+import type { AIActionRequest } from '../types/ai.js';
 import type { Personality, SpectrumCard } from '../types/game.js';
 import type { AIUsageSample } from '../types/playtest.js';
 
@@ -19,14 +12,6 @@ type DialPlacementResponse = {
   position: number;
   reasoning: string;
   usage: AIUsageSample | null;
-};
-
-type AIProxyRequest = {
-  model: string;
-  systemPrompt: string;
-  userPrompt: string;
-  maxTokens?: number;
-  temperature?: number;
 };
 
 type AIProxySuccessPayload = {
@@ -62,15 +47,6 @@ type PlaceDialInput = {
   clue: string;
   personality: Personality;
 };
-
-type UseAIOptions = {
-  useHaikuOnlyClues?: boolean;
-};
-
-const CLUE_MAX_TOKENS = 220;
-const CLUE_TEMPERATURE = 0.75;
-const DIAL_MAX_TOKENS = 220;
-const DIAL_TEMPERATURE = 0.55;
 const DIAL_MIN_POSITION = 0;
 const DIAL_MAX_POSITION = 100;
 
@@ -217,7 +193,7 @@ const toUsageSample = (
   };
 };
 
-const callAIProxy = async (payload: AIProxyRequest): Promise<AIProxyResult> => {
+const callAIProxy = async (payload: AIActionRequest): Promise<AIProxyResult> => {
   const response = await fetch('/api/ai', {
     method: 'POST',
     headers: {
@@ -265,22 +241,16 @@ const callAIProxy = async (payload: AIProxyRequest): Promise<AIProxyResult> => {
   };
 };
 
-export const useAI = (options: UseAIOptions = {}) => {
-  const clueModel = resolveClueModel(options.useHaikuOnlyClues ?? false);
-
+export const useAI = () => {
   const generateClue = async (
     input: GenerateClueInput,
   ): Promise<ClueResponse> => {
     try {
       const result = await callAIProxy({
-        model: clueModel,
-        systemPrompt: buildClueSystemPrompt(input.personality),
-        userPrompt: buildClueUserPrompt({
-          card: input.card,
-          targetPosition: input.targetPosition,
-        }),
-        maxTokens: CLUE_MAX_TOKENS,
-        temperature: CLUE_TEMPERATURE,
+        action: 'generate-clue',
+        personality: input.personality,
+        card: input.card,
+        targetPosition: input.targetPosition,
       });
 
       if (!isClueResponse(result.data)) {
@@ -304,14 +274,10 @@ export const useAI = (options: UseAIOptions = {}) => {
   ): Promise<DialPlacementResponse> => {
     try {
       const result = await callAIProxy({
-        model: DIAL_MODEL,
-        systemPrompt: buildDialSystemPrompt(input.personality),
-        userPrompt: buildDialUserPrompt({
-          card: input.card,
-          clue: input.clue,
-        }),
-        maxTokens: DIAL_MAX_TOKENS,
-        temperature: DIAL_TEMPERATURE,
+        action: 'place-dial',
+        personality: input.personality,
+        card: input.card,
+        clue: input.clue,
       });
 
       if (!isDialPlacementResponse(result.data)) {

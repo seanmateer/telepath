@@ -18,10 +18,10 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 5 — Gameplay Testing (in progress)
-**Last Updated:** 2026-03-01
-**Last Session Summary:** Added phase-aware dial motion for AI clue rounds: the center hub now pulses while the AI is thinking of a clue, and the dial hand pops out from the hub when the clue locks in.
-**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 6 real-device testing.
+**Current Phase:** Phase 6 — Pre-Deploy Hardening (in progress)
+**Last Updated:** 2026-03-02
+**Last Session Summary:** Started Phase 6 hardening: `/api/ai` now accepts task-scoped game actions, builds Anthropic prompts server-side, and enforces stricter production origin rules with regression coverage.
+**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 7 real-device testing.
 
 ---
 
@@ -163,7 +163,7 @@
 ---
 
 ### Phase 5 — Gameplay Testing
-*Open-ended iteration phase. Do NOT skip to Phase 6 (Deploy) until gameplay feels solid.*
+*Open-ended iteration phase. Do NOT skip to Phase 6 (Pre-Deploy Hardening) until gameplay feels solid.*
 
 This phase is different from the others — it's not a linear checklist. We play-test the game, identify issues (gameplay feel, AI quality, UI rough edges, timing, animations, edge cases), log them as tasks below, fix them, and repeat. Tasks will be added and removed as we go.
 
@@ -214,19 +214,35 @@ This phase is different from the others — it's not a linear checklist. We play
 
 ---
 
-### Phase 6 — Deploy
-*Depends on Phase 5. Do NOT start until gameplay testing is complete.*
+### Phase 6 — Pre-Deploy Hardening
+*Depends on Phase 5. Do not start until gameplay testing is complete and the human says we're ready to ship.*
+
+- [x] Lock `/api/ai` to task-scoped game actions instead of accepting arbitrary client-supplied prompts
+- [x] Build Anthropic prompts inside the edge function for each supported game action
+- [x] Tighten `/api/ai` access rules for production (missing `Origin` rejection and strict `ALLOWED_ORIGINS` behavior)
+- [x] Add regression coverage for prompt-relay rejection and strict origin enforcement
+- [x] Finalize production env/config checklist for `/api/ai` (`ANTHROPIC_API_KEY`, Upstash, `ALLOWED_ORIGINS`, allowed models)
+- [ ] 📦 `git add -A && git commit -m "[phase-6] pre-deploy proxy hardening"`
+- [ ] Run a final pre-deploy security review after hardening lands
+- [ ] 📦 `git add -A && git commit -m "[phase-6] pre-deploy review complete"`
+
+**Phase 6 complete when:** The public AI proxy is locked to Telepath game actions, abuse controls are verified by tests, and the app is ready for production deploy.
+
+---
+
+### Phase 7 — Deploy
+*Depends on Phase 6. Do not start until pre-deploy hardening is complete.*
 
 - [ ] Set `ANTHROPIC_API_KEY` in Vercel environment variables
 - [ ] Deploy to Vercel
 - [ ] Smoke test production build — full game, both player types
 - [ ] Verify edge function works in production (check logs)
-- [ ] 📦 `git add -A && git commit -m "[phase-6] production verified"`
+- [ ] 📦 `git add -A && git commit -m "[phase-7] production verified"`
 - [ ] Test share card on iOS and Android
 - [ ] Final mobile test on real device
-- [ ] 📦 `git add -A && git commit -m "[phase-6] MVP complete 🎉"`
+- [ ] 📦 `git add -A && git commit -m "[phase-7] MVP complete 🎉"`
 
-**Phase 6 complete when:** Live URL works end-to-end on real devices. Share card works.
+**Phase 7 complete when:** Live URL works end-to-end on real devices. Share card works.
 
 ---
 
@@ -267,6 +283,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-02 | Codex | Phase 6 | Started pre-deploy hardening for `/api/ai`: replaced raw prompt relay payloads with task-scoped game actions, moved prompt construction into the edge function, tightened production origin handling (`ALLOWED_ORIGINS` + missing-origin rejection), updated security/env docs, and verified with `npm run lint`, `npm run test`, and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Added AI clue-state dial motion polish: the dial hub now pulses during AI clue generation and the hand pops out with a brief overshoot when the clue locks in and guessing begins. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Moved the co-op human-psychic preview target percentage into the dial footer readout and removed the duplicate helper line above the dial, so preview uses the same percentage slot as guessing. Verified with `npm run lint` and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Restored the missing co-op reveal slider after AI dial placement on human-psychic rounds, so the post-guess `reveal` state now exposes a progression control again. Verified with `npm run lint`, `npm run test:game`, and `npm run build`. |

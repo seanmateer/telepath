@@ -1,15 +1,17 @@
 import Anthropic from '@anthropic-ai/sdk';
 import {
   MAX_REQUEST_BODY_BYTES,
+  buildAnthropicRequest,
   buildAllowedModels,
   buildAllowedOrigins,
   createRateLimiter,
   createCorsHeaders,
+  isProductionEnvironment,
   isOriginAllowed,
   parseJsonPayload,
   toRateLimitResult,
   sanitizeUpstreamError,
-  validateAIRequestBody,
+  validateAIActionRequest,
   type JsonValue,
 } from './aiSecurity.js';
 
@@ -99,13 +101,16 @@ const getRateLimitHeaders = (
 
 export default async function handler(req: Request): Promise<Response> {
   const originHeader = req.headers.get('origin');
+  const isProduction = isProductionEnvironment();
   const allowedOrigins = buildAllowedOrigins(
     process.env.ALLOWED_ORIGINS,
     req.headers.get('host'),
+    { includeLocalDevOrigins: !isProduction },
   );
   const corsHeaders = createCorsHeaders(originHeader, allowedOrigins);
+  const allowMissingOrigin = !isProduction;
 
-  if (!isOriginAllowed(originHeader, allowedOrigins)) {
+  if (!isOriginAllowed(originHeader, allowedOrigins, { allowMissingOrigin })) {
     return createJsonResponse(
       { ok: false, error: 'Origin not allowed.' },
       403,
@@ -244,12 +249,22 @@ export default async function handler(req: Request): Promise<Response> {
     );
   }
 
-  const allowedModels = buildAllowedModels(process.env.ALLOWED_ANTHROPIC_MODELS);
-  const validation = validateAIRequestBody(parsedBody, allowedModels);
+  const validation = validateAIActionRequest(parsedBody);
   if (!validation.ok) {
     return createJsonResponse(
       { ok: false, error: validation.error },
       400,
+      corsHeaders,
+      rateLimitHeaders,
+    );
+  }
+
+  const allowedModels = buildAllowedModels(process.env.ALLOWED_ANTHROPIC_MODELS);
+  const preparedRequest = buildAnthropicRequest(validation.data, allowedModels);
+  if (!preparedRequest.ok) {
+    return createJsonResponse(
+      { ok: false, error: preparedRequest.error },
+      500,
       corsHeaders,
       rateLimitHeaders,
     );
@@ -268,11 +283,11 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     const anthropic = new Anthropic({ apiKey });
     const message = await anthropic.messages.create({
-      model: validation.data.model,
-      system: validation.data.systemPrompt,
-      max_tokens: validation.data.maxTokens,
-      temperature: validation.data.temperature,
-      messages: [{ role: 'user', content: validation.data.userPrompt }],
+      model: preparedRequest.data.model,
+      system: preparedRequest.data.systemPrompt,
+      max_tokens: preparedRequest.data.maxTokens,
+      temperature: preparedRequest.data.temperature,
+      messages: [{ role: 'user', content: preparedRequest.data.userPrompt }],
     });
 
     const rawText = getTextResponse(message);

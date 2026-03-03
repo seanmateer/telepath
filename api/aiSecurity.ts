@@ -1,5 +1,15 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import {
+  buildClueSystemPrompt,
+  buildClueUserPrompt,
+  buildDialSystemPrompt,
+  buildDialUserPrompt,
+  DIAL_MODEL,
+  resolveClueModel,
+} from '../src/lib/aiPrompts.js';
+import type { AIActionRequest } from '../src/types/ai.js';
+import type { Personality, SpectrumCard } from '../src/types/game.js';
 
 export const DEFAULT_ALLOWED_MODELS = [
   'claude-sonnet-4-5-20250929',
@@ -11,20 +21,21 @@ const LOCAL_DEV_ORIGINS = new Set<string>([
   'http://127.0.0.1:5173',
 ]);
 
-export const DEFAULT_MAX_TOKENS = 250;
-export const DEFAULT_TEMPERATURE = 0.7;
+const CLUE_MAX_TOKENS = 220;
+const CLUE_TEMPERATURE = 0.75;
+const DIAL_MAX_TOKENS = 220;
+const DIAL_TEMPERATURE = 0.55;
 
 export const MAX_REQUEST_BODY_BYTES = 12_000;
-export const MAX_SYSTEM_PROMPT_LENGTH = 2_000;
-export const MAX_USER_PROMPT_LENGTH = 4_000;
-export const MAX_OUTPUT_TOKENS = 800;
-export const MIN_TEMPERATURE = 0;
-export const MAX_TEMPERATURE = 1;
+export const MAX_SPECTRUM_LABEL_LENGTH = 80;
+export const MAX_CLUE_LENGTH = 40;
+export const MIN_DIAL_POSITION = 0;
+export const MAX_DIAL_POSITION = 100;
 
 type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
-export type ValidatedAIRequestBody = {
+export type PreparedAnthropicRequest = {
   model: string;
   systemPrompt: string;
   userPrompt: string;
@@ -32,9 +43,9 @@ export type ValidatedAIRequestBody = {
   temperature: number;
 };
 
-type ValidationSuccess = {
+type ValidationSuccess<T> = {
   ok: true;
-  data: ValidatedAIRequestBody;
+  data: T;
 };
 
 type ValidationFailure = {
@@ -42,7 +53,7 @@ type ValidationFailure = {
   error: string;
 };
 
-export type ValidationResult = ValidationSuccess | ValidationFailure;
+export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
 
 export type RateLimitResult = {
   allowed: boolean;
@@ -61,8 +72,21 @@ type SafeUpstreamError = {
 let cachedRateLimiter: Ratelimit | null = null;
 let hasWarnedMissingRateLimiterConfig = false;
 
+const PERSONALITIES: readonly Personality[] = ['lumen', 'sage', 'flux'];
+
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
+};
+
+const isOneOf = <T extends string>(
+  value: unknown,
+  options: readonly T[],
+): value is T => {
+  return typeof value === 'string' && options.includes(value as T);
+};
+
+const normalizeText = (value: string): string => {
+  return value.trim().replace(/\s+/g, ' ');
 };
 
 const normalizeOrigin = (value: string): string | null => {
@@ -114,7 +138,7 @@ const getUpstreamStatus = (error: unknown): number | null => {
   return status;
 };
 
-const isProductionEnvironment = (): boolean => {
+export const isProductionEnvironment = (): boolean => {
   return (
     process.env.NODE_ENV === 'production' ||
     process.env.VERCEL_ENV === 'production'
@@ -126,6 +150,83 @@ const hasUpstashRateLimiterEnv = (): boolean => {
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   return Boolean(redisUrl?.trim() && redisToken?.trim());
+};
+
+const validateShortTextField = (
+  value: unknown,
+  fieldName: string,
+  maxLength: number,
+): ValidationResult<string> => {
+  if (typeof value !== 'string') {
+    return {
+      ok: false,
+      error: `Invalid payload. \`${fieldName}\` must be a string.`,
+    };
+  }
+
+  const normalized = normalizeText(value);
+  if (normalized.length === 0) {
+    return {
+      ok: false,
+      error: `Invalid payload. \`${fieldName}\` is required.`,
+    };
+  }
+
+  if (normalized.length > maxLength) {
+    return {
+      ok: false,
+      error: `Invalid payload. \`${fieldName}\` exceeds ${maxLength} characters.`,
+    };
+  }
+
+  return {
+    ok: true,
+    data: normalized,
+  };
+};
+
+const validateSpectrumCard = (value: unknown): ValidationResult<SpectrumCard> => {
+  if (!isRecord(value)) {
+    return { ok: false, error: 'Invalid payload. `card` must be an object.' };
+  }
+
+  if (
+    typeof value.id !== 'number' ||
+    !Number.isInteger(value.id) ||
+    value.id < 0
+  ) {
+    return {
+      ok: false,
+      error: 'Invalid payload. `card.id` must be a non-negative integer.',
+    };
+  }
+
+  const left = validateShortTextField(
+    value.left,
+    'card.left',
+    MAX_SPECTRUM_LABEL_LENGTH,
+  );
+  if (!left.ok) {
+    return left;
+  }
+
+  const right = validateShortTextField(
+    value.right,
+    'card.right',
+    MAX_SPECTRUM_LABEL_LENGTH,
+  );
+  if (!right.ok) {
+    return right;
+  }
+
+  return {
+    ok: true,
+    data: {
+      id: value.id,
+      left: left.data,
+      right: right.data,
+    },
+  };
 };
 
 export const createRateLimiter = (
@@ -209,8 +310,15 @@ export const buildAllowedModels = (
 export const buildAllowedOrigins = (
   envValue: string | undefined,
   hostHeader: string | null,
+  options: { includeLocalDevOrigins?: boolean } = {},
 ): ReadonlySet<string> => {
-  const allowedOrigins = new Set<string>(LOCAL_DEV_ORIGINS);
+  const allowedOrigins = new Set<string>();
+
+  if (options.includeLocalDevOrigins ?? true) {
+    for (const origin of LOCAL_DEV_ORIGINS) {
+      allowedOrigins.add(origin);
+    }
+  }
 
   if (envValue && envValue.trim().length > 0) {
     for (const rawOrigin of parseCsv(envValue)) {
@@ -219,6 +327,8 @@ export const buildAllowedOrigins = (
         allowedOrigins.add(normalized);
       }
     }
+
+    return allowedOrigins;
   }
 
   const hostOrigin = getOriginFromHost(hostHeader);
@@ -232,9 +342,10 @@ export const buildAllowedOrigins = (
 export const isOriginAllowed = (
   originHeader: string | null,
   allowedOrigins: ReadonlySet<string>,
+  options: { allowMissingOrigin?: boolean } = {},
 ): boolean => {
   if (!originHeader) {
-    return true;
+    return options.allowMissingOrigin ?? false;
   }
 
   const origin = normalizeOrigin(originHeader);
@@ -267,97 +378,132 @@ export const createCorsHeaders = (
   return headers;
 };
 
-export const validateAIRequestBody = (
+export const validateAIActionRequest = (
   value: unknown,
-  allowedModels: ReadonlySet<string>,
-): ValidationResult => {
+): ValidationResult<AIActionRequest> => {
   if (!isRecord(value)) {
     return { ok: false, error: 'Invalid payload. Expected a JSON object.' };
   }
 
-  const { model, systemPrompt, userPrompt, maxTokens, temperature } = value;
+  const { action, personality, card } = value;
 
-  if (typeof model !== 'string' || model.trim().length === 0) {
-    return { ok: false, error: 'Invalid payload. `model` is required.' };
-  }
-
-  if (!allowedModels.has(model)) {
+  if (action !== 'generate-clue' && action !== 'place-dial') {
     return {
       ok: false,
-      error: `Unsupported model. Allowed models: ${Array.from(allowedModels).join(', ')}`,
+      error:
+        'Unsupported action. Allowed actions: generate-clue, place-dial.',
     };
   }
 
-  if (typeof systemPrompt !== 'string' || systemPrompt.trim().length === 0) {
+  if (!isOneOf(personality, PERSONALITIES)) {
     return {
       ok: false,
-      error: 'Invalid payload. `systemPrompt` is required.',
+      error: 'Invalid payload. `personality` must be lumen, sage, or flux.',
     };
   }
 
-  if (systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
-    return {
-      ok: false,
-      error: `Invalid payload. \`systemPrompt\` exceeds ${MAX_SYSTEM_PROMPT_LENGTH} characters.`,
-    };
+  const validatedCard = validateSpectrumCard(card);
+  if (!validatedCard.ok) {
+    return validatedCard;
   }
 
-  if (typeof userPrompt !== 'string' || userPrompt.trim().length === 0) {
-    return {
-      ok: false,
-      error: 'Invalid payload. `userPrompt` is required.',
-    };
-  }
-
-  if (userPrompt.length > MAX_USER_PROMPT_LENGTH) {
-    return {
-      ok: false,
-      error: `Invalid payload. \`userPrompt\` exceeds ${MAX_USER_PROMPT_LENGTH} characters.`,
-    };
-  }
-
-  let safeMaxTokens = DEFAULT_MAX_TOKENS;
-  if (maxTokens !== undefined) {
+  if (action === 'generate-clue') {
+    const { targetPosition } = value;
     if (
-      typeof maxTokens !== 'number' ||
-      !Number.isInteger(maxTokens) ||
-      maxTokens <= 0 ||
-      maxTokens > MAX_OUTPUT_TOKENS
+      typeof targetPosition !== 'number' ||
+      !Number.isInteger(targetPosition) ||
+      targetPosition < MIN_DIAL_POSITION ||
+      targetPosition > MAX_DIAL_POSITION
     ) {
       return {
         ok: false,
-        error: `Invalid payload. \`maxTokens\` must be an integer between 1 and ${MAX_OUTPUT_TOKENS}.`,
+        error:
+          'Invalid payload. `targetPosition` must be an integer between 0 and 100.',
       };
     }
 
-    safeMaxTokens = maxTokens;
+    return {
+      ok: true,
+      data: {
+        action,
+        personality,
+        card: validatedCard.data,
+        targetPosition,
+      },
+    };
   }
 
-  let safeTemperature = DEFAULT_TEMPERATURE;
-  if (temperature !== undefined) {
-    if (
-      typeof temperature !== 'number' ||
-      Number.isNaN(temperature) ||
-      temperature < MIN_TEMPERATURE ||
-      temperature > MAX_TEMPERATURE
-    ) {
-      return {
-        ok: false,
-        error: `Invalid payload. \`temperature\` must be between ${MIN_TEMPERATURE} and ${MAX_TEMPERATURE}.`,
-      };
-    }
-
-    safeTemperature = temperature;
+  const clue = validateShortTextField(value.clue, 'clue', MAX_CLUE_LENGTH);
+  if (!clue.ok) {
+    return clue;
   }
 
   return {
     ok: true,
     data: {
-      model,
-      systemPrompt,
-      userPrompt,
-      maxTokens: safeMaxTokens,
-      temperature: safeTemperature,
+      action,
+      personality,
+      card: validatedCard.data,
+      clue: clue.data,
+    },
+  };
+};
+
+const resolvePreparedModel = (
+  model: string,
+  allowedModels: ReadonlySet<string>,
+): ValidationResult<string> => {
+  if (!allowedModels.has(model)) {
+    return {
+      ok: false,
+      error: `Server model allowlist misconfigured for ${model}.`,
+    };
+  }
+
+  return { ok: true, data: model };
+};
+
+export const buildAnthropicRequest = (
+  request: AIActionRequest,
+  allowedModels: ReadonlySet<string>,
+): ValidationResult<PreparedAnthropicRequest> => {
+  if (request.action === 'generate-clue') {
+    const model = resolvePreparedModel(resolveClueModel(true), allowedModels);
+    if (!model.ok) {
+      return model;
+    }
+
+    return {
+      ok: true,
+      data: {
+        model: model.data,
+        systemPrompt: buildClueSystemPrompt(request.personality),
+        userPrompt: buildClueUserPrompt({
+          card: request.card,
+          targetPosition: request.targetPosition,
+        }),
+        maxTokens: CLUE_MAX_TOKENS,
+        temperature: CLUE_TEMPERATURE,
+      },
+    };
+  }
+
+  const model = resolvePreparedModel(DIAL_MODEL, allowedModels);
+  if (!model.ok) {
+    return model;
+  }
+
+  return {
+    ok: true,
+    data: {
+      model: model.data,
+      systemPrompt: buildDialSystemPrompt(request.personality),
+      userPrompt: buildDialUserPrompt({
+        card: request.card,
+        clue: request.clue,
+      }),
+      maxTokens: DIAL_MAX_TOKENS,
+      temperature: DIAL_TEMPERATURE,
     },
   };
 };

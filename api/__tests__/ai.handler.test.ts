@@ -8,6 +8,17 @@ type ErrorPayload = {
   error: string;
 };
 
+const validGenerateClueBody = {
+  action: 'generate-clue',
+  personality: 'sage',
+  card: {
+    id: 1,
+    left: 'Rare',
+    right: 'Common',
+  },
+  targetPosition: 19,
+} as const;
+
 const createRequest = (
   body: unknown,
   headers: Record<string, string> = {},
@@ -57,17 +68,10 @@ const withTemporaryEnv = async (
 describe('/api/ai handler hardening', () => {
   it('rejects disallowed origins', async () => {
     const response = await handler(
-      createRequest(
-        {
-          model: 'claude-sonnet-4-5-20250929',
-          systemPrompt: 'Return JSON only',
-          userPrompt: '{"ok":true}',
-        },
-        {
-          origin: 'https://evil.example',
-          'x-forwarded-for': '198.51.100.10',
-        },
-      ),
+      createRequest(validGenerateClueBody, {
+        origin: 'https://evil.example',
+        'x-forwarded-for': '198.51.100.10',
+      }),
     );
 
     const payload = await toErrorPayload(response);
@@ -76,11 +80,34 @@ describe('/api/ai handler hardening', () => {
     assert.match(payload.error, /Origin not allowed/);
   });
 
-  it('rejects unsupported models before upstream calls', async () => {
+  it('rejects missing origins in production', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'production',
+        VERCEL_ENV: 'production',
+        UPSTASH_REDIS_REST_URL: undefined,
+        UPSTASH_REDIS_REST_TOKEN: undefined,
+      },
+      async () => {
+        resetRateLimiterForTests();
+        const response = await handler(
+          createRequest(validGenerateClueBody, {
+            'x-forwarded-for': '198.51.100.14',
+          }),
+        );
+
+        const payload = await toErrorPayload(response);
+        assert.equal(response.status, 403);
+        assert.match(payload.error, /Origin not allowed/);
+      },
+    );
+  });
+
+  it('rejects legacy prompt-relay payloads before upstream calls', async () => {
     const response = await handler(
       createRequest(
         {
-          model: 'claude-unknown',
+          model: 'claude-sonnet-4-5-20250929',
           systemPrompt: 'Return JSON only',
           userPrompt: '{"ok":true}',
         },
@@ -93,7 +120,7 @@ describe('/api/ai handler hardening', () => {
 
     const payload = await toErrorPayload(response);
     assert.equal(response.status, 400);
-    assert.match(payload.error, /Unsupported model/);
+    assert.match(payload.error, /Unsupported action/);
     assert.equal(
       response.headers.get('access-control-allow-origin'),
       'http://localhost:5173',
@@ -113,9 +140,10 @@ describe('/api/ai handler hardening', () => {
         const response = await handler(
           createRequest(
             {
-              model: 'claude-unknown',
-              systemPrompt: 'Return JSON only',
-              userPrompt: '{"ok":true}',
+              action: 'place-dial',
+              personality: 'flux',
+              card: { id: 2, left: 'Quiet', right: 'Loud' },
+              clue: '',
             },
             {
               origin: 'http://localhost:5173',
@@ -126,7 +154,7 @@ describe('/api/ai handler hardening', () => {
 
         const payload = await toErrorPayload(response);
         assert.equal(response.status, 400);
-        assert.match(payload.error, /Unsupported model/);
+        assert.match(payload.error, /`clue` is required/i);
       },
     );
   });
@@ -136,28 +164,70 @@ describe('/api/ai handler hardening', () => {
       {
         NODE_ENV: 'production',
         VERCEL_ENV: 'production',
+        ALLOWED_ORIGINS: 'https://telepath.example',
         UPSTASH_REDIS_REST_URL: undefined,
         UPSTASH_REDIS_REST_TOKEN: undefined,
       },
       async () => {
         resetRateLimiterForTests();
         const response = await handler(
-          createRequest(
-            {
-              model: 'claude-sonnet-4-5-20250929',
-              systemPrompt: 'Return JSON only',
-              userPrompt: '{"ok":true}',
-            },
-            {
-              origin: 'http://localhost:5173',
-              'x-forwarded-for': '198.51.100.13',
-            },
-          ),
+          createRequest(validGenerateClueBody, {
+            origin: 'https://telepath.example',
+            'x-forwarded-for': '198.51.100.13',
+          }),
         );
 
         const payload = await toErrorPayload(response);
         assert.equal(response.status, 500);
         assert.match(payload.error, /rate limiter is not configured/i);
+      },
+    );
+  });
+
+  it('treats ALLOWED_ORIGINS as authoritative when configured', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'test',
+        VERCEL_ENV: undefined,
+        ALLOWED_ORIGINS: 'https://app.telepath.example',
+      },
+      async () => {
+        resetRateLimiterForTests();
+        const response = await handler(
+          createRequest(validGenerateClueBody, {
+            origin: 'https://preview.telepath.example',
+            host: 'preview.telepath.example',
+            'x-forwarded-for': '198.51.100.15',
+          }),
+        );
+
+        const payload = await toErrorPayload(response);
+        assert.equal(response.status, 403);
+        assert.match(payload.error, /Origin not allowed/);
+      },
+    );
+  });
+
+  it('does not implicitly allow localhost origins in production', async () => {
+    await withTemporaryEnv(
+      {
+        NODE_ENV: 'production',
+        VERCEL_ENV: 'production',
+        ALLOWED_ORIGINS: 'https://app.telepath.example',
+      },
+      async () => {
+        resetRateLimiterForTests();
+        const response = await handler(
+          createRequest(validGenerateClueBody, {
+            origin: 'http://localhost:5173',
+            host: 'app.telepath.example',
+            'x-forwarded-for': '198.51.100.16',
+          }),
+        );
+
+        const payload = await toErrorPayload(response);
+        assert.equal(response.status, 403);
+        assert.match(payload.error, /Origin not allowed/);
       },
     );
   });

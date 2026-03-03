@@ -2,19 +2,18 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   DEFAULT_ALLOWED_MODELS,
-  DEFAULT_TEMPERATURE,
-  MAX_OUTPUT_TOKENS,
-  MAX_SYSTEM_PROMPT_LENGTH,
-  MAX_USER_PROMPT_LENGTH,
+  MAX_CLUE_LENGTH,
+  MAX_SPECTRUM_LABEL_LENGTH,
   buildAllowedModels,
   buildAllowedOrigins,
+  buildAnthropicRequest,
   createRateLimiter,
   isOriginAllowed,
+  parseJsonPayload,
   resetRateLimiterForTests,
   sanitizeUpstreamError,
   toRateLimitResult,
-  validateAIRequestBody,
-  parseJsonPayload,
+  validateAIActionRequest,
 } from '../aiSecurity.js';
 
 const withTemporaryEnv = async (
@@ -67,83 +66,163 @@ describe('buildAllowedOrigins + isOriginAllowed', () => {
     assert.equal(origins.has('http://127.0.0.1:5173'), true);
   });
 
-  it('adds host-derived origin and validates membership', () => {
+  it('adds host-derived origin only when ALLOWED_ORIGINS is unset', () => {
     const origins = buildAllowedOrigins(undefined, 'telepath.example');
     assert.equal(origins.has('https://telepath.example'), true);
     assert.equal(isOriginAllowed('https://telepath.example', origins), true);
     assert.equal(isOriginAllowed('https://evil.example', origins), false);
   });
+
+  it('does not auto-trust host when ALLOWED_ORIGINS is explicitly configured', () => {
+    const origins = buildAllowedOrigins(
+      'https://app.telepath.example',
+      'preview.telepath.example',
+    );
+
+    assert.equal(origins.has('https://app.telepath.example'), true);
+    assert.equal(origins.has('https://preview.telepath.example'), false);
+    assert.equal(
+      isOriginAllowed('https://preview.telepath.example', origins),
+      false,
+    );
+  });
+
+  it('can reject missing origins when a caller requires strict origin presence', () => {
+    const origins = buildAllowedOrigins('https://app.telepath.example', null);
+    assert.equal(isOriginAllowed(null, origins), false);
+    assert.equal(
+      isOriginAllowed(null, origins, { allowMissingOrigin: true }),
+      true,
+    );
+  });
 });
 
-describe('validateAIRequestBody', () => {
-  const allowedModels = new Set(DEFAULT_ALLOWED_MODELS);
-
-  it('accepts valid payloads and assigns defaults', () => {
-    const result = validateAIRequestBody(
-      {
-        model: 'claude-sonnet-4-5-20250929',
-        systemPrompt: 'You are a strict JSON API.',
-        userPrompt: 'Return {"ok":true}',
-      },
-      allowedModels,
-    );
+describe('validateAIActionRequest', () => {
+  it('accepts valid generate-clue payloads', () => {
+    const result = validateAIActionRequest({
+      action: 'generate-clue',
+      personality: 'sage',
+      card: { id: 7, left: 'Rare', right: 'Common' },
+      targetPosition: 19,
+    });
 
     assert.equal(result.ok, true);
     if (result.ok) {
-      assert.equal(result.data.maxTokens, 250);
-      assert.equal(result.data.temperature, DEFAULT_TEMPERATURE);
+      assert.equal(result.data.action, 'generate-clue');
+      assert.equal(result.data.targetPosition, 19);
     }
   });
 
-  it('rejects unsupported models', () => {
-    const result = validateAIRequestBody(
-      {
-        model: 'claude-unknown',
-        systemPrompt: 'a',
-        userPrompt: 'b',
-      },
-      allowedModels,
-    );
+  it('accepts valid place-dial payloads and normalizes clue whitespace', () => {
+    const result = validateAIActionRequest({
+      action: 'place-dial',
+      personality: 'lumen',
+      card: { id: 11, left: 'Low stakes', right: 'High stakes' },
+      clue: '  office    coffee ',
+    });
+
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.data.action, 'place-dial');
+      assert.equal(result.data.clue, 'office coffee');
+    }
+  });
+
+  it('rejects unsupported actions and legacy prompt-relay payloads', () => {
+    const result = validateAIActionRequest({
+      model: 'claude-sonnet-4-5-20250929',
+      systemPrompt: 'Return JSON only',
+      userPrompt: '{"ok":true}',
+    });
+
     assert.equal(result.ok, false);
     if (!result.ok) {
-      assert.match(result.error, /Unsupported model/);
+      assert.match(result.error, /Unsupported action/);
     }
   });
 
-  it('rejects over-limit prompt lengths and maxTokens', () => {
-    const tooLongSystem = 'a'.repeat(MAX_SYSTEM_PROMPT_LENGTH + 1);
-    const tooLongUser = 'b'.repeat(MAX_USER_PROMPT_LENGTH + 1);
-
-    const systemResult = validateAIRequestBody(
-      {
-        model: 'claude-sonnet-4-5-20250929',
-        systemPrompt: tooLongSystem,
-        userPrompt: 'ok',
+  it('rejects invalid card labels, clue length, and target bounds', () => {
+    const badCard = validateAIActionRequest({
+      action: 'generate-clue',
+      personality: 'sage',
+      card: {
+        id: 1,
+        left: 'L'.repeat(MAX_SPECTRUM_LABEL_LENGTH + 1),
+        right: 'Right',
       },
-      allowedModels,
-    );
-    assert.equal(systemResult.ok, false);
+      targetPosition: 10,
+    });
+    assert.equal(badCard.ok, false);
 
-    const userResult = validateAIRequestBody(
-      {
-        model: 'claude-sonnet-4-5-20250929',
-        systemPrompt: 'ok',
-        userPrompt: tooLongUser,
-      },
-      allowedModels,
-    );
-    assert.equal(userResult.ok, false);
+    const badClue = validateAIActionRequest({
+      action: 'place-dial',
+      personality: 'flux',
+      card: { id: 2, left: 'Quiet', right: 'Loud' },
+      clue: 'x'.repeat(MAX_CLUE_LENGTH + 1),
+    });
+    assert.equal(badClue.ok, false);
 
-    const tokenResult = validateAIRequestBody(
-      {
-        model: 'claude-sonnet-4-5-20250929',
-        systemPrompt: 'ok',
-        userPrompt: 'ok',
-        maxTokens: MAX_OUTPUT_TOKENS + 1,
-      },
-      allowedModels,
+    const badTarget = validateAIActionRequest({
+      action: 'generate-clue',
+      personality: 'lumen',
+      card: { id: 3, left: 'Cold', right: 'Hot' },
+      targetPosition: 101,
+    });
+    assert.equal(badTarget.ok, false);
+  });
+});
+
+describe('buildAnthropicRequest', () => {
+  const allowedModels = new Set(DEFAULT_ALLOWED_MODELS);
+
+  it('builds server-side prompts for generate-clue actions', () => {
+    const request = validateAIActionRequest({
+      action: 'generate-clue',
+      personality: 'sage',
+      card: { id: 1, left: 'Rare', right: 'Common' },
+      targetPosition: 19,
+    });
+
+    assert.equal(request.ok, true);
+    if (!request.ok) {
+      return;
+    }
+
+    const prepared = buildAnthropicRequest(request.data, allowedModels);
+    assert.equal(prepared.ok, true);
+    if (!prepared.ok) {
+      return;
+    }
+
+    assert.match(prepared.data.model, /claude-/);
+    assert.match(prepared.data.systemPrompt, /Return only valid JSON/);
+    assert.match(
+      prepared.data.userPrompt,
+      /Hidden target value on that scale: 19\./,
     );
-    assert.equal(tokenResult.ok, false);
+  });
+
+  it('rejects server-side model selections outside the allowlist', () => {
+    const request = validateAIActionRequest({
+      action: 'place-dial',
+      personality: 'flux',
+      card: { id: 2, left: 'Calm', right: 'Chaotic' },
+      clue: 'weeknight',
+    });
+
+    assert.equal(request.ok, true);
+    if (!request.ok) {
+      return;
+    }
+
+    const prepared = buildAnthropicRequest(
+      request.data,
+      new Set(['claude-sonnet-4-5-20250929']),
+    );
+    assert.equal(prepared.ok, false);
+    if (!prepared.ok) {
+      assert.match(prepared.error, /allowlist misconfigured/i);
+    }
   });
 });
 

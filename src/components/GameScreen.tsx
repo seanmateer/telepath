@@ -93,9 +93,7 @@ export const GameScreen = ({
   const gameSessionIdRef = useRef<string | null>(null);
   const telemetryEndedRef = useRef(false);
   const roundAdvanceInFlightRef = useRef(false);
-  const { generateClue, placeDial } = useAI({
-    useHaikuOnlyClues: playtestSettings.haikuOnlyClues,
-  });
+  const { generateClue, placeDial } = useAI();
 
   // Stable refs for AI functions to avoid re-render loops
   const generateClueRef = useRef(generateClue);
