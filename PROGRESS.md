@@ -233,14 +233,14 @@ This phase is different from the others — it's not a linear checklist. We play
 ### Phase 7 — Deploy
 *Depends on Phase 6. Do not start until pre-deploy hardening is complete.*
 
-- [ ] Set `ANTHROPIC_API_KEY` in Vercel environment variables
-- [ ] Deploy to Vercel
-- [ ] Smoke test production build — full game, both player types
-- [ ] Verify edge function works in production (check logs)
-- [ ] 📦 `git add -A && git commit -m "[phase-7] production verified"`
-- [ ] Test share card on iOS and Android
-- [ ] Final mobile test on real device
-- [ ] 📦 `git add -A && git commit -m "[phase-7] MVP complete 🎉"`
+- [x] Set `ANTHROPIC_API_KEY` in Vercel environment variables
+- [x] Deploy to Vercel
+- [x] Smoke test production build — full game, both player types
+- [x] Verify edge function works in production (check logs) 
+- [x] 📦 `git add -A && git commit -m "[phase-7] production verified"`
+- [x] Test share card on iOS and Android
+- [x] Final mobile test on real device
+- [x] 📦 `git add -A && git commit -m "[phase-7] MVP complete 🎉"`
 
 **Phase 7 complete when:** Live URL works end-to-end on real devices. Share card works.
 
