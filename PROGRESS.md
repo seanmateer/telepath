@@ -18,9 +18,9 @@
 ## Current Status
 
 **Active Milestone:** MVP
-**Current Phase:** Phase 7 — Deploy (ready)
-**Last Updated:** 2026-03-02
-**Last Session Summary:** Completed Phase 6 pre-deploy hardening and review: `/api/ai` is task-scoped, builds prompts server-side, enforces strict production origin config, and now fails closed when `ALLOWED_ORIGINS` is missing in production.
+**Current Phase:** Phase 7 — Deploy (in progress)
+**Last Updated:** 2026-03-03
+**Last Session Summary:** Fixed Vercel deployment config by removing the invalid `functions.runtime` entry from `vercel.json`; the edge runtime is now declared only in `api/ai.ts`, which matches Vercel's current build expectations.
 **Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 7 real-device testing.
 
 ---
@@ -283,6 +283,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-03 | Codex | Phase 7 | Fixed the Vercel deploy config by removing the invalid `runtime: "edge"` entry from `vercel.json`, which was causing the build-time runtime-version error during project import. |
 | 2026-03-02 | Codex | Phase 6 | Closed the remaining production fail-open path by requiring `ALLOWED_ORIGINS` in production, reran the final pre-deploy security review, and verified with `npm run lint`, `npm run test`, and `npm run build`. |
 | 2026-03-02 | Codex | Phase 6 | Started pre-deploy hardening for `/api/ai`: replaced raw prompt relay payloads with task-scoped game actions, moved prompt construction into the edge function, tightened production origin handling (`ALLOWED_ORIGINS` + missing-origin rejection), updated security/env docs, and verified with `npm run lint`, `npm run test`, and `npm run build`. |
 | 2026-03-01 | Codex | Phase 5 | Added AI clue-state dial motion polish: the dial hub now pulses during AI clue generation and the hand pops out with a brief overshoot when the clue locks in and guessing begins. Verified with `npm run lint` and `npm run build`. |
