@@ -2,7 +2,7 @@
 
  A web-based adaptation of the Wavelength board game where you play against an LLM opponent.
 
-<!-- [Play Telepath](#) &nbsp;·&nbsp; [Report a bug](../../issues) &nbsp;·&nbsp; [Project plan](telepath-project-plan.md) -->
+[Play Telepath](https://telepath-seven.vercel.app)
 
 <!-- --- -->
 
@@ -81,7 +81,6 @@ vercel dev
 |---|---|---|
 | **MVP** | 🔨 In progress | Solo vs. AI, 80-card deck, 3 personalities |
 | **1.0** | Planned | Human multiplayer rooms, themed card packs |
-| **2.0** | Planned | Player-generated packs, pack sharing, scoring options |
 
 
 ## For AI Coding Agents
