@@ -11,17 +11,17 @@
 4. **If you hit a blocker:** Mark it `🚫 Blocked`, log it in the Blockers Log below, and stop. Do not silently work around it or skip ahead.
 5. **Never mark a task done without verifying end-to-end** — run the dev server, test the feature as a user would, check mobile viewport.
 6. **At session end:** Add a row to the Session Log before stopping. If mid-task, commit with a `[wip]` prefix and describe what's in progress.
-7. **Scope discipline:** Do not build anything outside the current milestone. 1.0 and 2.0 tasks are listed for reference only — do not touch them during MVP.
+7. **Scope discipline:** Do not build anything outside the current milestone. 2.0 tasks are listed for reference only until 1.0 is complete.
 
 ---
 
 ## Current Status
 
-**Active Milestone:** MVP
-**Current Phase:** Phase 7 — Deploy (in progress)
-**Last Updated:** 2026-03-03
-**Last Session Summary:** Fixed Vercel deployment config by removing the invalid `functions.runtime` entry from `vercel.json`; the edge runtime is now declared only in `api/ai.ts`, which matches Vercel's current build expectations.
-**Known Follow-up:** iOS Safari haptics are not firing on iPhone 16 Pro (iOS 26.2.1). Current `navigator.vibrate` + switch-input fallback has no reliable physical feedback; revisit during Phase 7 real-device testing.
+**Active Milestone:** 1.0 — Multiplayer + Competitive
+**Current Phase:** 1.0 Phase 0 — Multiplayer Planning + Solo Dev Loop (queued)
+**Last Updated:** 2026-03-06
+**Last Session Summary:** Closed out MVP in the tracker and aligned the 1.0 docs around the chosen multiplayer shape: one human team vs. AI first, 6-character room codes + URLs, fixed-board named cursors, host-only round commits, auto-rotating human psychic, and a phased multiplayer execution plan.
+**Known Follow-up:** Before writing multiplayer code, lock the room/public-private state interfaces and the one-laptop multi-tab testing loop so Supabase schema and API work land on stable authority boundaries.
 
 ---
 
@@ -246,16 +246,100 @@ This phase is different from the others — it's not a linear checklist. We play
 
 ---
 
-## 1.0 Tasks (Do Not Start Until MVP is Live)
+## 1.0 Tasks (Current Milestone)
 
-- [ ] Supabase project setup
-- [ ] Room creation + unique code generation
-- [ ] Room join via URL
-- [ ] Real-time dial sync (Supabase Realtime)
-- [ ] Room state persistence + 24hr expiry
-- [ ] Human team display names
-- [ ] LLM-generated themed card packs (curated before shipping)
-- [ ] Pack selection at setup
+### 1.0 Phase 0 — Multiplayer Planning + Solo Dev Loop
+*Do this first. Lock the architecture and the testing workflow before writing room code.*
+
+- [ ] Document the room model and authority boundaries (`RoomPublicState`, `RoomPrivateState`, `RoomAction`, `RoomActionResult`)
+- [ ] Define participant identity/reconnect behavior (`ParticipantToken`, join-order psychic rotation, host reassignment rules)
+- [ ] Finalize room addressing details (6-character uppercase code + `/room/:code` URL flow)
+- [ ] Specify the fixed-board presence model (named cursors, shared dial preview, no synchronized pan/zoom)
+- [ ] Design the solo-dev multiplayer loop for one laptop and 2–4 browser tabs
+- [ ] Write a multi-page Playwright smoke-plan for host + guest room flows
+- [ ] 📦 `git add -A && git commit -m "[1.0-phase-0] multiplayer architecture + dev loop plan"`
+
+**1.0 Phase 0 complete when:** The room/public-private state split, reconnect model, and local multi-tab testing workflow are decision-complete enough that backend work can begin without re-litigating architecture.
+
+### 1.0 Phase 1 — Backend Foundation
+*Build the authoritative server/data layer for rooms before wiring presence-heavy UI.*
+
+- [ ] Set up the Supabase project and local env wiring
+- [ ] Add 1.0 env vars to `.env.example` and deployment docs (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
+- [ ] Create the initial room + participant schema
+- [ ] Implement human-friendly 6-character room code generation
+- [ ] Build `/api/rooms/create`
+- [ ] Build `/api/rooms/join`
+- [ ] Build `/api/rooms/action`
+- [ ] Persist authoritative room snapshots and `last_active_at` timestamps
+- [ ] Add basic stale-room expiry/cleanup rules for 24hr inactivity
+- [ ] 📦 `git add -A && git commit -m "[1.0-phase-1] room backend foundation"`
+
+**1.0 Phase 1 complete when:** A host can create a room, a guest can join it, and the server can persist authoritative room state with reconnect-friendly participant records.
+
+### 1.0 Phase 2 — Lobby + Identity
+*Make room creation/joining legible before introducing active gameplay sync.*
+
+- [ ] Build the multiplayer create/join room UI
+- [ ] Add display-name entry with random fallback name generation
+- [ ] Persist the participant token locally for refresh/reconnect
+- [ ] Show roster, host badge, room code, and copy-link/share affordances
+- [ ] Surface selected AI personality in the lobby
+- [ ] Rehydrate the room shell after refresh using the stored participant token
+- [ ] 📦 `git add -A && git commit -m "[1.0-phase-2] lobby + identity"`
+
+**1.0 Phase 2 complete when:** Players can create or join a room, see who is present, recover after refresh, and understand who is hosting before gameplay starts.
+
+### 1.0 Phase 3 — Presence + Shared Interaction
+*Add the collaborative layer on top of the authoritative room state.*
+
+- [ ] Add Supabase presence for connected participants
+- [ ] Render colored named cursors over the shared gameplay surface
+- [ ] Broadcast shared dial preview updates in real time
+- [ ] Enforce host-only phase-changing actions in the client + API
+- [ ] Handle disconnects, stale cursors, and host promotion
+- [ ] Verify the fixed-board model works well on desktop and mobile without shared camera movement
+- [ ] 📦 `git add -A && git commit -m "[1.0-phase-3] presence + shared dial"`
+
+**1.0 Phase 3 complete when:** Multiple humans can occupy the same room, see each other's named cursors, collaboratively move the dial, and recover cleanly from disconnects.
+
+### 1.0 Phase 4 — Competitive Multiplayer Gameplay
+*Replace the remaining local-only competitive scaffolding with room-backed gameplay.*
+
+- [ ] Route competitive mode through room-backed game flow instead of local-only state
+- [ ] Keep AI clue generation and bonus-guess actions server-side
+- [ ] Implement auto-rotating human psychic selection by join order
+- [ ] Wire bonus-guess flow and scoring into authoritative room actions
+- [ ] Enforce public/private reveal boundaries so hidden target data never leaks early
+- [ ] Sanitize server room state before broadcasting it to clients
+- [ ] 📦 `git add -A && git commit -m "[1.0-phase-4] competitive multiplayer flow"`
+
+**1.0 Phase 4 complete when:** A full competitive game can run in a shared room from lobby through scoring, with AI turns and hidden state controlled by the server.
+
+### 1.0 Phase 5 — Multiplayer QA + Hardening
+*Treat multi-user reliability as a feature, not a cleanup pass.*
+
+- [ ] Run one-laptop multi-tab testing across 2–4 players
+- [ ] Verify refresh/reconnect/resume behavior for host and guests
+- [ ] Check race conditions around simultaneous drag, duplicate submit, and stale action retries
+- [ ] Test mobile join/share/reconnect flows on real devices
+- [ ] Validate room expiry cleanup and stale-room UX
+- [ ] Add automated smoke coverage for host + guest room flows
+- [ ] 📦 `git add -A && git commit -m "[1.0-phase-5] multiplayer qa + hardening"`
+
+**1.0 Phase 5 complete when:** Core room flows are reliable under multi-tab and real-device testing, and failure modes are handled deliberately rather than accidentally.
+
+### 1.0 Phase 6 — Themed Packs
+*Keep pack work after multiplayer core so it doesn't compete with room architecture.*
+
+- [ ] Generate curated themed packs with Claude
+- [ ] Review and prune generated pairs before shipping
+- [ ] Add static pack metadata/files alongside the core deck
+- [ ] Add pack selection UI to setup/lobby flows
+- [ ] Verify packs work in solo co-op and multiplayer competitive setup
+- [ ] 📦 `git add -A && git commit -m "[1.0-phase-6] curated themed packs"`
+
+**1.0 Phase 6 complete when:** Curated themed packs are selectable in setup, work in both major modes, and ship as static content rather than runtime generation.
 
 ---
 
@@ -283,6 +367,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-06 | Codex | 1.0 Phase 0 | Aligned `telepath-project-plan.md`, `PROGRESS.md`, and agent docs around the first-cut multiplayer architecture: one human team vs. AI, 6-character room codes + URLs, fixed-board named cursors, host-only round commits, public/private room state, and a phased 1.0 execution plan. |
 | 2026-03-03 | Codex | Phase 7 | Fixed the Vercel deploy config by removing the invalid `runtime: "edge"` entry from `vercel.json`, which was causing the build-time runtime-version error during project import. |
 | 2026-03-02 | Codex | Phase 6 | Closed the remaining production fail-open path by requiring `ALLOWED_ORIGINS` in production, reran the final pre-deploy security review, and verified with `npm run lint`, `npm run test`, and `npm run build`. |
 | 2026-03-02 | Codex | Phase 6 | Started pre-deploy hardening for `/api/ai`: replaced raw prompt relay payloads with task-scoped game actions, moved prompt construction into the edge function, tightened production origin handling (`ALLOWED_ORIGINS` + missing-origin rejection), updated security/env docs, and verified with `npm run lint`, `npm run test`, and `npm run build`. |

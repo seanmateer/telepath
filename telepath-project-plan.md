@@ -6,7 +6,7 @@
 
 ## ⚠️ Open Decisions — Remaining
 
-- [ ] **Room link sharing format** — For 1.0 multiplayer: short code (e.g. `WXYZ`) + URL, or UUID-based URL only?
+- None for the first 1.0 multiplayer cut. Revisit two-human-team rooms and shared pan/zoom only after the initial room-based release is stable.
 
 ---
 
@@ -17,6 +17,11 @@
 - **Bonus guess:** Not used in co-op mode (no opposing team). Kept in codebase for competitive mode in 1.0.
 - **Spectrum deck:** LLM-generated pairs. 80-card core deck shipped as static JSON (see `public/spectrum-deck.json`). Additional LLM-generated packs in 1.0, player-generated in 2.0.
 - **Multiplayer:** MVP is solo only. 1.0 adds human multiplayer with websockets — priority 1 after working MVP.
+- **Room link sharing format:** 1.0 rooms use a 6-character uppercase code plus a shareable URL.
+- **Competitive room shape:** 1.0 ships one human team vs. AI first. The room/presence model should leave room for two human teams later without reworking the network layer.
+- **Presence scope:** 1.0 adds live named cursors on a fixed shared board. Shared pan/zoom camera movement is explicitly deferred.
+- **Control model:** Any connected human can drag the shared dial, but only the host can trigger phase-changing actions like start, lock, reveal, and next round.
+- **Human psychic selection:** On human-team turns, the psychic auto-rotates by join order among connected players.
 - **Scoring:** Co-op: score rated on chart at game end. Competitive (1.0): first to 10 points. Configurable scoring planned for post-1.0.
 - **AI explanation:** Yes — shown after reveal, hidden behind a tap. Both for player interest and prompt/model tuning purposes.
 - **Hosting:** Vercel (frontend, free tier), Supabase (DB + realtime for 1.0, free tier). Effectively $0 hosting cost. Anthropic API is the only variable cost.
@@ -47,7 +52,7 @@ Telepath is inspired by [Wavelength](https://www.cmyk.games/collections/games/pr
 
 A web-based adaptation of Wavelength where a human plays with an AI partner. In solo play (MVP), the human and AI cooperate as teammates — alternating as the psychic who gives clues while the other reads their mind and places the dial. In multiplayer (1.0), human teams compete against the AI in competitive mode.
 
-The AI has a distinct personality that affects its clue style and dial placement. The core experience is trying to read how an LLM thinks — and having it try to read you back.
+The AI has a distinct personality that affects its clue style and dial placement. The core experience is trying to read how an LLM thinks — and having it try to read you back. In the first multiplayer release, one human team collaborates live in a shared room against the AI, with richer two-human-team competition planned only after that core room model is proven.
 
 ---
 
@@ -56,7 +61,7 @@ The AI has a distinct personality that affects its clue style and dial placement
 | Milestone | Scope | Goal |
 |---|---|---|
 | **MVP** | Solo co-op with AI, static deck, core loop | Validate the AI partner concept |
-| **1.0** | + Competitive mode, human multiplayer rooms, LLM-generated card packs | Make it a real shareable game |
+| **1.0** | + Competitive mode, one-human-team multiplayer rooms, curated LLM-generated card packs | Make it a real shareable game |
 | **2.0** | + Player-generated packs, pack sharing, scoring options | Community and replayability |
 
 ---
@@ -230,12 +235,15 @@ Respond only as JSON: { "position": <number 0-100>, "reasoning": "..." }
 *Competitive mode + multiplayer rooms + LLM-generated card packs. Priority 1 after working MVP.*
 
 ### Added Scope
-- **Competitive mode enabled** — humans vs. AI, first to 10 points, bonus guess mechanic (code scaffolding already exists from MVP)
-- Human multiplayer via shareable room link (humans share one team vs. AI)
-- Real-time dial sync across all human players (they see each other's live position)
-- Room creation with unique code + URL
-- No account required — display name only
+- **Competitive mode enabled** — one shared human team vs. AI, first to 10 points, bonus guess mechanic (code scaffolding already exists from MVP)
+- Human multiplayer via shareable room link (first cut is one human team vs. AI; two human teams come later)
+- Fixed shared board with real-time named cursors and dial sync across all human players
+- Room creation with a 6-character uppercase code + URL (example: `telepath.app/room/WAVEFX`)
+- No account required — players may enter a display name or get a random fallback name with initials
 - Room owner selects AI personality; room expires after 24hr inactivity
+- Everyone can drag the shared dial; only the host can trigger phase-changing actions
+- Human psychic role auto-rotates by join order on human-team turns
+- Reconnect is handled by a locally stored participant token so refreshes can rejoin the same seat
 - **LLM-generated card packs** — themed packs generated via Claude and curated before shipping (e.g. "Food & Taste", "Tech & Culture", "Emotions")
 - Pack selection at game setup
 
@@ -243,17 +251,42 @@ Respond only as JSON: { "position": <number 0-100>, "reasoning": "..." }
 
 | Layer | Addition |
 |---|---|
-| Backend | Supabase (room state, realtime presence, dial sync) |
-| Realtime | Supabase Realtime (websockets) |
+| Backend | Supabase (room persistence, presence, broadcast channels) |
+| Realtime | Supabase Realtime (presence + broadcast over websockets) |
+| API Authority | Vercel API routes for room create/join/action and AI-triggered turns |
 | Auth | None — anonymous display names only |
 
 ### Multiplayer Room Logic
-- Owner generates room → unique 4-letter code + URL (e.g. `wavelength.app/room/WXYZ`)
-- Participants join via link, enter display name
-- All humans on one team; AI auto-assigned as opponent
-- Real-time dial position broadcast as human players drag
+- Owner generates room → unique 6-character uppercase code + URL
+- Participants join via link, enter a display name, or accept a random fallback name
+- All humans join one team; AI is the opposing team in the first 1.0 release
+- Real-time named cursors show each human player's pointer over the shared board
+- Real-time dial position broadcasts while humans drag; last movement wins for preview state
+- Only the host can trigger `Start Game`, `Lock Guess`, `Reveal`, and `Next Round`
+- Human psychic turns rotate automatically by join order among connected players
 - Room state: waiting → in-game → complete
+- Refresh/reconnect attempts restore the same participant via a locally stored participant token
+- Host ownership transfers to the next connected participant if the host drops for an extended period
 - Expires 24hr after last activity
+
+### Multiplayer Architecture Approach
+- Supabase stores room snapshots, participant records, presence, and realtime broadcast traffic
+- Vercel API routes are authoritative for room creation, joining, state transitions, and all AI-triggered turns
+- The existing reducer/state-machine approach remains the source of truth for game rules; multiplayer wraps it instead of replacing it
+- Clients consume sanitized **public room state** only; hidden round data stays in **private room state** on the server until reveal
+
+### Key Multiplayer Interfaces
+- `RoomPublicState` — sanitized room/game data that is safe to broadcast to all clients
+- `RoomPrivateState` — authoritative server-side room snapshot including hidden round data
+- `ParticipantPresence` — transient cursor/presence payload for connected players
+- `ParticipantToken` — reconnect token stored locally to reclaim the same seat after refresh
+- `RoomAction` — typed client intent sent to room APIs for durable state changes
+- `RoomActionResult` — typed API result containing updated room state or rejection details
+
+### 1.0 Non-Goals
+- No synchronized zoom/pan camera movement
+- No spectator mode
+- No two-human-team competitive mode in the first 1.0 cut
 
 ### LLM Pack Generation Process (1.0)
 1. Prompt Claude to generate 20 spectrum pairs on a given theme

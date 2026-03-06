@@ -22,7 +22,7 @@ When in doubt, `AGENTS.md` wins for universal content. `CLAUDE.md` wins only for
 
 ## Project Overview
 
-A web-based game called **Telepath** — an adaptation of the Wavelength board game. In solo play (MVP), a human and an AI with a distinct personality cooperate as teammates, alternating as psychic. In multiplayer (1.0), teams of humans compete against the AI. Built as a public project — code quality and architecture decisions should reflect that.
+A web-based game called **Telepath** — an adaptation of the Wavelength board game. In solo play (MVP), a human and an AI with a distinct personality cooperate as teammates, alternating as psychic. In multiplayer (1.0), humans compete against the AI in shared rooms, starting with one human team collaborating in real time. Built as a public project — code quality and architecture decisions should reflect that.
 
 Full design context: `telepath-project-plan.md`  
 Progress tracking: `PROGRESS.md`
@@ -40,9 +40,9 @@ At the start of every session, read `PROGRESS.md` and `telepath-project-plan.md`
 | Animations | Framer Motion |
 | AI — Clue generation | Anthropic Claude Sonnet (via `/api/ai` proxy) |
 | AI — Dial placement + reasoning | Anthropic Claude Haiku (via `/api/ai` proxy) |
-| API Proxy | Vercel Edge Function (`/api/ai.ts`) |
+| API Layer | Vercel Functions (`/api/ai.ts` proxy today, `/api/rooms/*` authority in 1.0) |
 | Hosting | Vercel |
-| Backend (1.0 only) | Supabase (realtime + room state) |
+| Backend (1.0 only) | Supabase (room persistence + presence + broadcast) |
 
 ---
 
@@ -66,7 +66,8 @@ At the start of every session, read `PROGRESS.md` and `telepath-project-plan.md`
 │   │   └── game.ts              ← All game-related TypeScript types
 │   └── main.tsx
 ├── api/
-│   └── ai.ts                    ← Vercel Edge Function — build this first
+│   ├── ai.ts                    ← Vercel Edge Function — build this first
+│   └── rooms/                   ← 1.0 authoritative room routes (`create`, `join`, `action`)
 ├── .env.example                 ← Document env vars here, never commit .env
 └── vercel.json
 ```
@@ -104,6 +105,8 @@ npx tsc --noEmit     # Type check
 - All AI interaction logic lives in `src/hooks/useAI.ts` — not inline in components
 - Spectrum card data is static JSON at `public/spectrum-deck.json` — no API call needed
 - All AI responses are structured JSON
+- In 1.0, Supabase handles room persistence, presence, and broadcast; Vercel room routes stay authoritative for create/join/action and AI-triggered turns
+- Multiplayer clients consume sanitized public room state only; hidden round state remains server-side until reveal
 
 **Edge function structure:**
 ```ts
@@ -150,11 +153,13 @@ Three personalities, each with a distinct system prompt affecting clue style and
 - Based on the official Wavelength cooperative mode rules
 
 **Competitive Mode (1.0 — multiplayer):**
-- Two teams: Human(s) vs. AI
+- First cut: one shared human team vs. AI on a fixed board with live named cursors
 - First to 10 points wins
 - Each round: active team's Psychic gives a clue → their team places the dial → opposing team makes a bonus left/right guess for 1pt
+- Any connected human may drag the shared dial, but only the host may trigger phase-changing actions
+- Human-team psychic rotates automatically by join order in the first release
 - Scoring: Bullseye 4 pts, Adjacent 3 pts, Outer 2 pts, Miss 0 pts, Bonus guess correct 1 pt
-- Code scaffolding exists but mode is not yet playable
+- Shared pan/zoom camera movement and two-human-team rooms are explicitly out of scope for the first 1.0 cut
 
 ---
 
@@ -173,6 +178,9 @@ Three personalities, each with a distinct system prompt affecting clue style and
 ANTHROPIC_API_KEY=        # Required. Server-side only. Never expose client-side.
 UPSTASH_REDIS_REST_URL=   # Required in production for distributed edge rate limiting.
 UPSTASH_REDIS_REST_TOKEN= # Required in production for distributed edge rate limiting.
+VITE_SUPABASE_URL=        # Required in 1.0+. Client-safe Supabase project URL.
+VITE_SUPABASE_ANON_KEY=   # Required in 1.0+. Client-safe Supabase anon key.
+SUPABASE_SERVICE_ROLE_KEY=# Required in 1.0+. Server-side only for room APIs.
 ```
 
 Document any new env vars in `.env.example` as they are added. Never add real values to `.env.example`.
@@ -214,8 +222,8 @@ Key design principles:
 
 ## Milestone Scope
 
-**MVP (current):** Solo co-op play (human + AI teammates). Mode selection screen with competitive disabled. No multiplayer, no Supabase, no user accounts.
-**1.0:** Human multiplayer rooms + Supabase + competitive mode enabled. Do not build during MVP.
+**MVP (shipped):** Solo co-op play (human + AI teammates). Mode selection screen with competitive disabled. No multiplayer, no Supabase, no user accounts.
+**1.0 (current):** Human multiplayer rooms + Supabase + competitive mode enabled. First cut is one human team vs. AI on a fixed board with live named cursors, host-controlled round commits, and no shared pan/zoom camera.
 **2.0:** Player-generated card packs. Do not build during 1.0.
 
 Do not build ahead of the current milestone without explicit instruction.
