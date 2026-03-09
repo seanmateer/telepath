@@ -18,10 +18,10 @@
 ## Current Status
 
 **Active Milestone:** 1.0 — Multiplayer + Competitive
-**Current Phase:** 1.0 Phase 0 — Multiplayer Planning + Solo Dev Loop (queued)
-**Last Updated:** 2026-03-06
-**Last Session Summary:** Closed out MVP in the tracker and aligned the 1.0 docs around the chosen multiplayer shape: one human team vs. AI first, 6-character room codes + URLs, fixed-board named cursors, host-only round commits, auto-rotating human psychic, and a phased multiplayer execution plan.
-**Known Follow-up:** Before writing multiplayer code, lock the room/public-private state interfaces and the one-laptop multi-tab testing loop so Supabase schema and API work land on stable authority boundaries.
+**Current Phase:** 1.0 Phase 1 — Backend Foundation (queued)
+**Last Updated:** 2026-03-09
+**Last Session Summary:** Locked the Phase 0 multiplayer foundation in code and docs: added canonical room/public-private/action/presence types, room-state helpers for sanitization/addressing/rotation/host promotion, and a written one-laptop multi-tab + Playwright smoke plan. Verified with lint, unit tests, production build, and a browser sanity pass.
+**Known Follow-up:** Start Phase 1 against the locked room interfaces: wire Supabase env/config, define the room/participant schema, and build `/api/rooms/create|join|action` around the new `RoomPrivateState`/`RoomPublicState` contract.
 
 ---
 
@@ -251,13 +251,13 @@ This phase is different from the others — it's not a linear checklist. We play
 ### 1.0 Phase 0 — Multiplayer Planning + Solo Dev Loop
 *Do this first. Lock the architecture and the testing workflow before writing room code.*
 
-- [ ] Document the room model and authority boundaries (`RoomPublicState`, `RoomPrivateState`, `RoomAction`, `RoomActionResult`)
-- [ ] Define participant identity/reconnect behavior (`ParticipantToken`, join-order psychic rotation, host reassignment rules)
-- [ ] Finalize room addressing details (6-character uppercase code + `/room/:code` URL flow)
-- [ ] Specify the fixed-board presence model (named cursors, shared dial preview, no synchronized pan/zoom)
-- [ ] Design the solo-dev multiplayer loop for one laptop and 2–4 browser tabs
-- [ ] Write a multi-page Playwright smoke-plan for host + guest room flows
-- [ ] 📦 `git add -A && git commit -m "[1.0-phase-0] multiplayer architecture + dev loop plan"`
+- [x] Document the room model and authority boundaries (`RoomPublicState`, `RoomPrivateState`, `RoomAction`, `RoomActionResult`)
+- [x] Define participant identity/reconnect behavior (`ParticipantToken`, join-order psychic rotation, host reassignment rules)
+- [x] Finalize room addressing details (6-character uppercase code + `/room/:code` URL flow)
+- [x] Specify the fixed-board presence model (named cursors, shared dial preview, no synchronized pan/zoom)
+- [x] Design the solo-dev multiplayer loop for one laptop and 2–4 browser tabs
+- [x] Write a multi-page Playwright smoke-plan for host + guest room flows
+- [x] 📦 `git add -A && git commit -m "[1.0-phase-0] multiplayer architecture + dev loop plan"`
 
 **1.0 Phase 0 complete when:** The room/public-private state split, reconnect model, and local multi-tab testing workflow are decision-complete enough that backend work can begin without re-litigating architecture.
 
@@ -367,5 +367,6 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-09 | Codex | 1.0 Phase 0 | Completed the multiplayer foundation pass: added canonical room types/helpers in `src/types/room.ts` and `src/lib/roomState.ts`, documented the first-cut room authority/presence/dev-loop plan in `docs/multiplayer-architecture.md`, and verified the repo with lint, tests, build, and a browser sanity pass. |
 | 2026-03-06 | Codex | 1.0 Phase 0 | Archived the MVP-era session log into `PROGRESS-archive-mvp.md` so `PROGRESS.md` stays lightweight for 1.0 startup while preserving detailed implementation history. |
 | 2026-03-06 | Codex | 1.0 Phase 0 | Aligned `telepath-project-plan.md`, `PROGRESS.md`, and agent docs around the first-cut multiplayer architecture: one human team vs. AI, 6-character room codes + URLs, fixed-board named cursors, host-only round commits, public/private room state, and a phased 1.0 execution plan. |
