@@ -135,6 +135,7 @@ export type RoomActionRejectionCode =
   | 'forbidden'
   | 'invalid-phase'
   | 'invalid-payload'
+  | 'not-implemented'
   | 'participant-missing'
   | 'room-expired'
   | 'room-missing'
@@ -192,3 +193,32 @@ export type RoomActionResult =
       serverTime: string;
       room?: RoomPublicState;
     };
+
+export type CreateRoomRequest = {
+  personality?: Personality;
+  displayName?: string;
+};
+
+export type CreateRoomResponse = {
+  ok: true;
+  room: RoomPublicState;
+  participantToken: ParticipantToken;
+};
+
+export type JoinRoomRequest = {
+  roomCode: string;
+  displayName?: string;
+  participantToken?: ParticipantToken | null;
+};
+
+export type JoinRoomResponse = {
+  ok: true;
+  room: RoomPublicState;
+  participantToken: ParticipantToken;
+  reconnected: boolean;
+};
+
+export type RoomActionRequest = {
+  participantToken: ParticipantToken;
+  action: RoomAction;
+};

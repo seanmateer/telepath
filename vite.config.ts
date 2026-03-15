@@ -2,6 +2,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import aiHandler from './api/ai';
+import roomActionHandler from './api/rooms/action';
+import roomCreateHandler from './api/rooms/create';
+import roomJoinHandler from './api/rooms/join';
 
 const readRequestBody = (req: IncomingMessage): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -52,13 +55,22 @@ const createApiRequest = async (req: IncomingMessage): Promise<Request> => {
 };
 
 const devApiProxyPlugin = (): Plugin => {
+  const routeHandlers: Record<string, (request: Request) => Promise<Response>> = {
+    '/api/ai': aiHandler,
+    '/api/rooms/create': roomCreateHandler,
+    '/api/rooms/join': roomJoinHandler,
+    '/api/rooms/action': roomActionHandler,
+  };
+
   return {
     name: 'telepath-dev-api-proxy',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const pathname = (req.url ?? '').split('?')[0];
-        if (pathname !== '/api/ai') {
+        const routeHandler = pathname ? routeHandlers[pathname] : undefined;
+
+        if (!routeHandler) {
           next();
           return;
         }
@@ -69,10 +81,10 @@ const devApiProxyPlugin = (): Plugin => {
         ) => {
           try {
             const request = await createApiRequest(apiReq);
-            const response = await aiHandler(request);
+            const response = await routeHandler(request);
             await writeResponse(response, apiRes);
           } catch (error: unknown) {
-            console.error('Local /api/ai proxy failed', error);
+            console.error(`Local ${pathname} proxy failed`, error);
             apiRes.statusCode = 500;
             apiRes.setHeader('content-type', 'application/json');
             apiRes.end(

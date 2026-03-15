@@ -75,12 +75,23 @@ vercel dev
 
 ## Project Status
 
-**Currently:** Building MVP — solo vs. AI, static 80-card deck, core game loop.
+**Currently:** Building 1.0 — multiplayer rooms + competitive mode on top of the shipped solo co-op MVP.
 
 | Milestone | Status | Scope |
 |---|---|---|
-| **MVP** | 🔨 In progress | Solo vs. AI, 80-card deck, 3 personalities |
-| **1.0** | Planned | Human multiplayer rooms, themed card packs |
+| **MVP** | ✅ Shipped | Solo co-op, 80-card deck, 3 personalities |
+| **1.0** | 🔨 In progress | Human multiplayer rooms, competitive mode, themed card packs |
+
+## Local Environment
+
+Copy `.env.example` to `.env` and set the values needed for the slice you are working on:
+
+- `ANTHROPIC_API_KEY` for AI clue/dial calls
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for production-style API rate limiting
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` for 1.0 room APIs
+
+The room API foundation expects the Supabase schema in `supabase/migrations/20260315_initial_rooms.sql`.
+When those Supabase room vars are missing in local development, the Vite-backed room routes fall back to an in-memory store so the one-laptop multiplayer loop still works. Production remains hard-gated on real Supabase config.
 
 
 ## For AI Coding Agents

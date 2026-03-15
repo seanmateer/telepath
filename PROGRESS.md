@@ -18,10 +18,10 @@
 ## Current Status
 
 **Active Milestone:** 1.0 — Multiplayer + Competitive
-**Current Phase:** 1.0 Phase 1 — Backend Foundation (queued)
-**Last Updated:** 2026-03-09
-**Last Session Summary:** Locked the Phase 0 multiplayer foundation in code and docs: added canonical room/public-private/action/presence types, room-state helpers for sanitization/addressing/rotation/host promotion, and a written one-laptop multi-tab + Playwright smoke plan. Verified with lint, unit tests, production build, and a browser sanity pass.
-**Known Follow-up:** Start Phase 1 against the locked room interfaces: wire Supabase env/config, define the room/participant schema, and build `/api/rooms/create|join|action` around the new `RoomPrivateState`/`RoomPublicState` contract.
+**Current Phase:** 1.0 Phase 1 — Backend Foundation (in progress)
+**Last Updated:** 2026-03-15
+**Last Session Summary:** Built the Phase 1 room backend scaffold: added Supabase env/docs + SQL schema, official Supabase SDK wiring, room storage abstractions with a non-production memory fallback, human-friendly room code + participant token generation, `/api/rooms/create|join|action`, Vite dev proxy support for the new routes, and API coverage plus a manual local create/join/start-game verification pass. Live Supabase project wiring is still the remaining unchecked Phase 1 item.
+**Known Follow-up:** Point the new room store at a real Supabase project by setting `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`, run the SQL migration, and re-verify the create/join/action routes against the service-role-backed store instead of the local in-memory fallback.
 
 ---
 
@@ -265,14 +265,14 @@ This phase is different from the others — it's not a linear checklist. We play
 *Build the authoritative server/data layer for rooms before wiring presence-heavy UI.*
 
 - [ ] Set up the Supabase project and local env wiring
-- [ ] Add 1.0 env vars to `.env.example` and deployment docs (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
-- [ ] Create the initial room + participant schema
-- [ ] Implement human-friendly 6-character room code generation
-- [ ] Build `/api/rooms/create`
-- [ ] Build `/api/rooms/join`
-- [ ] Build `/api/rooms/action`
-- [ ] Persist authoritative room snapshots and `last_active_at` timestamps
-- [ ] Add basic stale-room expiry/cleanup rules for 24hr inactivity
+- [x] Add 1.0 env vars to `.env.example` and deployment docs (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
+- [x] Create the initial room + participant schema
+- [x] Implement human-friendly 6-character room code generation
+- [x] Build `/api/rooms/create`
+- [x] Build `/api/rooms/join`
+- [x] Build `/api/rooms/action`
+- [x] Persist authoritative room snapshots and `last_active_at` timestamps
+- [x] Add basic stale-room expiry/cleanup rules for 24hr inactivity
 - [ ] 📦 `git add -A && git commit -m "[1.0-phase-1] room backend foundation"`
 
 **1.0 Phase 1 complete when:** A host can create a room, a guest can join it, and the server can persist authoritative room state with reconnect-friendly participant records.
@@ -367,6 +367,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-15 | Codex | 1.0 Phase 1 | Added the room backend scaffold: Supabase schema/env docs, `@supabase/supabase-js`, room storage abstractions with local in-memory fallback, `/api/rooms/create|join|action`, Vite dev proxy support for room routes, API tests, and a manual local create/join/start-game verification pass. Remaining Phase 1 gap is wiring these routes to an actual Supabase project/env. |
 | 2026-03-09 | Codex | 1.0 Phase 0 | Completed the multiplayer foundation pass: added canonical room types/helpers in `src/types/room.ts` and `src/lib/roomState.ts`, documented the first-cut room authority/presence/dev-loop plan in `docs/multiplayer-architecture.md`, and verified the repo with lint, tests, build, and a browser sanity pass. |
 | 2026-03-06 | Codex | 1.0 Phase 0 | Archived the MVP-era session log into `PROGRESS-archive-mvp.md` so `PROGRESS.md` stays lightweight for 1.0 startup while preserving detailed implementation history. |
 | 2026-03-06 | Codex | 1.0 Phase 0 | Aligned `telepath-project-plan.md`, `PROGRESS.md`, and agent docs around the first-cut multiplayer architecture: one human team vs. AI, 6-character room codes + URLs, fixed-board named cursors, host-only round commits, public/private room state, and a phased 1.0 execution plan. |
