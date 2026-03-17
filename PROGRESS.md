@@ -18,10 +18,10 @@
 ## Current Status
 
 **Active Milestone:** 1.0 — Multiplayer + Competitive
-**Current Phase:** 1.0 Phase 1 — Backend Foundation (in progress)
+**Current Phase:** 1.0 Phase 2 — Lobby + Identity (queued)
 **Last Updated:** 2026-03-16
-**Last Session Summary:** Confirmed the Supabase env vars are now present locally and the hosted project is reachable, but the Phase 1 room schema has not been applied yet: querying `public.rooms` returns `PGRST205` (“Could not find the table 'public.rooms' in the schema cache”). Phase 1 live verification is blocked until `supabase/migrations/20260315_initial_rooms.sql` is run against the project.
-**Known Follow-up:** Apply `supabase/migrations/20260315_initial_rooms.sql` in the Supabase project via SQL Editor / `psql` / linked Supabase CLI, then re-run live `/api/rooms/create|join|action` verification against the real store instead of the local in-memory fallback.
+**Last Session Summary:** Completed Phase 1 live backend verification: the Supabase room schema is applied, and `/api/rooms/create`, `/api/rooms/join`, and `/api/rooms/action` (`start_game`) all succeeded against the real service-role-backed store. The room backend foundation is now complete end-to-end.
+**Known Follow-up:** Start Phase 2 by building the multiplayer create/join room UI around the finished backend: room create/join entry points, display names + fallback names, participant-token persistence, and room-shell rehydration after refresh.
 
 ---
 
@@ -264,7 +264,7 @@ This phase is different from the others — it's not a linear checklist. We play
 ### 1.0 Phase 1 — Backend Foundation
 *Build the authoritative server/data layer for rooms before wiring presence-heavy UI.*
 
-- [ ] Set up the Supabase project and local env wiring
+- [x] Set up the Supabase project and local env wiring
 - [x] Add 1.0 env vars to `.env.example` and deployment docs (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
 - [x] Create the initial room + participant schema
 - [x] Implement human-friendly 6-character room code generation
@@ -273,7 +273,7 @@ This phase is different from the others — it's not a linear checklist. We play
 - [x] Build `/api/rooms/action`
 - [x] Persist authoritative room snapshots and `last_active_at` timestamps
 - [x] Add basic stale-room expiry/cleanup rules for 24hr inactivity
-- [ ] 📦 `git add -A && git commit -m "[1.0-phase-1] room backend foundation"`
+- [x] 📦 `git add -A && git commit -m "[1.0-phase-1] room backend foundation"`
 
 **1.0 Phase 1 complete when:** A host can create a room, a guest can join it, and the server can persist authoritative room state with reconnect-friendly participant records.
 
@@ -357,7 +357,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Task | Blocker | Resolution |
 |------|-------|------|---------|------------|
-| 2026-03-16 | Codex | 1.0 Phase 1 live Supabase verification | Supabase env vars are set, but the hosted project does not have `public.rooms` yet (`PGRST205` from `/rest/v1/rooms`). API keys alone were enough to verify reachability, not to apply the SQL migration from the terminal. | Run `supabase/migrations/20260315_initial_rooms.sql` in the Supabase SQL Editor or provide a DB connection / linked Supabase CLI, then resume live route verification. |
+| 2026-03-16 | Codex | 1.0 Phase 1 live Supabase verification | Supabase env vars were set, but the hosted project initially did not have `public.rooms` yet (`PGRST205` from `/rest/v1/rooms`). | Resolved: migration was applied in Supabase, then live `/api/rooms/create`, `/join`, and `/action` verification passed against the real store. |
 
 ---
 
@@ -367,6 +367,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-16 | Codex | 1.0 Phase 1 | Finished live Supabase verification after the migration was applied: confirmed the hosted room schema exists, then verified `/api/rooms/create`, `/api/rooms/join`, and `/api/rooms/action` (`start_game`) end-to-end against the real store. Phase 1 is complete; next is the lobby + identity UI. |
 | 2026-03-16 | Codex | 1.0 Phase 1 | Verified that the Supabase env vars are present and the hosted project is reachable, then hit a live-schema blocker: `public.rooms` does not exist yet (`PGRST205`). Logged the blocker and stopped before claiming Phase 1 complete. |
 | 2026-03-15 | Codex | 1.0 Phase 1 | Added the room backend scaffold: Supabase schema/env docs, `@supabase/supabase-js`, room storage abstractions with local in-memory fallback, `/api/rooms/create|join|action`, Vite dev proxy support for room routes, API tests, and a manual local create/join/start-game verification pass. Remaining Phase 1 gap is wiring these routes to an actual Supabase project/env. |
 | 2026-03-09 | Codex | 1.0 Phase 0 | Completed the multiplayer foundation pass: added canonical room types/helpers in `src/types/room.ts` and `src/lib/roomState.ts`, documented the first-cut room authority/presence/dev-loop plan in `docs/multiplayer-architecture.md`, and verified the repo with lint, tests, build, and a browser sanity pass. |
