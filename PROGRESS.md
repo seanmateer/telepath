@@ -19,9 +19,9 @@
 
 **Active Milestone:** 1.0 — Multiplayer + Competitive
 **Current Phase:** 1.0 Phase 1 — Backend Foundation (in progress)
-**Last Updated:** 2026-03-15
-**Last Session Summary:** Built the Phase 1 room backend scaffold: added Supabase env/docs + SQL schema, official Supabase SDK wiring, room storage abstractions with a non-production memory fallback, human-friendly room code + participant token generation, `/api/rooms/create|join|action`, Vite dev proxy support for the new routes, and API coverage plus a manual local create/join/start-game verification pass. Live Supabase project wiring is still the remaining unchecked Phase 1 item.
-**Known Follow-up:** Point the new room store at a real Supabase project by setting `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`, run the SQL migration, and re-verify the create/join/action routes against the service-role-backed store instead of the local in-memory fallback.
+**Last Updated:** 2026-03-16
+**Last Session Summary:** Confirmed the Supabase env vars are now present locally and the hosted project is reachable, but the Phase 1 room schema has not been applied yet: querying `public.rooms` returns `PGRST205` (“Could not find the table 'public.rooms' in the schema cache”). Phase 1 live verification is blocked until `supabase/migrations/20260315_initial_rooms.sql` is run against the project.
+**Known Follow-up:** Apply `supabase/migrations/20260315_initial_rooms.sql` in the Supabase project via SQL Editor / `psql` / linked Supabase CLI, then re-run live `/api/rooms/create|join|action` verification against the real store instead of the local in-memory fallback.
 
 ---
 
@@ -357,7 +357,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Task | Blocker | Resolution |
 |------|-------|------|---------|------------|
-| —    | —     | —    | —       | —          |
+| 2026-03-16 | Codex | 1.0 Phase 1 live Supabase verification | Supabase env vars are set, but the hosted project does not have `public.rooms` yet (`PGRST205` from `/rest/v1/rooms`). API keys alone were enough to verify reachability, not to apply the SQL migration from the terminal. | Run `supabase/migrations/20260315_initial_rooms.sql` in the Supabase SQL Editor or provide a DB connection / linked Supabase CLI, then resume live route verification. |
 
 ---
 
@@ -367,6 +367,7 @@ This phase is different from the others — it's not a linear checklist. We play
 
 | Date | Agent | Phase | Summary |
 |------|-------|-------|---------|
+| 2026-03-16 | Codex | 1.0 Phase 1 | Verified that the Supabase env vars are present and the hosted project is reachable, then hit a live-schema blocker: `public.rooms` does not exist yet (`PGRST205`). Logged the blocker and stopped before claiming Phase 1 complete. |
 | 2026-03-15 | Codex | 1.0 Phase 1 | Added the room backend scaffold: Supabase schema/env docs, `@supabase/supabase-js`, room storage abstractions with local in-memory fallback, `/api/rooms/create|join|action`, Vite dev proxy support for room routes, API tests, and a manual local create/join/start-game verification pass. Remaining Phase 1 gap is wiring these routes to an actual Supabase project/env. |
 | 2026-03-09 | Codex | 1.0 Phase 0 | Completed the multiplayer foundation pass: added canonical room types/helpers in `src/types/room.ts` and `src/lib/roomState.ts`, documented the first-cut room authority/presence/dev-loop plan in `docs/multiplayer-architecture.md`, and verified the repo with lint, tests, build, and a browser sanity pass. |
 | 2026-03-06 | Codex | 1.0 Phase 0 | Archived the MVP-era session log into `PROGRESS-archive-mvp.md` so `PROGRESS.md` stays lightweight for 1.0 startup while preserving detailed implementation history. |
